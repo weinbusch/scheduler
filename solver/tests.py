@@ -3,6 +3,9 @@ import unittest
 import datetime
 import collections
 
+from django.test import TestCase
+from django.urls import reverse
+
 from .solver import get_schedule
 
 
@@ -89,3 +92,12 @@ class SchedulerTest(unittest.TestCase):
         available_dates = {"foo": [days[0]], "bar": days}
         with self.assertRaises(Exception):
             get_schedule(days, families, available_dates)
+
+
+class ViewTests(TestCase):
+    def assert_get_200(self, path):
+        r = self.client.get(path)
+        self.assertEqual(r.status_code, 200)
+
+    def test_register_view(self):
+        self.assert_get_200(reverse("register"))
