@@ -5,6 +5,7 @@ import collections
 
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth.models import User
 
 from .solver import get_schedule
 
@@ -99,5 +100,38 @@ class ViewTests(TestCase):
         r = self.client.get(path)
         self.assertEqual(r.status_code, 200)
 
+    def assert_post_302(self, path, data):
+        r = self.client.post(path, data)
+        self.assertEqual(r.status_code, 302)
+
+    def assert_post_200(self, path, data):
+        r = self.client.post(path, data)
+        self.assertEqual(r.status_code, 200)
+
     def test_register_view(self):
         self.assert_get_200(reverse("register"))
+
+    def test_post_to_register_view(self):
+        data = {
+            "username": "foo",
+            "password1": "A12iofa_sdf!",
+            "password2": "A12iofa_sdf!",
+        }
+        self.assert_post_302(reverse("register"), data)
+
+    def test_post_creates_user(self):
+        data = {
+            "username": "foo",
+            "password1": "A12iofa_sdf!",
+            "password2": "A12iofa_sdf!",
+        }
+        self.client.post(reverse("register"), data)
+        self.assertEqual(User.objects.filter(username="foo").count(), 1)
+
+    def test_post_to_register_view_invalid_data(self):
+        data = {
+            "username": "foo",
+            "password1": "A12iofa_sdf!",
+            "password2": "A12iofa",
+        }
+        self.assert_post_200(reverse("register"), data)
