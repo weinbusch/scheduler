@@ -5,10 +5,37 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
 
+from django.forms import ModelForm
+
+from solver.models import UserPreferences
+
 
 @login_required
 def index(request):
     return render(request, "solver/index.html")
+
+
+class UserPreferencesForm(ModelForm):
+    class Meta:
+        model = UserPreferences
+        exclude = ["user"]
+
+
+@login_required
+def weekly_preferences(request):
+    p, _ = UserPreferences.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        form = UserPreferencesForm(request.POST, instance=p)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse("index"))
+    else:
+        form = UserPreferencesForm(instance=p)
+    return render(
+        request,
+        "solver/weekly_preferences.html",
+        context=dict(form=form),
+    )
 
 
 class LoginView(BaseLoginView):

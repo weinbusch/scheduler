@@ -7,7 +7,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from .solver import get_schedule
+from solver.solver import get_schedule
+from solver.models import UserPreferences
 
 
 class SchedulerTest(unittest.TestCase):
@@ -186,3 +187,22 @@ class ViewTests(TestCase, AssertionsMixin):
 
     def test_get_index(self):
         self.assert_get_200(reverse("login"))
+
+    def test_get_weekly_preferences(self):
+        self.assert_get_200(reverse("weekly_preferences"))
+
+    def test_post_to_weekly_preferences(self):
+        data = {
+            "monday": True,
+        }
+        self.assert_post_302(reverse("weekly_preferences"), data, reverse("index"))
+        p = UserPreferences.objects.get(user=self.user)
+        self.assertTrue(p.monday)
+        self.assertFalse(p.tuesday)
+
+    def test_update_weekly_preferences(self):
+        UserPreferences.objects.create(user=self.user)
+        self.client.post(reverse("weekly_preferences"), {"monday": True})
+        p = UserPreferences.objects.get(user=self.user)
+        self.assertTrue(p.monday)
+        self.assertFalse(p.tuesday)
