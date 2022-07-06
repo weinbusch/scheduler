@@ -5,10 +5,13 @@ import collections
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 from solver.solver import get_schedule
 from solver.models import UserPreferences
+
+
+User = get_user_model()
 
 
 class SchedulerTest(unittest.TestCase):
