@@ -206,3 +206,6 @@ class ViewTests(TestCase, AssertionsMixin):
         p = UserPreferences.objects.get(user=self.user)
         self.assertTrue(p.monday)
         self.assertFalse(p.tuesday)
+
+    def test_get_daily_preferences(self):
+        self.assert_get_200(reverse("daily_preferences"))

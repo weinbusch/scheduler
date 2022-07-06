@@ -38,6 +38,11 @@ def weekly_preferences(request):
     )
 
 
+@login_required
+def daily_preferences(request):
+    return render(request, "solver/daily_preferences.html")
+
+
 class LoginView(BaseLoginView):
     template_name = "auth/login.html"
 
