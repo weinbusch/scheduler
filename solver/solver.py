@@ -93,15 +93,10 @@ def make_constraints(days, families, available_dates):
 
     # 3. Availability
 
-    def is_available(family, day):
-        if day in available_dates.get(family, []):
-            return 1
-        return 0
-
     for family in families:
         constraint = scipy.optimize.LinearConstraint(
             [
-                1 if f == family and not is_available(family, day) else 0
+                1 if f == family and day not in available_dates.get(family, []) else 0
                 for day in days
                 for f in families
             ],
