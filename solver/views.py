@@ -3,6 +3,7 @@ from django.shortcuts import render, reverse, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView as BaseLoginView
+from django.contrib.auth.views import logout_then_login
 
 
 @login_required
@@ -15,6 +16,10 @@ class LoginView(BaseLoginView):
 
 
 login_user = LoginView.as_view()
+
+
+def logout_user(request):
+    return logout_then_login(request, reverse("login"))
 
 
 def register_user(request):

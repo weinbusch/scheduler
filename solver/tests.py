@@ -163,3 +163,6 @@ class ViewTests(TestCase):
             "password": "A12iofa",
         }
         self.assert_post_200(reverse("login"), data)
+
+    def test_get_logout_view_redirects_to_login_page(self):
+        self.assert_get_302(reverse("logout"), reverse("login"))
