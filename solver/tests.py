@@ -3,7 +3,7 @@ import unittest
 import datetime
 import collections
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
@@ -95,7 +95,7 @@ class SchedulerTest(unittest.TestCase):
             get_schedule(days, families, available_dates)
 
 
-class ViewTests(TestCase):
+class AssertionsMixin:
     def assert_get_200(self, path):
         r = self.client.get(path)
         self.assertEqual(r.status_code, 200)
@@ -115,6 +115,14 @@ class ViewTests(TestCase):
     def test_register_view(self):
         self.assert_get_200(reverse("register"))
 
+
+# https://docs.djangoproject.com/en/4.0/topics/testing/overview/#password-hashing
+@override_settings(
+    PASSWORD_HASHERS=[
+        "django.contrib.auth.hashers.MD5PasswordHasher",
+    ]
+)
+class AuthTest(TestCase, AssertionsMixin):
     def test_post_to_register_view(self):
         data = {
             "username": "foo",
@@ -166,3 +174,15 @@ class ViewTests(TestCase):
 
     def test_get_logout_view_redirects_to_login_page(self):
         self.assert_get_302(reverse("logout"), reverse("login"))
+
+
+class ViewTests(TestCase, AssertionsMixin):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="foo", password="bar")
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_get_index(self):
+        self.assert_get_200(reverse("login"))
