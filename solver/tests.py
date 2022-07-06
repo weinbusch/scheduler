@@ -100,13 +100,17 @@ class ViewTests(TestCase):
         r = self.client.get(path)
         self.assertEqual(r.status_code, 200)
 
-    def assert_post_302(self, path, data):
-        r = self.client.post(path, data)
-        self.assertEqual(r.status_code, 302)
+    def assert_get_302(self, path, to):
+        r = self.client.get(path)
+        self.assertRedirects(r, to)
 
     def assert_post_200(self, path, data):
         r = self.client.post(path, data)
         self.assertEqual(r.status_code, 200)
+
+    def assert_post_302(self, path, data, to):
+        r = self.client.post(path, data)
+        self.assertRedirects(r, to)
 
     def test_register_view(self):
         self.assert_get_200(reverse("register"))
@@ -117,7 +121,7 @@ class ViewTests(TestCase):
             "password1": "A12iofa_sdf!",
             "password2": "A12iofa_sdf!",
         }
-        self.assert_post_302(reverse("register"), data)
+        self.assert_post_302(reverse("register"), data, reverse("login"))
 
     def test_post_creates_user(self):
         data = {
@@ -135,3 +139,27 @@ class ViewTests(TestCase):
             "password2": "A12iofa",
         }
         self.assert_post_200(reverse("register"), data)
+
+    def test_index_view_redirects_to_login(self):
+        self.assert_get_302(
+            reverse("index"), to=reverse("login") + "?next=" + reverse("index")
+        )
+
+    def test_get_login_view(self):
+        self.assert_get_200(reverse("login"))
+
+    def test_post_to_login_view(self):
+        User.objects.create_user(username="foo", password="A12iofa_sdf")
+        data = {
+            "username": "foo",
+            "password": "A12iofa_sdf",
+        }
+        self.assert_post_302(reverse("login"), data, reverse("index"))
+
+    def test_post_to_login_view_invalid_data(self):
+        User.objects.create_user(username="foo", password="A12iofa_sdf")
+        data = {
+            "username": "foo",
+            "password": "A12iofa",
+        }
+        self.assert_post_200(reverse("login"), data)

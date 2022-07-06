@@ -122,3 +122,11 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Auth customization
+
+# https://docs.djangoproject.com/en/4.0/ref/settings/#login-url
+LOGIN_URL = "login"
+
+# https://docs.djangoproject.com/en/4.0/ref/settings/#login-redirect-url
+LOGIN_REDIRECT_URL = "index"

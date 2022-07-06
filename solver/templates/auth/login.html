@@ -1,0 +1,7 @@
+<form action="" method="POST">
+  {% csrf_token %}
+  {{ form }}
+  <input type="hidden" name="next" value="{{ next }}">
+  <input type="submit" value="">
+  <a href="{% url 'register' %}">Register</a>
+</form>
