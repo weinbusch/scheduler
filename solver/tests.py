@@ -99,6 +99,39 @@ class SchedulerTest(unittest.TestCase):
             get_schedule(days, families, available_dates)
 
 
+class ModelTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="foo", password="1234")
+
+    def test_compile_available_dates_based_on_user_preferences(self):
+        p = UserPreferences.objects.create(user=self.user, monday=True)
+        available_dates = p.get_available_dates(
+            start=datetime.date(2022, 7, 1),
+            end=datetime.date(2022, 7, 31),
+        )
+        self.assertListEqual(
+            available_dates,
+            [
+                datetime.date(2022, 7, 4),
+                datetime.date(2022, 7, 11),
+                datetime.date(2022, 7, 18),
+                datetime.date(2022, 7, 25),
+            ],
+        )
+
+    def test_user_preferences_is_available_method(self):
+        p = UserPreferences.objects.create(
+            user=self.user,
+            monday=True,
+            wednesday=True,
+        )
+        self.assertTrue(p.is_available(datetime.date(2022, 7, 4)))
+        self.assertFalse(p.is_available(datetime.date(2022, 7, 5)))
+        self.assertTrue(p.is_available(datetime.date(2022, 7, 6)))
+        self.assertFalse(p.is_available(datetime.date(2022, 7, 7)))
+
+
 class AssertionsMixin:
     def assert_get_200(self, path):
         r = self.client.get(path)
