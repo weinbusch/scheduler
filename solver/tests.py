@@ -131,6 +131,34 @@ class ModelTests(TestCase):
         self.assertTrue(p.is_available(datetime.date(2022, 7, 6)))
         self.assertFalse(p.is_available(datetime.date(2022, 7, 7)))
 
+    def test_user_preferences_allowed_days(self):
+        p = UserPreferences.objects.create(
+            user=self.user,
+            allowed_days=[datetime.date(2022, 7, 5), datetime.date(2022, 7, 5)],
+        )
+        p.refresh_from_db()
+        self.assertListEqual(
+            p.allowed_days,
+            [
+                "2022-07-05",
+                "2022-07-05",
+            ],
+        )
+
+    def test_user_preferences_excluded_days(self):
+        p = UserPreferences.objects.create(
+            user=self.user,
+            excluded_days=[datetime.date(2022, 7, 5), datetime.date(2022, 7, 5)],
+        )
+        p.refresh_from_db()
+        self.assertListEqual(
+            p.excluded_days,
+            [
+                "2022-07-05",
+                "2022-07-05",
+            ],
+        )
+
 
 class AssertionsMixin:
     def assert_get_200(self, path):

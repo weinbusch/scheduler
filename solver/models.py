@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.db import models
-
+from django.core.serializers.json import DjangoJSONEncoder
 from solver.utils import date_range
+
 
 weekdays = [
     "monday",
@@ -24,6 +25,16 @@ class UserPreferences(models.Model):
     wednesday = models.BooleanField(default=False)
     thursday = models.BooleanField(default=False)
     friday = models.BooleanField(default=False)
+
+    allowed_days = models.JSONField(
+        default=list,
+        encoder=DjangoJSONEncoder,
+    )
+
+    excluded_days = models.JSONField(
+        default=list,
+        encoder=DjangoJSONEncoder,
+    )
 
     def is_available(self, date):
         return getattr(self, weekdays[date.weekday()], False)

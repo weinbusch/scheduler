@@ -18,7 +18,7 @@ def index(request):
 class UserPreferencesForm(ModelForm):
     class Meta:
         model = UserPreferences
-        exclude = ["user"]
+        exclude = ["user", "allowed_days", "excluded_days"]
 
 
 @login_required
