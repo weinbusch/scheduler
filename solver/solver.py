@@ -107,8 +107,6 @@ def make_constraints(days, families, available_dates):
 
     """TODO:
     - a family should not be assigned more than once every n days
-    - the difference in the number of assignements between families
-      should not exceed 1
     """
 
     return constraints
