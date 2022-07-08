@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
-
+from django.http import JsonResponse
 from django.forms import ModelForm
 
 from solver.models import UserPreferences
@@ -39,8 +39,8 @@ def weekly_preferences(request):
 
 
 @login_required
-def daily_preferences(request):
-    return render(request, "solver/daily_preferences.html")
+def day_preferences(request, pk):
+    return JsonResponse({"group_id": pk})
 
 
 class LoginView(BaseLoginView):

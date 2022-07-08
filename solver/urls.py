@@ -13,8 +13,8 @@ urlpatterns = [
         name="weekly_preferences",
     ),
     path(
-        "daily_preferences",
-        views.daily_preferences,
-        name="daily_preferences",
+        "day_preferences/<int:pk>",
+        views.day_preferences,
+        name="day_preferences",
     ),
 ]

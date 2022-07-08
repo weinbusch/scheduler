@@ -1,4 +1,5 @@
 import math
+import json
 import unittest
 import datetime
 import collections
@@ -261,5 +262,43 @@ class ViewTests(TestCase, AssertionsMixin):
         self.assertTrue(p.monday)
         self.assertFalse(p.tuesday)
 
-    def test_get_daily_preferences(self):
-        self.assert_get_200(reverse("daily_preferences"))
+
+class APITests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="foo", password="bar")
+        p = cls.user.user_preferences
+        DayPreference.objects.bulk_create(
+            [
+                DayPreference(
+                    user_preferences=p,
+                    start=datetime.date(2022, 7, 6),
+                    allowed=True,
+                ),
+                DayPreference(
+                    user_preferences=p,
+                    start=datetime.date(2022, 7, 7),
+                    allowed=False,
+                ),
+                DayPreference(
+                    user_preferences=p,
+                    start=datetime.date(2022, 7, 8),
+                    allowed=True,
+                ),
+                DayPreference(
+                    user_preferences=p,
+                    start=datetime.date(2022, 7, 9),
+                    allowed=False,
+                ),
+            ]
+        )
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_get_day_preferences(self):
+        pk = self.user.user_preferences.id
+        url = reverse("day_preferences", args=[pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content), {"group_id": pk})
