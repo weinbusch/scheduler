@@ -104,47 +104,52 @@ class ModelTests(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user(username="foo", password="1234")
 
+    def test_user_creation_also_creates_user_preferences(self):
+        self.assertIsNotNone(self.user.userpreferences)
+
     def test_user_preferences_is_available_method(self):
-        p = UserPreferences.objects.create(
-            user=self.user,
-            monday=True,
-            wednesday=True,
-        )
+        p = self.user.userpreferences
+        p.monday = True
+        p.wednesday = True
         self.assertTrue(p.is_available(datetime.date(2022, 7, 4)))
         self.assertFalse(p.is_available(datetime.date(2022, 7, 5)))
         self.assertTrue(p.is_available(datetime.date(2022, 7, 6)))
         self.assertFalse(p.is_available(datetime.date(2022, 7, 7)))
 
     def test_user_preferences_allowed_days(self):
-        p = UserPreferences.objects.create(
-            user=self.user,
-            allowed_days=[datetime.date(2022, 7, 5), datetime.date(2022, 7, 5)],
-        )
+        p = self.user.userpreferences
+        p.allowed_days = [
+            datetime.date(2022, 7, 5),
+            datetime.date(2022, 7, 6),
+        ]
+        p.save()
         p.refresh_from_db()
         self.assertListEqual(
             p.allowed_days,
             [
                 "2022-07-05",
-                "2022-07-05",
+                "2022-07-06",
             ],
         )
 
     def test_user_preferences_excluded_days(self):
-        p = UserPreferences.objects.create(
-            user=self.user,
-            excluded_days=[datetime.date(2022, 7, 5), datetime.date(2022, 7, 5)],
-        )
+        p = self.user.userpreferences
+        p.excluded_days = [
+            datetime.date(2022, 7, 5),
+            datetime.date(2022, 7, 6),
+        ]
+        p.save()
         p.refresh_from_db()
         self.assertListEqual(
             p.excluded_days,
             [
                 "2022-07-05",
-                "2022-07-05",
+                "2022-07-06",
             ],
         )
 
     def test_compile_available_dates_based_on_weekly_preferences(self):
-        p = UserPreferences.objects.create(user=self.user, monday=True)
+        p = UserPreferences(monday=True)
         available_dates = p.get_available_dates(
             start=datetime.date(2022, 7, 1),
             end=datetime.date(2022, 7, 31),
@@ -162,16 +167,16 @@ class ModelTests(TestCase):
     def test_available_dates_based_on_weekly_prefs_allowed_and_excluded_days(
         self,
     ):
-        p = UserPreferences.objects.create(
-            user=self.user,
+        p = UserPreferences(
             monday=True,
             allowed_days=[
                 datetime.date(2022, 7, 5),
                 datetime.date(2022, 6, 5),
             ],
-            excluded_days=[datetime.date(2022, 7, 4)],
+            excluded_days=[
+                datetime.date(2022, 7, 4),
+            ],
         )
-        # p.refresh_from_db()
         available_dates = p.get_available_dates(
             start=datetime.date(2022, 7, 1),
             end=datetime.date(2022, 7, 31),
@@ -287,13 +292,6 @@ class ViewTests(TestCase, AssertionsMixin):
             "monday": True,
         }
         self.assert_post_302(reverse("weekly_preferences"), data, reverse("index"))
-        p = UserPreferences.objects.get(user=self.user)
-        self.assertTrue(p.monday)
-        self.assertFalse(p.tuesday)
-
-    def test_update_weekly_preferences(self):
-        UserPreferences.objects.create(user=self.user)
-        self.client.post(reverse("weekly_preferences"), {"monday": True})
         p = UserPreferences.objects.get(user=self.user)
         self.assertTrue(p.monday)
         self.assertFalse(p.tuesday)
