@@ -39,7 +39,7 @@ class UserPreferences(models.Model):
 
 class DayPreference(models.Model):
 
-    user_preference = models.ForeignKey(
+    user_preferences = models.ForeignKey(
         UserPreferences,
         on_delete=models.CASCADE,
         related_name="day_preferences",

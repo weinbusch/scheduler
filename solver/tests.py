@@ -135,17 +135,17 @@ class ModelTests(TestCase):
         p = self.user.user_preferences
         p.monday = True
         DayPreference.objects.create(
-            user_preference=p,
+            user_preferences=p,
             start=datetime.date(2022, 7, 3),
             allowed=True,
         )
         DayPreference.objects.create(
-            user_preference=p,
+            user_preferences=p,
             start=datetime.date(2022, 7, 5),
             allowed=True,
         )
         DayPreference.objects.create(
-            user_preference=p,
+            user_preferences=p,
             start=datetime.date(2022, 7, 4),
             allowed=False,
         )
