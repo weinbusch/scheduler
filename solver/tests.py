@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 from solver.solver import get_schedule
-from solver.models import UserPreferences
+from solver.models import UserPreferences, DayPreference
 
 
 User = get_user_model()
@@ -114,40 +114,9 @@ class ModelTests(TestCase):
         self.assertTrue(p.is_available(datetime.date(2022, 7, 6)))
         self.assertFalse(p.is_available(datetime.date(2022, 7, 7)))
 
-    def test_user_preferences_allowed_days(self):
-        p = self.user.user_preferences
-        p.allowed_days = [
-            datetime.date(2022, 7, 5),
-            datetime.date(2022, 7, 6),
-        ]
-        p.save()
-        p.refresh_from_db()
-        self.assertListEqual(
-            p.allowed_days,
-            [
-                "2022-07-05",
-                "2022-07-06",
-            ],
-        )
-
-    def test_user_preferences_excluded_days(self):
-        p = self.user.user_preferences
-        p.excluded_days = [
-            datetime.date(2022, 7, 5),
-            datetime.date(2022, 7, 6),
-        ]
-        p.save()
-        p.refresh_from_db()
-        self.assertListEqual(
-            p.excluded_days,
-            [
-                "2022-07-05",
-                "2022-07-06",
-            ],
-        )
-
     def test_compile_available_dates_based_on_weekly_preferences(self):
-        p = UserPreferences(monday=True)
+        p = self.user.user_preferences
+        p.monday = True
         available_dates = p.get_available_dates(
             start=datetime.date(2022, 7, 1),
             end=datetime.date(2022, 7, 31),
@@ -162,31 +131,29 @@ class ModelTests(TestCase):
             ],
         )
 
-    def test_available_dates_based_on_weekly_prefs_allowed_and_excluded_days(
-        self,
-    ):
-        p = UserPreferences(
-            monday=True,
-            allowed_days=[
-                datetime.date(2022, 7, 5),
-                datetime.date(2022, 6, 5),
-            ],
-            excluded_days=[
-                datetime.date(2022, 7, 4),
-            ],
+    def test_available_dates_based_on_day_preferences(self):
+        p = self.user.user_preferences
+        p.monday = True
+        DayPreference.objects.create(
+            user_preference=p,
+            start=datetime.date(2022, 7, 3),
+            allowed=True,
         )
-        available_dates = p.get_available_dates(
-            start=datetime.date(2022, 7, 1),
-            end=datetime.date(2022, 7, 31),
+        DayPreference.objects.create(
+            user_preference=p,
+            start=datetime.date(2022, 7, 5),
+            allowed=True,
+        )
+        DayPreference.objects.create(
+            user_preference=p,
+            start=datetime.date(2022, 7, 4),
+            allowed=False,
         )
         self.assertListEqual(
-            available_dates,
-            [
-                datetime.date(2022, 7, 5),
-                datetime.date(2022, 7, 11),
-                datetime.date(2022, 7, 18),
-                datetime.date(2022, 7, 25),
-            ],
+            p.get_available_dates(
+                start=datetime.date(2022, 7, 4), end=datetime.date(2022, 7, 6)
+            ),
+            [datetime.date(2022, 7, 5)],
         )
 
 
