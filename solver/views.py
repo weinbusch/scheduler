@@ -23,7 +23,7 @@ class UserPreferencesForm(ModelForm):
 
 @login_required
 def weekly_preferences(request):
-    p, _ = UserPreferences.objects.get_or_create(user=request.user)
+    p = UserPreferences.objects.get(user=request.user)
     if request.method == "POST":
         form = UserPreferencesForm(request.POST, instance=p)
         if form.is_valid():
