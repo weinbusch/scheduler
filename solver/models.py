@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.db import models
-from django.core.serializers.json import DjangoJSONEncoder
-from solver.utils import date_range, parse_date_list
+from solver.utils import date_range
 
 
 weekdays = [
