@@ -105,7 +105,7 @@ class ModelTests(TestCase):
         cls.user = User.objects.create_user(username="foo", password="1234")
 
     def test_user_creation_also_creates_user_preferences(self):
-        self.assertIsNotNone(self.user.userpreferences)
+        self.assertIsNotNone(self.user.user_preferences)
 
     def test_user_preferences_is_available_method(self):
         p = UserPreferences(monday=True, wednesday=True)
@@ -115,7 +115,7 @@ class ModelTests(TestCase):
         self.assertFalse(p.is_available(datetime.date(2022, 7, 7)))
 
     def test_user_preferences_allowed_days(self):
-        p = self.user.userpreferences
+        p = self.user.user_preferences
         p.allowed_days = [
             datetime.date(2022, 7, 5),
             datetime.date(2022, 7, 6),
@@ -131,7 +131,7 @@ class ModelTests(TestCase):
         )
 
     def test_user_preferences_excluded_days(self):
-        p = self.user.userpreferences
+        p = self.user.user_preferences
         p.excluded_days = [
             datetime.date(2022, 7, 5),
             datetime.date(2022, 7, 6),

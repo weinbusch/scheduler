@@ -19,6 +19,7 @@ class UserPreferences(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name="user_preferences",
     )
     monday = models.BooleanField(default=False)
     tuesday = models.BooleanField(default=False)
