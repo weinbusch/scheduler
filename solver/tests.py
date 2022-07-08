@@ -108,9 +108,7 @@ class ModelTests(TestCase):
         self.assertIsNotNone(self.user.userpreferences)
 
     def test_user_preferences_is_available_method(self):
-        p = self.user.userpreferences
-        p.monday = True
-        p.wednesday = True
+        p = UserPreferences(monday=True, wednesday=True)
         self.assertTrue(p.is_available(datetime.date(2022, 7, 4)))
         self.assertFalse(p.is_available(datetime.date(2022, 7, 5)))
         self.assertTrue(p.is_available(datetime.date(2022, 7, 6)))
