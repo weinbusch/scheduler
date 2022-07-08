@@ -104,22 +104,6 @@ class ModelTests(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user(username="foo", password="1234")
 
-    def test_compile_available_dates_based_on_user_preferences(self):
-        p = UserPreferences.objects.create(user=self.user, monday=True)
-        available_dates = p.get_available_dates(
-            start=datetime.date(2022, 7, 1),
-            end=datetime.date(2022, 7, 31),
-        )
-        self.assertListEqual(
-            available_dates,
-            [
-                datetime.date(2022, 7, 4),
-                datetime.date(2022, 7, 11),
-                datetime.date(2022, 7, 18),
-                datetime.date(2022, 7, 25),
-            ],
-        )
-
     def test_user_preferences_is_available_method(self):
         p = UserPreferences.objects.create(
             user=self.user,
@@ -156,6 +140,49 @@ class ModelTests(TestCase):
             [
                 "2022-07-05",
                 "2022-07-05",
+            ],
+        )
+
+    def test_compile_available_dates_based_on_weekly_preferences(self):
+        p = UserPreferences.objects.create(user=self.user, monday=True)
+        available_dates = p.get_available_dates(
+            start=datetime.date(2022, 7, 1),
+            end=datetime.date(2022, 7, 31),
+        )
+        self.assertListEqual(
+            available_dates,
+            [
+                datetime.date(2022, 7, 4),
+                datetime.date(2022, 7, 11),
+                datetime.date(2022, 7, 18),
+                datetime.date(2022, 7, 25),
+            ],
+        )
+
+    def test_available_dates_based_on_weekly_prefs_allowed_and_excluded_days(
+        self,
+    ):
+        p = UserPreferences.objects.create(
+            user=self.user,
+            monday=True,
+            allowed_days=[
+                datetime.date(2022, 7, 5),
+                datetime.date(2022, 6, 5),
+            ],
+            excluded_days=[datetime.date(2022, 7, 4)],
+        )
+        # p.refresh_from_db()
+        available_dates = p.get_available_dates(
+            start=datetime.date(2022, 7, 1),
+            end=datetime.date(2022, 7, 31),
+        )
+        self.assertListEqual(
+            available_dates,
+            [
+                datetime.date(2022, 7, 5),
+                datetime.date(2022, 7, 11),
+                datetime.date(2022, 7, 18),
+                datetime.date(2022, 7, 25),
             ],
         )
 
