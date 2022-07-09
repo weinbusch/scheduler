@@ -17,4 +17,9 @@ urlpatterns = [
         views.day_preferences,
         name="day_preferences",
     ),
+    path(
+        "day_preference/<int:pk>",
+        views.day_preference,
+        name="day_preference",
+    ),
 ]

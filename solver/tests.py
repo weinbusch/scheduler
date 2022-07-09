@@ -321,3 +321,34 @@ class APITests(TestCase):
                 {"id": 2, "start": "2022-07-07", "allowed": False},
             ],
         )
+
+    def test_post_to_day_preferences(self):
+        url = reverse("day_preferences")
+        data = {"start": "2022-07-08", "allowed": True}
+        r = self.client.post(url, data=data)
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(
+            DayPreference.objects.last().start,
+            datetime.date(2022, 7, 8),
+        )
+
+    def test_method_not_allowed_day_preference_list(self):
+        url = reverse("day_preferences")
+        for method in ["delete", "put", "patch"]:
+            with self.subTest(method=method):
+                client = getattr(self.client, method)
+                self.assertEqual(client(url).status_code, 405)
+
+    def test_update_day_preference(self):
+        url = reverse("day_preference", args=[1])
+        data = {"id": 1, "start": "2022-07-06", "allowed": False}
+        r = self.client.patch(url, data=data, content_type="application/json")
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(DayPreference.objects.get(id=1).allowed)
+
+    def test_delete_day_preferences(self):
+        url = reverse("day_preference", args=[1])
+        r = self.client.delete(url)
+        self.assertEqual(r.status_code, 204)
+        with self.assertRaises(DayPreference.DoesNotExist):
+            DayPreference.objects.get(id=1)

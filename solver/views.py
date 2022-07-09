@@ -1,11 +1,12 @@
-from django.shortcuts import render, reverse, redirect
-
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
-from django.http import JsonResponse
 from django.forms import ModelForm
+from django.shortcuts import render, reverse, redirect
+
+from rest_framework import generics
+from rest_framework import mixins
 
 from solver.models import UserPreferences, DayPreference
 from solver.serializers import DayPreferenceSerializer
@@ -39,11 +40,38 @@ def weekly_preferences(request):
     )
 
 
-@login_required
-def day_preferences(request):
-    qs = DayPreference.objects.filter(user_preferences__user=request.user)
-    serializer = DayPreferenceSerializer(qs, many=True)
-    return JsonResponse(serializer.data, safe=False)
+class DayPreferencesListAPIView(generics.ListCreateAPIView):
+    serializer_class = DayPreferenceSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return DayPreference.objects.filter(user_preferences__user=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        prefs = UserPreferences.objects.get(user=user)
+        return serializer.save(user_preferences=prefs)
+
+
+day_preferences = DayPreferencesListAPIView.as_view()
+
+
+class DayPreferenceUpdateDeleteAPIView(
+    mixins.DestroyModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView,
+):
+    serializer_class = DayPreferenceSerializer
+    queryset = DayPreference.objects.all()
+
+    def patch(self, *args, **kwargs):
+        return self.partial_update(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        return self.destroy(*args, **kwargs)
+
+
+day_preference = DayPreferenceUpdateDeleteAPIView.as_view()
 
 
 class LoginView(BaseLoginView):
