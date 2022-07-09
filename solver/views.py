@@ -40,10 +40,8 @@ def weekly_preferences(request):
 
 
 @login_required
-def day_preferences(request, pk):
-    qs = DayPreference.objects.filter(
-        user_preferences__user=request.user, user_preferences__pk=pk
-    )
+def day_preferences(request):
+    qs = DayPreference.objects.filter(user_preferences__user=request.user)
     serializer = DayPreferenceSerializer(qs, many=True)
     return JsonResponse(serializer.data, safe=False)
 

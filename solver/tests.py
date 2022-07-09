@@ -311,8 +311,7 @@ class APITests(TestCase):
         self.client.force_login(self.user)
 
     def test_get_day_preferences(self):
-        pk = self.user.user_preferences.id
-        url = reverse("day_preferences", args=[pk])
+        url = reverse("day_preferences")
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
         self.assertListEqual(
