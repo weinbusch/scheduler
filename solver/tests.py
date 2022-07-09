@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 
 from solver.solver import get_schedule
 from solver.models import UserPreferences, DayPreference
-
+from solver.serializers import DayPreferenceSerializer
 
 User = get_user_model()
 
@@ -157,6 +157,30 @@ class ModelTests(TestCase):
             [datetime.date(2022, 7, 5)],
         )
 
+    def tests_serialization_of_day_preferences(self):
+        p = self.user.user_preferences
+        DayPreference.objects.bulk_create(
+            [
+                DayPreference(
+                    user_preferences=p,
+                    start=datetime.date(2022, 7, 3),
+                    allowed=True,
+                ),
+                DayPreference(
+                    user_preferences=p,
+                    start=datetime.date(2022, 7, 4),
+                    allowed=False,
+                ),
+            ]
+        )
+        self.assertListEqual(
+            DayPreferenceSerializer(p.day_preferences.all(), many=True).data,
+            [
+                {"id": 1, "start": "2022-07-03", "allowed": True},
+                {"id": 2, "start": "2022-07-04", "allowed": False},
+            ],
+        )
+
 
 class AssertionsMixin:
     def assert_get_200(self, path):
@@ -280,16 +304,6 @@ class APITests(TestCase):
                     start=datetime.date(2022, 7, 7),
                     allowed=False,
                 ),
-                DayPreference(
-                    user_preferences=p,
-                    start=datetime.date(2022, 7, 8),
-                    allowed=True,
-                ),
-                DayPreference(
-                    user_preferences=p,
-                    start=datetime.date(2022, 7, 9),
-                    allowed=False,
-                ),
             ]
         )
 
@@ -301,4 +315,10 @@ class APITests(TestCase):
         url = reverse("day_preferences", args=[pk])
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
-        self.assertDictEqual(json.loads(r.content), {"group_id": pk})
+        self.assertListEqual(
+            json.loads(r.content),
+            [
+                {"id": 1, "start": "2022-07-06", "allowed": True},
+                {"id": 2, "start": "2022-07-07", "allowed": False},
+            ],
+        )

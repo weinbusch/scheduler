@@ -7,7 +7,8 @@ from django.contrib.auth.views import logout_then_login
 from django.http import JsonResponse
 from django.forms import ModelForm
 
-from solver.models import UserPreferences
+from solver.models import UserPreferences, DayPreference
+from solver.serializers import DayPreferenceSerializer
 
 
 @login_required
@@ -40,7 +41,11 @@ def weekly_preferences(request):
 
 @login_required
 def day_preferences(request, pk):
-    return JsonResponse({"group_id": pk})
+    qs = DayPreference.objects.filter(
+        user_preferences__user=request.user, user_preferences__pk=pk
+    )
+    serializer = DayPreferenceSerializer(qs, many=True)
+    return JsonResponse(serializer.data, safe=False)
 
 
 class LoginView(BaseLoginView):
