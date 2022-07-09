@@ -7,9 +7,11 @@ from django.shortcuts import render, reverse, redirect
 
 from rest_framework import generics
 from rest_framework import mixins
+from rest_framework.permissions import DjangoModelPermissions
 
 from solver.models import UserPreferences, DayPreference
 from solver.serializers import DayPreferenceSerializer
+from solver.permissions import DayPreferenceChangePermission
 
 
 @login_required
@@ -63,6 +65,7 @@ class DayPreferenceUpdateDeleteAPIView(
 ):
     serializer_class = DayPreferenceSerializer
     queryset = DayPreference.objects.all()
+    permission_classes = [DayPreferenceChangePermission]
 
     def patch(self, *args, **kwargs):
         return self.partial_update(*args, **kwargs)

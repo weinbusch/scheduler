@@ -352,3 +352,14 @@ class APITests(TestCase):
         self.assertEqual(r.status_code, 204)
         with self.assertRaises(DayPreference.DoesNotExist):
             DayPreference.objects.get(id=1)
+
+    def test_update_day_preference_not_authorized(self):
+        user_2 = User.objects.create(username="baz", password="1234")
+        day = DayPreference.objects.create(
+            user_preferences=user_2.user_preferences,
+            start=datetime.date(2022, 7, 9),
+            allowed=True,
+        )
+        url = reverse("day_preference", args=[day.pk])
+        r = self.client.delete(url)
+        self.assertEqual(r.status_code, 403)
