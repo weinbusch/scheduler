@@ -32,8 +32,8 @@ class UserPreferences(models.Model):
     def get_available_dates(self, start, end):
         weekly = {d for d in date_range(start, end) if self.is_available(d)}
         qs = self.day_preferences.filter(start__gte=start, start__lte=end)
-        allowed = set(d.start for d in qs.filter(allowed=True).all())
-        excluded = set(d.start for d in qs.filter(allowed=False).all())
+        allowed = set(d.start for d in qs if d.allowed)
+        excluded = set(d.start for d in qs if not d.allowed)
         return list(sorted((weekly | allowed) - excluded))
 
 
