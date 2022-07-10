@@ -353,7 +353,7 @@ class APITests(TestCase):
         with self.assertRaises(DayPreference.DoesNotExist):
             DayPreference.objects.get(id=1)
 
-    def test_update_day_preference_not_authorized(self):
+    def test_day_preference_not_authorized(self):
         user_2 = User.objects.create(username="baz", password="1234")
         day = DayPreference.objects.create(
             user_preferences=user_2.user_preferences,
@@ -363,3 +363,28 @@ class APITests(TestCase):
         url = reverse("day_preference", args=[day.pk])
         r = self.client.delete(url)
         self.assertEqual(r.status_code, 403)
+
+    def test_day_reference_read_only_id(self):
+        data = {
+            "id": 99,
+            "start": datetime.date(1900, 7, 6),
+            "allowed": True,
+        }
+        url = reverse("day_preference", args=[1])
+        self.client.patch(url, data=data, content_type="application/json")
+        self.assertEqual(DayPreference.objects.filter(id=99).count(), 0)
+        self.assertEqual(
+            DayPreference.objects.get(pk=1).start, datetime.date(1900, 7, 6)
+        )
+
+    def test_day_preference_404(self):
+        url = reverse("day_preference", args=[99])
+        r = self.client.patch(
+            url,
+            data={
+                "id": 99,
+                "start": datetime.date(1900, 1, 1),
+                "allowed": True,
+            },
+        )
+        self.assertEqual(r.status_code, 404)
