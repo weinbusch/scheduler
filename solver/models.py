@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
+
 from solver.utils import date_range
 
 
@@ -48,3 +50,6 @@ class DayPreference(models.Model):
     start = models.DateField()
 
     allowed = models.BooleanField(default=True)
+
+    def get_absolute_url(self):
+        return reverse("day_preference", args=[self.id])
