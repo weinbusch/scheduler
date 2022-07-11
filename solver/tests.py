@@ -4,9 +4,10 @@ import unittest
 import datetime
 import collections
 
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 
 from solver.solver import get_schedule
 from solver.models import UserPreferences, DayPreference
@@ -155,6 +156,17 @@ class ModelTests(TestCase):
             ),
             [datetime.date(2022, 7, 5)],
         )
+
+    def test_day_preferences_unique_date(self):
+        DayPreference.objects.create(
+            user_preferences=self.user.user_preferences,
+            start=datetime.date(2022, 7, 10),
+        )
+        with self.assertRaises(IntegrityError):
+            DayPreference.objects.create(
+                user_preferences=self.user.user_preferences,
+                start=datetime.date(2022, 7, 10),
+            )
 
 
 class AssertionsMixin:

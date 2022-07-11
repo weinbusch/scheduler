@@ -53,3 +53,11 @@ class DayPreference(models.Model):
 
     def get_absolute_url(self):
         return reverse("day_preference", args=[self.id])
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user_preferences", "start"],
+                name="unique_day_preference",
+            )
+        ]
