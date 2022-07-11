@@ -108,6 +108,13 @@ class ModelTests(TestCase):
     def test_user_creation_also_creates_user_preferences(self):
         self.assertIsNotNone(self.user.user_preferences)
 
+    def test_day_preference_available(self):
+        p = DayPreference.objects.create(
+            user_preferences=self.user.user_preferences,
+            start=datetime.date.today(),
+        )
+        self.assertTrue(p.available)
+
     def test_user_preferences_is_available_method(self):
         p = UserPreferences(monday=True, wednesday=True)
         self.assertTrue(p.is_available(datetime.date(2022, 7, 4)))
@@ -138,17 +145,17 @@ class ModelTests(TestCase):
         DayPreference.objects.create(
             user_preferences=p,
             start=datetime.date(2022, 7, 3),
-            allowed=True,
+            available=True,
         )
         DayPreference.objects.create(
             user_preferences=p,
             start=datetime.date(2022, 7, 5),
-            allowed=True,
+            available=True,
         )
         DayPreference.objects.create(
             user_preferences=p,
             start=datetime.date(2022, 7, 4),
-            allowed=False,
+            available=False,
         )
         self.assertListEqual(
             p.get_available_dates(
@@ -284,12 +291,12 @@ class APITests(TestCase):
                 DayPreference(
                     user_preferences=p,
                     start=datetime.date(2022, 7, 6),
-                    allowed=True,
+                    available=True,
                 ),
                 DayPreference(
                     user_preferences=p,
                     start=datetime.date(2022, 7, 7),
-                    allowed=False,
+                    available=False,
                 ),
             ]
         )
@@ -307,13 +314,13 @@ class APITests(TestCase):
                 {
                     "id": 1,
                     "start": "2022-07-06",
-                    "allowed": True,
+                    "available": True,
                     "url": reverse("day_preference", args=[1]),
                 },
                 {
                     "id": 2,
                     "start": "2022-07-07",
-                    "allowed": False,
+                    "available": False,
                     "url": reverse("day_preference", args=[2]),
                 },
             ],
@@ -321,7 +328,7 @@ class APITests(TestCase):
 
     def test_post_to_day_preferences(self):
         url = reverse("day_preferences")
-        data = {"start": "2022-07-08", "allowed": True}
+        data = {"start": "2022-07-08", "available": True}
         r = self.client.post(url, data=data)
         self.assertEqual(r.status_code, 201)
         self.assertEqual(
@@ -338,10 +345,10 @@ class APITests(TestCase):
 
     def test_update_day_preference(self):
         url = reverse("day_preference", args=[1])
-        data = {"id": 1, "start": "2022-07-06", "allowed": False}
+        data = {"id": 1, "start": "2022-07-06", "available": False}
         r = self.client.patch(url, data=data, content_type="application/json")
         self.assertEqual(r.status_code, 200)
-        self.assertFalse(DayPreference.objects.get(id=1).allowed)
+        self.assertFalse(DayPreference.objects.get(id=1).available)
 
     def test_delete_day_preferences(self):
         url = reverse("day_preference", args=[1])
@@ -355,7 +362,7 @@ class APITests(TestCase):
         day = DayPreference.objects.create(
             user_preferences=user_2.user_preferences,
             start=datetime.date(2022, 7, 9),
-            allowed=True,
+            available=True,
         )
         url = reverse("day_preference", args=[day.pk])
         r = self.client.delete(url)
@@ -365,7 +372,7 @@ class APITests(TestCase):
         data = {
             "id": 99,
             "start": datetime.date(1900, 7, 6),
-            "allowed": True,
+            "available": True,
         }
         url = reverse("day_preference", args=[1])
         self.client.patch(url, data=data, content_type="application/json")
@@ -381,7 +388,7 @@ class APITests(TestCase):
             data={
                 "id": 99,
                 "start": datetime.date(1900, 1, 1),
-                "allowed": True,
+                "available": True,
             },
         )
         self.assertEqual(r.status_code, 404)

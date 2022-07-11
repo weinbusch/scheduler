@@ -9,4 +9,4 @@ class DayPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = DayPreference
-        fields = ["id", "start", "allowed", "url"]
+        fields = ["id", "start", "available", "url"]
