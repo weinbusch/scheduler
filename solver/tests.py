@@ -10,7 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from solver.solver import get_schedule
-from solver.models import UserPreferences, DayPreference
+from solver.models import DayPreference
 
 User = get_user_model()
 
@@ -115,47 +115,19 @@ class ModelTests(TestCase):
         )
         self.assertTrue(p.available)
 
-    def test_user_preferences_is_available_method(self):
-        p = UserPreferences(monday=True, wednesday=True)
-        self.assertTrue(p.is_available(datetime.date(2022, 7, 4)))
-        self.assertFalse(p.is_available(datetime.date(2022, 7, 5)))
-        self.assertTrue(p.is_available(datetime.date(2022, 7, 6)))
-        self.assertFalse(p.is_available(datetime.date(2022, 7, 7)))
-
-    def test_compile_available_dates_based_on_weekly_preferences(self):
+    def test_day_preferences_unique_date(self):
         p = self.user.user_preferences
-        p.monday = True
-        available_dates = p.get_available_dates(
-            start=datetime.date(2022, 7, 1),
-            end=datetime.date(2022, 7, 31),
-        )
-        self.assertListEqual(
-            available_dates,
-            [
-                datetime.date(2022, 7, 4),
-                datetime.date(2022, 7, 11),
-                datetime.date(2022, 7, 18),
-                datetime.date(2022, 7, 25),
-            ],
-        )
+        s = datetime.date(2022, 7, 11)
+        DayPreference.objects.create(user_preferences=p, start=s)
+        with self.assertRaises(IntegrityError):
+            DayPreference.objects.create(user_preferences=p, start=s)
 
-    def test_available_dates_based_on_day_preferences(self):
+    def test_available_dates(self):
         p = self.user.user_preferences
-        p.monday = True
-        DayPreference.objects.create(
-            user_preferences=p,
-            start=datetime.date(2022, 7, 3),
-            available=True,
-        )
-        DayPreference.objects.create(
-            user_preferences=p,
-            start=datetime.date(2022, 7, 5),
-            available=True,
-        )
-        DayPreference.objects.create(
-            user_preferences=p,
-            start=datetime.date(2022, 7, 4),
-            available=False,
+        d = datetime.date(2022, 7, 3)
+        days = [d + datetime.timedelta(days=delta) for delta in [0, 2, 4]]
+        DayPreference.objects.bulk_create(
+            [DayPreference(user_preferences=p, start=day) for day in days]
         )
         self.assertListEqual(
             p.get_available_dates(
@@ -163,17 +135,6 @@ class ModelTests(TestCase):
             ),
             [datetime.date(2022, 7, 5)],
         )
-
-    def test_day_preferences_unique_date(self):
-        DayPreference.objects.create(
-            user_preferences=self.user.user_preferences,
-            start=datetime.date(2022, 7, 10),
-        )
-        with self.assertRaises(IntegrityError):
-            DayPreference.objects.create(
-                user_preferences=self.user.user_preferences,
-                start=datetime.date(2022, 7, 10),
-            )
 
 
 class AssertionsMixin:
@@ -267,18 +228,6 @@ class ViewTests(TestCase, AssertionsMixin):
 
     def test_get_index(self):
         self.assert_get_200(reverse("login"))
-
-    def test_get_weekly_preferences(self):
-        self.assert_get_200(reverse("weekly_preferences"))
-
-    def test_post_to_weekly_preferences(self):
-        data = {
-            "monday": True,
-        }
-        self.assert_post_302(reverse("weekly_preferences"), data, reverse("index"))
-        p = UserPreferences.objects.get(user=self.user)
-        self.assertTrue(p.monday)
-        self.assertFalse(p.tuesday)
 
 
 class APITests(TestCase):

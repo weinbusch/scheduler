@@ -1,1 +1,109 @@
-Hello world
+{% extends "base/layout.html" %}
+
+{% block style %}
+<style>
+  .day-available {
+      background: green !important;
+      opacity: .7 !important;
+  }
+  .day-not-available {
+      background: red !important;
+      opacity: .7 !important;
+  }
+  .weekday-available {
+      background: rgba(14, 165, 233, 0.3);
+  }
+</style>
+{% endblock %}
+
+{% block main %}
+<div id="calendar" class=""></div>  
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function deleteEvent(event){
+      let url = event.url;
+      return fetch(url, {
+	  method: "DELETE",
+	  headers: {
+	      "X-CSRFToken": "{{ csrf_token }}",
+	  },
+      })
+	  .then(() => event.remove())
+  }
+  function toggleStatus(event){
+      let url = event.url,
+	  newStatus = !event.extendedProps.allowed,
+	  data = {
+	      id: event.id,
+	      start: event.startStr,
+	      allowed: newStatus,
+	  };
+      return fetch(url, {
+	  method: "PATCH",
+	  headers: {
+	      "Content-Type": "application/json",
+	      "X-CSRFToken": "{{ csrf_token }}",
+	  },
+	  body: JSON.stringify(data),
+      })
+	  .then(response=>response.json)
+      	  .then(data => event.setExtendedProp("allowed", newStatus));
+  }
+  const calendarEl = document.getElementById("calendar");
+  const calendarOptions = {
+      initialView: "dayGridMonth",
+      locale: "de",
+      eventSources: [
+	  {
+	      url: "{% url 'day_preferences' %}",
+	      display: "background",
+	  },
+      ],
+      dateClick: function(info){
+	  let start = info.dateStr;
+	  if (this.getEvents().findIndex(el=>el.startStr == start) > -1){
+	      return;
+	  }
+	  let source = this.getEventSources()[0],
+	      url = source.url,
+	      data = {
+		  start: start,
+		  allowed: true,
+	      };
+	  return fetch(url, {
+	      method: "POST",
+	      headers: {
+		  "Content-Type": "application/json",
+		  "X-CSRFToken": "{{ csrf_token }}",
+	      },
+	      body: JSON.stringify(data),
+	  })
+	      .then(response => source.refetch())
+      },
+      eventClick: function(info){
+	  let event = info.event,
+	      available = event.extendedProps.allowed;
+	  if (available){
+	      toggleStatus(event);
+	  } else {
+	      deleteEvent(event);
+	  }
+      },
+      eventClassNames: function(info){
+	  let event = info.event;
+	  return [event.extendedProps.allowed ? "day-available" : "day-not-available"];
+      },
+      dayCellClassNames: function(info){
+	  let date = info.date,
+	      weekday = date.getDay();
+	  if (weekday == 1){
+	      return ["weekday-available"];
+	  }
+      },
+  };
+  const calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
+  calendar.render();
+</script>
+{% endblock %}
