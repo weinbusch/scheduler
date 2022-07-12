@@ -3,11 +3,12 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
 from django.shortcuts import render, reverse, redirect
+from django.views.generic import CreateView, UpdateView
 
 from rest_framework import generics
 from rest_framework import mixins
 
-from solver.models import UserPreferences, DayPreference
+from solver.models import UserPreferences, DayPreference, Schedule
 from solver.serializers import DayPreferenceSerializer
 from solver.permissions import DayPreferenceChangePermission
 
@@ -50,6 +51,22 @@ class DayPreferenceUpdateDeleteAPIView(
 
 
 day_preference = DayPreferenceUpdateDeleteAPIView.as_view()
+
+
+class ScheduleCreateView(CreateView):
+    model = Schedule
+    fields = ["start", "end", "users"]
+
+
+add_schedule = ScheduleCreateView.as_view()
+
+
+class ScheduleUpdateView(UpdateView):
+    model = Schedule
+    fields = ["start", "end", "users"]
+
+
+update_schedule = ScheduleUpdateView.as_view()
 
 
 class LoginForm(AuthenticationForm):

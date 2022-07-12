@@ -50,7 +50,7 @@ class Schedule(models.Model):
     start = models.DateField()
     end = models.DateField()
     users = models.ManyToManyField(
-        to=settings.AUTH_USER_MODEL, related_name="schedules"
+        to=settings.AUTH_USER_MODEL, related_name="schedules", blank=True
     )
 
     def days(self):
@@ -67,3 +67,6 @@ class Schedule(models.Model):
                 for u in self.users.all()
             },
         )
+
+    def get_absolute_url(self):
+        return reverse("schedule", args=[self.pk])

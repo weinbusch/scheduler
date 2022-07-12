@@ -205,9 +205,12 @@ class AssertionsMixin:
         r = self.client.post(path, data)
         self.assertEqual(r.status_code, 200)
 
-    def assert_post_302(self, path, data, to):
+    def assert_post_302(self, path, data, to=None):
         r = self.client.post(path, data)
-        self.assertRedirects(r, to)
+        if to is not None:
+            self.assertRedirects(r, to)
+        else:
+            self.assertEqual(r.status_code, 302)
 
     def test_register_view(self):
         self.assert_get_200(reverse("register"))
@@ -283,6 +286,38 @@ class ViewTests(TestCase, AssertionsMixin):
 
     def test_get_index(self):
         self.assert_get_200(reverse("login"))
+
+    def test_get_add_schedule(self):
+        self.assert_get_200(reverse("add_schedule"))
+
+    def test_post_to_add_schedule(self):
+        data = {
+            "start": datetime.date.today(),
+            "end": datetime.date.today(),
+            "users": [self.user.pk],
+        }
+        self.assert_post_302(reverse("add_schedule"), data)
+
+    def test_get_schedule_detail(self):
+        s = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+        self.assert_get_200(reverse("schedule", args=[s.pk]))
+
+    def test_post_to_schedule_detail(self):
+        s = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+        url = reverse("schedule", args=[s.pk])
+        self.assert_post_302(
+            url,
+            {
+                "start": datetime.date.today(),
+                "end": datetime.date.today(),
+                "users": [],
+            },
+            to=url,
+        )
 
 
 class APITests(TestCase):
