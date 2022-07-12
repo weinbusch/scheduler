@@ -165,6 +165,32 @@ class ModelTests(TestCase):
             [datetime.date(2022, 7, x) for x in [11, 12, 13, 14, 15, 18]],
         )
 
+    def test_schedule_solve(self):
+        u1 = User.objects.create(username="bar", password="1234")
+        u2 = User.objects.create(username="baz", password="1234")
+        user_sequence = [u1, u1, u2, u2, u1, u2]
+        s = Schedule.objects.create(
+            start=datetime.date(2022, 7, 11),  # a monday
+            end=datetime.date(2022, 7, 18),  # the next monday
+        )
+        days = s.days()
+        s.users.set([u1, u2])
+        DayPreference.objects.bulk_create(
+            [
+                DayPreference(user_preferences=u.user_preferences, start=s)
+                for u, s in zip(user_sequence, days)
+            ]
+        )
+        self.assertListEqual(
+            list(
+                zip(
+                    days,
+                    (u.username for u in user_sequence),
+                ),
+            ),
+            s.solve(),
+        )
+
 
 class AssertionsMixin:
     def assert_get_200(self, path):

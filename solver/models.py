@@ -3,6 +3,7 @@ from django.db import models
 from django.urls import reverse
 
 from solver.utils import date_range
+from solver.solver import get_schedule
 
 
 class UserPreferences(models.Model):
@@ -54,3 +55,15 @@ class Schedule(models.Model):
 
     def days(self):
         return [d for d in date_range(self.start, self.end) if d.weekday() < 5]
+
+    def solve(self):
+        return get_schedule(
+            self.days(),
+            [u.username for u in self.users.all()],
+            {
+                u.username: u.user_preferences.get_available_dates(
+                    start=self.start, end=self.end
+                )
+                for u in self.users.all()
+            },
+        )
