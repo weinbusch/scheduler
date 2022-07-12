@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
 from django.shortcuts import render, reverse, redirect
@@ -52,8 +52,18 @@ class DayPreferenceUpdateDeleteAPIView(
 day_preference = DayPreferenceUpdateDeleteAPIView.as_view()
 
 
+class LoginForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for fieldname in ["username", "password"]:
+            self.fields[fieldname].widget.attrs.update(
+                {"class": "p-2 border w-full leading-tight"}
+            )
+
+
 class LoginView(BaseLoginView):
     template_name = "auth/login.html"
+    authentication_form = LoginForm
 
 
 login_user = LoginView.as_view()
@@ -63,12 +73,21 @@ def logout_user(request):
     return logout_then_login(request, reverse("login"))
 
 
+class RegisterForm(UserCreationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for fieldname in ["username", "password1", "password2"]:
+            self.fields[fieldname].widget.attrs.update(
+                {"class": "p-2 border w-full leading-tight"}
+            )
+
+
 def register_user(request):
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = RegisterForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect(reverse("login"))
     else:
-        form = UserCreationForm()
+        form = RegisterForm()
     return render(request, "auth/register.html", context=dict(form=form))
