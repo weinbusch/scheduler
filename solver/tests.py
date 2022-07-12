@@ -10,7 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from solver.solver import get_schedule
-from solver.models import DayPreference
+from solver.models import DayPreference, Schedule
 
 User = get_user_model()
 
@@ -135,6 +135,25 @@ class ModelTests(TestCase):
             ),
             [datetime.date(2022, 7, 5)],
         )
+
+    def test_schedule_start_end_date(self):
+        Schedule.objects.create(
+            start=datetime.date(2022, 7, 12),
+            end=datetime.date(2022, 8, 12),
+        )
+
+    def test_schedule_users_many_to_many(self):
+        u1 = self.user
+        u2 = User.objects.create_user(username="bar", password="1234")
+        Schedule.objects.create(
+            start=datetime.date(2022, 7, 12),
+            end=datetime.date(2022, 8, 12),
+        ).users.set([u1, u2])
+        Schedule.objects.create(
+            start=datetime.date(2022, 7, 12), end=datetime.date(2022, 8, 12)
+        ).users.set([u1])
+        self.assertEqual(u1.schedules.count(), 2)
+        self.assertEqual(u2.schedules.count(), 1)
 
 
 class AssertionsMixin:

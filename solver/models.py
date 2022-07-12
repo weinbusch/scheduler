@@ -41,3 +41,11 @@ class DayPreference(models.Model):
                 name="unique_day_preference",
             )
         ]
+
+
+class Schedule(models.Model):
+    start = models.DateField()
+    end = models.DateField()
+    users = models.ManyToManyField(
+        to=settings.AUTH_USER_MODEL, related_name="schedules"
+    )
