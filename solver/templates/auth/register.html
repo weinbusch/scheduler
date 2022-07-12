@@ -1,6 +1,37 @@
-<form action="" method="POST">
-  {% csrf_token %}
-  {{ form.as_p }}  
-  <input type="submit" value="">
-</form>
+{% extends "base/base.html" %}
 
+{% block body %}
+<main>
+  <div class="max-w-sm mx-auto">
+    <h1 class="font-semibold text-xl mt-8">Registrieren</h1>
+    <form action="" method="POST">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="flex flex-col mt-8">
+	<div>
+	  <label for="{{ field.id_for_label }}" class="text-gray-800 font-semibold text-sm leading-none">
+	    {{ field.label }}
+	  </label>
+	</div>
+	<div class="mt-1">
+	  {{ field }}
+	</div>
+	{% for error in field.errors %}
+	<div class="mt-1 text-red-600">
+	  {{ error }}
+	</div>
+	{% endfor %}
+      </div>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="flex flex-row justify-between items-baseline mt-8">
+	<input class="px-4 p-2 leading-tight rounded bg-green-600 hover:bg-green-500 hover:underline text-white leading-none cursor-pointer"
+	       type="submit" value="Registrieren">
+	<span class="mx-2 text-gray-800 italic">oder</span>
+	<a class="px-4 p-2 rounded border leading-tight hover:underline hover:text-blue-600"
+	   href="{% url 'login' %}">Anmelden</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}
