@@ -155,6 +155,16 @@ class ModelTests(TestCase):
         self.assertEqual(u1.schedules.count(), 2)
         self.assertEqual(u2.schedules.count(), 1)
 
+    def test_schedule_days(self):
+        s = Schedule(
+            start=datetime.date(2022, 7, 11),  # a monday
+            end=datetime.date(2022, 7, 18),  # the next monday
+        )
+        self.assertListEqual(
+            s.days(),
+            [datetime.date(2022, 7, x) for x in [11, 12, 13, 14, 15, 18]],
+        )
+
 
 class AssertionsMixin:
     def assert_get_200(self, path):

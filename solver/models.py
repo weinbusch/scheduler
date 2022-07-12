@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
+from solver.utils import date_range
+
 
 class UserPreferences(models.Model):
     user = models.OneToOneField(
@@ -49,3 +51,6 @@ class Schedule(models.Model):
     users = models.ManyToManyField(
         to=settings.AUTH_USER_MODEL, related_name="schedules"
     )
+
+    def days(self):
+        return [d for d in date_range(self.start, self.end) if d.weekday() < 5]
