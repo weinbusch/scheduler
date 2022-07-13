@@ -7,6 +7,7 @@ from django.views.generic import CreateView, UpdateView
 
 from rest_framework import generics
 from rest_framework import mixins
+from rest_framework import permissions
 
 from solver.models import UserPreferences, DayPreference, Schedule
 from solver.serializers import DayPreferenceSerializer
@@ -20,6 +21,7 @@ def index(request):
 
 class DayPreferencesListAPIView(generics.ListCreateAPIView):
     serializer_class = DayPreferenceSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -41,7 +43,10 @@ class DayPreferenceUpdateDeleteAPIView(
 ):
     serializer_class = DayPreferenceSerializer
     queryset = DayPreference.objects.all()
-    permission_classes = [DayPreferenceChangePermission]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        DayPreferenceChangePermission,
+    ]
 
     def patch(self, *args, **kwargs):
         return self.partial_update(*args, **kwargs)
