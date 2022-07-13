@@ -43,7 +43,7 @@
       </div>
       <div class="flex-grow ml-4">
 	<h1 class="font-semibold">{{ form.users.label }}</h1>
-	<div class="mt-2 border-b border-r border-l">
+	<div class="mt-2 border-b border-r border-l max-h-64 overflow-y-auto">
 	  {% for choice in form.users %}
 	  <div class="flex flex-row p-2 border-t items-baseline bg-white">
 	    {{ choice.tag }}
@@ -62,5 +62,68 @@
       <input class="px-4 p-2 leading-tight rounded bg-green-600 hover:bg-green-500 hover:underline text-white leading-none cursor-pointer" type="submit" value="Speichern">
     </div>
   </form>
+  {% if object %}
+  <h2 class="mt-8 font-semibold text-lg">Verfügbarkeiten</h2>
+  <p class="mt-2">Die bisherigen Teilnehmer sind an den folgenden
+  Tagen grundsätzlich verfügbar. Klicke
+  auf <span class="text-green-600 font-semibold">Speichern</span>, um
+  die Anzeige der Teilnehmer zu aktualisieren.
+  </p>
+  <div id="calendar" class="mt-8"></div>
+  {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if object %}
+<script>
+  const groupColors = [
+      "green",
+      "orange",
+      "yellow",
+      "blue",
+  ];
+  function stringToNumber(s){
+      let xs = new Array ();
+      for (var i=0; i < s.length; i++){
+	  xs.push(s.charCodeAt(i));
+      }
+      return xs.reduce((x, y) => x + y, 0);
+  }
+  function stringToColor(s){
+      let index = stringToNumber(s) % groupColors.length;
+      return groupColors[index];
+  }
+  const eventUrl = "{% url 'schedule_day_preferences' object.pk %}";
+  const calendarEl = document.getElementById("calendar");
+  const calendarOptions = {
+      initialView: "dayGridMonth",
+      locale: "de",
+      height: "auto",
+      buttonText: {
+	  "today": "Heute",
+	  "month": "Monatsansicht",
+      },
+      eventSources: [
+	  {
+	      url: eventUrl,
+	  },
+      ],
+      eventDataTransform: function(data){
+	  let color = stringToColor(data.username);
+	  data.title = data.username;
+	  data.groupId = data.username;
+	  data.url = "";
+	  data.backgroundColor = color;
+	  data.borderColor = color;
+	  return data;
+      },
+      eventClick: function(info){
+	  info.jsEvent.preventDefault();
+      },
+  };
+  const calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
+  calendar.render();
+</script>
+{% endif %}
 {% endblock %}
