@@ -370,18 +370,21 @@ class APITests(TestCase):
             [
                 {
                     "id": 1,
+                    "username": "foo",
                     "start": "2022-07-06",
                     "available": True,
                     "url": reverse("day_preference", args=[1]),
                 },
                 {
                     "id": 2,
+                    "username": "foo",
                     "start": "2022-07-07",
                     "available": False,
                     "url": reverse("day_preference", args=[2]),
                 },
                 {
                     "id": 3,
+                    "username": "bar",
                     "start": "2022-07-08",
                     "available": True,
                     "url": reverse("day_preference", args=[3]),
@@ -398,12 +401,14 @@ class APITests(TestCase):
             [
                 {
                     "id": 1,
+                    "username": "foo",
                     "start": "2022-07-06",
                     "available": True,
                     "url": reverse("day_preference", args=[1]),
                 },
                 {
                     "id": 2,
+                    "username": "foo",
                     "start": "2022-07-07",
                     "available": False,
                     "url": reverse("day_preference", args=[2]),
