@@ -1,7 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
+from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
 from django.shortcuts import render, reverse, redirect
 from django.views.generic import CreateView, UpdateView
 
@@ -58,17 +60,28 @@ class DayPreferenceUpdateDeleteAPIView(
 day_preference = DayPreferenceUpdateDeleteAPIView.as_view()
 
 
-class ScheduleCreateView(CreateView):
+class ScheduleForm(ModelForm):
+    class Meta:
+        model = Schedule
+        fields = ["start", "end", "users"]
+        widgets = {
+            "start": DateInput(attrs={"class": "p-2 border w-full leading-tight"}),
+            "end": DateInput(attrs={"class": "p-2 border w-full leading-tight"}),
+            "users": CheckboxSelectMultiple,
+        }
+
+
+class ScheduleCreateView(LoginRequiredMixin, CreateView):
     model = Schedule
-    fields = ["start", "end", "users"]
+    form_class = ScheduleForm
 
 
 add_schedule = ScheduleCreateView.as_view()
 
 
-class ScheduleUpdateView(UpdateView):
+class ScheduleUpdateView(LoginRequiredMixin, UpdateView):
     model = Schedule
-    fields = ["start", "end", "users"]
+    form_class = ScheduleForm
 
 
 update_schedule = ScheduleUpdateView.as_view()
