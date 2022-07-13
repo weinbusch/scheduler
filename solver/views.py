@@ -38,6 +38,21 @@ class UserDayPreferencesListAPIView(generics.ListCreateAPIView):
 user_day_preferences = UserDayPreferencesListAPIView.as_view()
 
 
+class ScheduleDayPreferencesListView(generics.ListAPIView):
+    serializer_class = DayPreferenceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        pk = self.kwargs["pk"]
+        schedule = Schedule.objects.get(pk=pk)
+        return DayPreference.objects.filter(
+            user_preferences__user__in=schedule.users.all()
+        )
+
+
+schedule_day_preferences = ScheduleDayPreferencesListView.as_view()
+
+
 class DayPreferenceUpdateDeleteAPIView(
     mixins.DestroyModelMixin,
     mixins.UpdateModelMixin,

@@ -323,25 +323,71 @@ class ViewTests(TestCase, AssertionsMixin):
 class APITests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username="foo", password="bar")
-        p = cls.user.user_preferences
+        u1 = User.objects.create_user(username="foo", password="bar")
+        u2 = User.objects.create_user(username="bar", password="bar")
+        u3 = User.objects.create_user(username="baz", password="baz")
         DayPreference.objects.bulk_create(
             [
                 DayPreference(
-                    user_preferences=p,
+                    user_preferences=u1.user_preferences,
                     start=datetime.date(2022, 7, 6),
                     available=True,
                 ),
                 DayPreference(
-                    user_preferences=p,
+                    user_preferences=u1.user_preferences,
                     start=datetime.date(2022, 7, 7),
                     available=False,
                 ),
+                DayPreference(
+                    user_preferences=u2.user_preferences,
+                    start=datetime.date(2022, 7, 8),
+                    available=True,
+                ),
+                DayPreference(
+                    user_preferences=u3.user_preferences,
+                    start=datetime.date(2022, 7, 9),
+                    available=True,
+                ),
             ]
         )
+        s = Schedule.objects.create(
+            start=datetime.date(2022, 7, 1),
+            end=datetime.date(2022, 7, 30),
+        )
+        s.users.set([u1, u2])
+        cls.user = u1
+        cls.schedule = s
 
     def setUp(self):
         self.client.force_login(self.user)
+
+    def test_get_day_preferences_for_schedule(self):
+        url = reverse("schedule_day_preferences", args=[self.schedule.pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertListEqual(
+            json.loads(r.content),
+            [
+                {
+                    "id": 1,
+                    "start": "2022-07-06",
+                    "available": True,
+                    "url": reverse("day_preference", args=[1]),
+                },
+                {
+                    "id": 2,
+                    "start": "2022-07-07",
+                    "available": False,
+                    "url": reverse("day_preference", args=[2]),
+                },
+                {
+                    "id": 3,
+                    "start": "2022-07-08",
+                    "available": True,
+                    "url": reverse("day_preference", args=[3]),
+                },
+            ],
+        )
 
     def test_get_user_day_preferences(self):
         url = reverse("user_day_preferences")
@@ -397,12 +443,7 @@ class APITests(TestCase):
             DayPreference.objects.get(id=1)
 
     def test_day_preference_not_authorized(self):
-        user_2 = User.objects.create(username="baz", password="1234")
-        day = DayPreference.objects.create(
-            user_preferences=user_2.user_preferences,
-            start=datetime.date(2022, 7, 9),
-            available=True,
-        )
+        day = DayPreference.objects.get(user_preferences__user__username="bar")
         url = reverse("day_preference", args=[day.pk])
         r = self.client.delete(url)
         self.assertEqual(r.status_code, 403)

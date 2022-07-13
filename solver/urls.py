@@ -8,9 +8,14 @@ urlpatterns = [
     path("logout", views.logout_user, name="logout"),
     path("register", views.register_user, name="register"),
     path(
-        "day_preferences/user",
+        "user/day_preferences",
         views.user_day_preferences,
         name="user_day_preferences",
+    ),
+    path(
+        "schedule/<int:pk>/day_preferences",
+        views.schedule_day_preferences,
+        name="schedule_day_preferences",
     ),
     path(
         "day_preferences/<int:pk>",
