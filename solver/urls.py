@@ -8,15 +8,15 @@ urlpatterns = [
     path("logout", views.logout_user, name="logout"),
     path("register", views.register_user, name="register"),
     path(
-        "day_preferences",
-        views.day_preferences,
-        name="day_preferences",
+        "day_preferences/user",
+        views.user_day_preferences,
+        name="user_day_preferences",
     ),
     path(
-        "day_preference/<int:pk>",
+        "day_preferences/<int:pk>",
         views.day_preference,
         name="day_preference",
     ),
-    path("add_schedule", views.add_schedule, name="add_schedule"),
-    path("schedule/<int:pk>", views.update_schedule, name="schedule"),
+    path("schedules", views.add_schedule, name="add_schedule"),
+    path("schedules/<int:pk>", views.update_schedule, name="schedule"),
 ]

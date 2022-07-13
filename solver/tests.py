@@ -343,8 +343,8 @@ class APITests(TestCase):
     def setUp(self):
         self.client.force_login(self.user)
 
-    def test_get_day_preferences(self):
-        url = reverse("day_preferences")
+    def test_get_user_day_preferences(self):
+        url = reverse("user_day_preferences")
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
         self.assertListEqual(
@@ -366,7 +366,7 @@ class APITests(TestCase):
         )
 
     def test_post_to_day_preferences(self):
-        url = reverse("day_preferences")
+        url = reverse("user_day_preferences")
         data = {"start": "2022-07-08", "available": True}
         r = self.client.post(url, data=data)
         self.assertEqual(r.status_code, 201)
@@ -376,7 +376,7 @@ class APITests(TestCase):
         )
 
     def test_method_not_allowed_day_preference_list(self):
-        url = reverse("day_preferences")
+        url = reverse("user_day_preferences")
         for method in ["delete", "put", "patch"]:
             with self.subTest(method=method):
                 client = getattr(self.client, method)
@@ -389,7 +389,7 @@ class APITests(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertFalse(DayPreference.objects.get(id=1).available)
 
-    def test_delete_day_preferences(self):
+    def test_delete_day_preference(self):
         url = reverse("day_preference", args=[1])
         r = self.client.delete(url)
         self.assertEqual(r.status_code, 204)

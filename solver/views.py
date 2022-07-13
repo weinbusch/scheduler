@@ -21,7 +21,7 @@ def index(request):
     return render(request, "solver/index.html")
 
 
-class DayPreferencesListAPIView(generics.ListCreateAPIView):
+class UserDayPreferencesListAPIView(generics.ListCreateAPIView):
     serializer_class = DayPreferenceSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -35,7 +35,7 @@ class DayPreferencesListAPIView(generics.ListCreateAPIView):
         return serializer.save(user_preferences=prefs)
 
 
-day_preferences = DayPreferencesListAPIView.as_view()
+user_day_preferences = UserDayPreferencesListAPIView.as_view()
 
 
 class DayPreferenceUpdateDeleteAPIView(
