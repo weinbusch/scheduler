@@ -1,0 +1,66 @@
+{% extends "base/layout.html" %}
+
+{% block main %}
+<div class="container mx-auto max-w-4xl px-4">
+  <h1 class="font-semibold text-xl mt-8">
+    {% if object %}Stundenplan {{ object.pk }}{% else %}Neuer Stundenplan{% endif %}
+  </h1>
+  <form action="" method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="flex flex-row w-full">
+      <div class="flex-grow max-w-sm">
+	<div class="flex flex-col mt-2">
+	  <div>
+	    <label for="{{ form.start.id_for_label }}" class="text-gray-800 font-semibold text-sm leading-none">
+	      {{ form.start.label }}
+	    </label>
+	  </div>
+	  <div class="mt-1">
+	    {{ form.start }}
+	  </div>
+	  {% for error in form.start.errors %}
+	  <div class="mt-1 text-red-600">
+	    {{ error }}
+	  </div>
+	  {% endfor %}
+	</div>
+	<div class="flex flex-col mt-2">
+	  <div>
+	    <label for="{{ form.end.id_for_label }}" class="text-gray-800 font-semibold text-sm leading-none">
+	      {{ form.end.label }}
+	    </label>
+	  </div>
+	  <div class="mt-1">
+	    {{ form.end }}
+	  </div>
+	  {% for error in form.end.errors %}
+	  <div class="mt-1 text-red-600">
+	    {{ error }}
+	  </div>
+	  {% endfor %}
+	</div>
+      </div>
+      <div class="flex-grow ml-4">
+	<h1 class="font-semibold">{{ form.users.label }}</h1>
+	<div class="mt-2 border-b border-r border-l">
+	  {% for choice in form.users %}
+	  <div class="flex flex-row p-2 border-t items-baseline bg-white">
+	    {{ choice.tag }}
+	    <label class="ml-2 flex-grow" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>	
+	  </div>
+	  {% endfor %}
+	</div>
+	{% for error in form.users.errors %}
+	<div class="mt-1 text-red-600">
+	  {{ error }}
+	</div>
+	{% endfor %}
+      </div>
+    </div>
+    <div class="flex flex-row justify-between items-baseline mt-4">
+      <input class="px-4 p-2 leading-tight rounded bg-green-600 hover:bg-green-500 hover:underline text-white leading-none cursor-pointer" type="submit" value="Speichern">
+    </div>
+  </form>
+</div>
+{% endblock %}

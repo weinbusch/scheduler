@@ -1,7 +1,36 @@
 {% extends "base/layout.html" %}
 
 {% block main %}
-<div class="container mx-auto max-w-4xl">
+<div class="container mx-auto max-w-4xl px-4">
+  <div class="mt-8">
+    <h1 class="text-lg font-semibold">Deine Stundenpläne</h1>
+    <div class="mt-2 -m-2 flex flex-row">
+      {% for schedule in user.schedules.all %}
+      <div class="m-2">
+	<a href="{% url 'schedule' schedule.pk %}"
+	   class="inline-block p-2 border rounded leading-tight hover:underline hover:text-blue-500 cursor-pointer">
+	  Stundenplan {{ schedule.pk }}
+	</a>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-2 -m-2 flex flex-row">
+      <a href="{% url 'add_schedule' %}"
+	 class="m-2 inline-block p-2 border rounded leading-tight bg-blue-500 text-white hover:bg-blue-600 
+		cursor-pointer">
+	Neuen Stundenplan hinzufügen
+      </a>
+    </div>
+  </div>
+  <div class="mt-8">
+    <h1 class="text-lg font-semibold">Deine Verfügbarkeit</h1>
+    <p class="mt-2">Trage bitte hier die Tage ein, an denen Du
+    grundsätzlich verfügbar bist. Ein Klick auf ein leeres Datumsfeld
+    markiert dieses Datum als verfügbar (grün). Ein Klick auf einen
+    verfügbaren Tag entfernt die Markierung. An den Tagen ohne
+    Markierung giltst Du als nicht verfügbar.
+    </p>
+  </div>
   <div id="calendar" class="mt-8"></div>
 </div>
 {% endblock %}
