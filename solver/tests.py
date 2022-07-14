@@ -182,12 +182,13 @@ class ModelTests(TestCase):
             ]
         )
         self.assertListEqual(
-            list(
-                zip(
+            [
+                {"start": d, "title": u.username}
+                for d, u in zip(
                     days,
-                    (u.username for u in user_sequence),
-                ),
-            ),
+                    user_sequence,
+                )
+            ],
             s.solve(),
         )
 
