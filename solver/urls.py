@@ -13,7 +13,7 @@ urlpatterns = [
         name="user_day_preferences",
     ),
     path(
-        "schedule/<int:pk>/day_preferences",
+        "schedules/<int:pk>/day_preferences",
         views.schedule_day_preferences,
         name="schedule_day_preferences",
     ),
@@ -24,4 +24,5 @@ urlpatterns = [
     ),
     path("schedules", views.add_schedule, name="add_schedule"),
     path("schedules/<int:pk>", views.update_schedule, name="schedule"),
+    path("schedules/<int:pk>/solve", views.solve_schedule, name="solve_schedule"),
 ]

@@ -5,7 +5,7 @@ from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
 from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
 from django.shortcuts import render, reverse, redirect
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, UpdateView, DetailView
 
 from rest_framework import generics
 from rest_framework import mixins
@@ -100,6 +100,13 @@ class ScheduleUpdateView(LoginRequiredMixin, UpdateView):
 
 
 update_schedule = ScheduleUpdateView.as_view()
+
+
+class ScheduleSolveView(LoginRequiredMixin, DetailView):
+    model = Schedule
+
+
+solve_schedule = ScheduleSolveView.as_view()
 
 
 class LoginForm(AuthenticationForm):

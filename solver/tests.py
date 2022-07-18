@@ -320,6 +320,13 @@ class ViewTests(TestCase, AssertionsMixin):
             to=url,
         )
 
+    def test_get_schedule_solver(self):
+        s = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+        url = reverse("solve_schedule", args=[s.pk])
+        self.assert_get_200(url)
+
 
 class APITests(TestCase):
     @classmethod
