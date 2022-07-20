@@ -16,6 +16,5 @@ class DayPreferenceSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "start",
-            "available",
             "url",
         ]

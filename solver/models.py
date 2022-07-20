@@ -17,7 +17,8 @@ class UserPreferences(models.Model):
         return [
             d.start
             for d in self.day_preferences.filter(
-                start__gte=start, start__lte=end, available=True
+                start__gte=start,
+                start__lte=end,
             )
         ]
 
@@ -31,8 +32,6 @@ class DayPreference(models.Model):
     )
 
     start = models.DateField()
-
-    available = models.BooleanField(default=True)
 
     def get_absolute_url(self):
         return reverse("day_preference", args=[self.id])
@@ -68,7 +67,6 @@ class Schedule(models.Model):
             },
         )
         return [{"start": d, "title": u} for d, u in s]
-
 
     def get_absolute_url(self):
         return reverse("schedule", args=[self.pk])

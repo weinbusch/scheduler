@@ -29,13 +29,6 @@ class ModelTests(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user(username="foo", password="1234")
 
-    def test_day_preference_available(self):
-        p = DayPreference.objects.create(
-            user_preferences=self.user.user_preferences,
-            start=datetime.date.today(),
-        )
-        self.assertTrue(p.available)
-
     def test_day_preferences_unique_date(self):
         p = self.user.user_preferences
         s = datetime.date(2022, 7, 11)

@@ -156,22 +156,18 @@ class APITests(TestCase):
                 DayPreference(
                     user_preferences=u1.user_preferences,
                     start=datetime.date(2022, 7, 6),
-                    available=True,
                 ),
                 DayPreference(
                     user_preferences=u1.user_preferences,
                     start=datetime.date(2022, 7, 7),
-                    available=False,
                 ),
                 DayPreference(
                     user_preferences=u2.user_preferences,
                     start=datetime.date(2022, 7, 8),
-                    available=True,
                 ),
                 DayPreference(
                     user_preferences=u3.user_preferences,
                     start=datetime.date(2022, 7, 9),
-                    available=True,
                 ),
             ]
         )
@@ -197,21 +193,18 @@ class APITests(TestCase):
                     "id": 1,
                     "username": "foo",
                     "start": "2022-07-06",
-                    "available": True,
                     "url": reverse("day_preference", args=[1]),
                 },
                 {
                     "id": 2,
                     "username": "foo",
                     "start": "2022-07-07",
-                    "available": False,
                     "url": reverse("day_preference", args=[2]),
                 },
                 {
                     "id": 3,
                     "username": "bar",
                     "start": "2022-07-08",
-                    "available": True,
                     "url": reverse("day_preference", args=[3]),
                 },
             ],
@@ -228,14 +221,12 @@ class APITests(TestCase):
                     "id": 1,
                     "username": "foo",
                     "start": "2022-07-06",
-                    "available": True,
                     "url": reverse("day_preference", args=[1]),
                 },
                 {
                     "id": 2,
                     "username": "foo",
                     "start": "2022-07-07",
-                    "available": False,
                     "url": reverse("day_preference", args=[2]),
                 },
             ],
@@ -260,10 +251,10 @@ class APITests(TestCase):
 
     def test_update_day_preference(self):
         url = reverse("day_preference", args=[1])
-        data = {"id": 1, "start": "2022-07-06", "available": False}
+        data = {"id": 1, "start": "2022-07-06"}
         r = self.client.patch(url, data=data, content_type="application/json")
         self.assertEqual(r.status_code, 200)
-        self.assertFalse(DayPreference.objects.get(id=1).available)
+        self.fail("Remove update DayPreference view")
 
     def test_delete_day_preference(self):
         url = reverse("day_preference", args=[1])
