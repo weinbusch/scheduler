@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from solver.models import DayPreference, Schedule
+from solver.serializers import DayPreferenceSerializer
 
 from .utils import fast_password_hashing
 
@@ -142,30 +143,20 @@ class ViewTests(TestCase, AssertionsMixin):
         self.assert_get_200(url)
 
 
+@fast_password_hashing
 class APITests(TestCase):
     @classmethod
     def setUpTestData(cls):
         u1 = User.objects.create_user(username="foo", password="bar")
         u2 = User.objects.create_user(username="bar", password="bar")
-        u3 = User.objects.create_user(username="baz", password="baz")
+        User.objects.create_user(username="baz", password="baz")
         DayPreference.objects.bulk_create(
             [
                 DayPreference(
-                    user_preferences=u1.user_preferences,
-                    start=datetime.date(2022, 7, 6),
-                ),
-                DayPreference(
-                    user_preferences=u1.user_preferences,
-                    start=datetime.date(2022, 7, 7),
-                ),
-                DayPreference(
-                    user_preferences=u2.user_preferences,
-                    start=datetime.date(2022, 7, 8),
-                ),
-                DayPreference(
-                    user_preferences=u3.user_preferences,
-                    start=datetime.date(2022, 7, 9),
-                ),
+                    user_preferences_id=pk,
+                    start=datetime.date(2022, 7, day),
+                )
+                for pk, day in zip([1, 1, 2, 3], [6, 7, 8, 9])
             ]
         )
         s = Schedule.objects.create(
@@ -183,68 +174,47 @@ class APITests(TestCase):
         url = reverse("schedule_day_preferences", args=[self.schedule.pk])
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
-        self.assertListEqual(
-            json.loads(r.content),
-            [
-                {
-                    "id": 1,
-                    "username": "foo",
-                    "start": "2022-07-06",
-                    "url": reverse("day_preference", args=[1]),
-                },
-                {
-                    "id": 2,
-                    "username": "foo",
-                    "start": "2022-07-07",
-                    "url": reverse("day_preference", args=[2]),
-                },
-                {
-                    "id": 3,
-                    "username": "bar",
-                    "start": "2022-07-08",
-                    "url": reverse("day_preference", args=[3]),
-                },
-            ],
+        expected = DayPreferenceSerializer(
+            DayPreference.objects.filter(
+                user_preferences__user__in=self.schedule.users.all()
+            ),
+            many=True,
         )
+        self.assertListEqual(json.loads(r.content), expected.data)
 
-    def test_get_user_day_preferences(self):
+    def test_method_not_allowed_schedule_day_preferences(self):
+        url = reverse("schedule_day_preferences", args=[self.schedule.pk])
+        for method in ["delete", "put", "patch", "post"]:
+            with self.subTest(method=method):
+                client = getattr(self.client, method)
+                self.assertEqual(client(url).status_code, 405)
+
+    def test_get_day_preferences_for_user(self):
         url = reverse("user_day_preferences")
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
-        self.assertListEqual(
-            json.loads(r.content),
-            [
-                {
-                    "id": 1,
-                    "username": "foo",
-                    "start": "2022-07-06",
-                    "url": reverse("day_preference", args=[1]),
-                },
-                {
-                    "id": 2,
-                    "username": "foo",
-                    "start": "2022-07-07",
-                    "url": reverse("day_preference", args=[2]),
-                },
-            ],
+        expected = DayPreferenceSerializer(
+            DayPreference.objects.filter(user_preferences__user=self.user),
+            many=True,
         )
+        self.assertListEqual(json.loads(r.content), expected.data)
 
-    def test_post_to_day_preferences(self):
-        url = reverse("user_day_preferences")
-        data = {"start": "2022-07-08", "available": True}
-        r = self.client.post(url, data=data)
-        self.assertEqual(r.status_code, 201)
-        self.assertEqual(
-            DayPreference.objects.last().start,
-            datetime.date(2022, 7, 8),
-        )
-
-    def test_method_not_allowed_day_preference_list(self):
+    def test_method_not_allowed_user_day_preferences(self):
         url = reverse("user_day_preferences")
         for method in ["delete", "put", "patch"]:
             with self.subTest(method=method):
                 client = getattr(self.client, method)
                 self.assertEqual(client(url).status_code, 405)
+
+    def test_create_new_user_day_preference(self):
+        url = reverse("user_day_preferences")
+        data = {"start": "2022-07-08", "available": True}
+        r = self.client.post(url, data=data)
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(
+            DayPreference.objects.filter(user_preferences__user=self.user).last().start,
+            datetime.date(2022, 7, 8),
+        )
 
     def test_delete_day_preference(self):
         url = reverse("day_preference", args=[1])
