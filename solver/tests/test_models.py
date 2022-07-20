@@ -16,40 +16,43 @@ fast_password_hashing = override_settings(
 )
 
 
+class TestDayPreference(TestCase):
+    def test_day_preference_date_user_unique(self):
+        s = datetime.date(2022, 7, 11)
+        DayPreference.objects.create(user_preferences_id=99, start=s)
+        with self.assertRaises(IntegrityError):
+            DayPreference.objects.create(user_preferences_id=99, start=s)
+
+
 @fast_password_hashing
 class TestUserPreferences(TestCase):
     def test_user_creation_also_creates_user_preferences(self):
         u = User.objects.create_user(username="bar", password="1234")
         self.assertIsNotNone(u.user_preferences)
 
-
-@fast_password_hashing
-class ModelTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = User.objects.create_user(username="foo", password="1234")
-
-    def test_day_preferences_unique_date(self):
-        p = self.user.user_preferences
-        s = datetime.date(2022, 7, 11)
-        DayPreference.objects.create(user_preferences=p, start=s)
-        with self.assertRaises(IntegrityError):
-            DayPreference.objects.create(user_preferences=p, start=s)
-
     def test_available_dates(self):
-        p = self.user.user_preferences
-        d = datetime.date(2022, 7, 3)
-        days = [d + datetime.timedelta(days=delta) for delta in [0, 2, 4]]
+        u = User.objects.create_user(username="bar", password="1234")
+        p = u.user_preferences
         DayPreference.objects.bulk_create(
-            [DayPreference(user_preferences=p, start=day) for day in days]
+            [
+                DayPreference(
+                    user_preferences=p,
+                    start=datetime.date(2022, 7, day),
+                )
+                for day in [3, 5, 7]
+            ]
         )
         self.assertListEqual(
             p.get_available_dates(
-                start=datetime.date(2022, 7, 4), end=datetime.date(2022, 7, 6)
+                start=datetime.date(2022, 7, 4),
+                end=datetime.date(2022, 7, 6),
             ),
             [datetime.date(2022, 7, 5)],
         )
 
+
+@fast_password_hashing
+class TestSchedule(TestCase):
     def test_schedule_start_end_date(self):
         Schedule.objects.create(
             start=datetime.date(2022, 7, 12),
@@ -57,7 +60,7 @@ class ModelTests(TestCase):
         )
 
     def test_schedule_users_many_to_many(self):
-        u1 = self.user
+        u1 = User.objects.create_user(username="foo", password="1234")
         u2 = User.objects.create_user(username="bar", password="1234")
         Schedule.objects.create(
             start=datetime.date(2022, 7, 12),
@@ -80,28 +83,4 @@ class ModelTests(TestCase):
         )
 
     def test_schedule_solve(self):
-        u1 = User.objects.create(username="bar", password="1234")
-        u2 = User.objects.create(username="baz", password="1234")
-        user_sequence = [u1, u1, u2, u2, u1, u2]
-        s = Schedule.objects.create(
-            start=datetime.date(2022, 7, 11),  # a monday
-            end=datetime.date(2022, 7, 18),  # the next monday
-        )
-        days = s.days()
-        s.users.set([u1, u2])
-        DayPreference.objects.bulk_create(
-            [
-                DayPreference(user_preferences=u.user_preferences, start=s)
-                for u, s in zip(user_sequence, days)
-            ]
-        )
-        self.assertListEqual(
-            [
-                {"start": d, "title": u.username}
-                for d, u in zip(
-                    days,
-                    user_sequence,
-                )
-            ],
-            s.solve(),
-        )
+        self.fail("implement test")

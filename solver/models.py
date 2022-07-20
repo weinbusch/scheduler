@@ -56,17 +56,7 @@ class Schedule(models.Model):
         return [d for d in date_range(self.start, self.end) if d.weekday() < 5]
 
     def solve(self):
-        s = get_schedule(
-            self.days(),
-            [u.username for u in self.users.all()],
-            {
-                u.username: u.user_preferences.get_available_dates(
-                    start=self.start, end=self.end
-                )
-                for u in self.users.all()
-            },
-        )
-        return [{"start": d, "title": u} for d, u in s]
+        raise NotImplementedError
 
     def get_absolute_url(self):
         return reverse("schedule", args=[self.pk])
