@@ -324,7 +324,7 @@ class ViewTests(TestCase, AssertionsMixin):
         s = Schedule.objects.create(
             start=datetime.date.today(), end=datetime.date.today()
         )
-        url = reverse("solve_schedule", args=[s.pk])
+        url = reverse("solution", args=[s.pk])
         self.assert_get_200(url)
 
 

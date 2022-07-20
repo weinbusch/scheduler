@@ -104,6 +104,7 @@ update_schedule = ScheduleUpdateView.as_view()
 
 class ScheduleSolveView(LoginRequiredMixin, DetailView):
     model = Schedule
+    template_name = "solver/solution.html"
 
 
 solve_schedule = ScheduleSolveView.as_view()
