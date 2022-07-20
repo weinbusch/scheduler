@@ -53,11 +53,7 @@ class ScheduleDayPreferencesListView(generics.ListAPIView):
 schedule_day_preferences = ScheduleDayPreferencesListView.as_view()
 
 
-class DayPreferenceUpdateDeleteAPIView(
-    mixins.DestroyModelMixin,
-    mixins.UpdateModelMixin,
-    generics.GenericAPIView,
-):
+class DayPreferenceDeleteAPIView(generics.DestroyAPIView):
     serializer_class = DayPreferenceSerializer
     queryset = DayPreference.objects.all()
     permission_classes = [
@@ -65,14 +61,8 @@ class DayPreferenceUpdateDeleteAPIView(
         DayPreferenceChangePermission,
     ]
 
-    def patch(self, *args, **kwargs):
-        return self.partial_update(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        return self.destroy(*args, **kwargs)
-
-
-day_preference = DayPreferenceUpdateDeleteAPIView.as_view()
+day_preference = DayPreferenceDeleteAPIView.as_view()
 
 
 class ScheduleForm(ModelForm):

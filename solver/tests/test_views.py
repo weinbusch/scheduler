@@ -249,13 +249,6 @@ class APITests(TestCase):
                 client = getattr(self.client, method)
                 self.assertEqual(client(url).status_code, 405)
 
-    def test_update_day_preference(self):
-        url = reverse("day_preference", args=[1])
-        data = {"id": 1, "start": "2022-07-06"}
-        r = self.client.patch(url, data=data, content_type="application/json")
-        self.assertEqual(r.status_code, 200)
-        self.fail("Remove update DayPreference view")
-
     def test_delete_day_preference(self):
         url = reverse("day_preference", args=[1])
         r = self.client.delete(url)
@@ -263,33 +256,15 @@ class APITests(TestCase):
         with self.assertRaises(DayPreference.DoesNotExist):
             DayPreference.objects.get(id=1)
 
+    def test_method_not_allowed_day_preference(self):
+        url = reverse("day_preference", args=[1])
+        for method in ["get", "post", "put", "patch"]:
+            with self.subTest(method=method):
+                client = getattr(self.client, method)
+                self.assertEqual(client(url).status_code, 405)
+
     def test_day_preference_not_authorized(self):
         day = DayPreference.objects.get(user_preferences__user__username="bar")
         url = reverse("day_preference", args=[day.pk])
         r = self.client.delete(url)
         self.assertEqual(r.status_code, 403)
-
-    def test_day_reference_read_only_id(self):
-        data = {
-            "id": 99,
-            "start": datetime.date(1900, 7, 6),
-            "available": True,
-        }
-        url = reverse("day_preference", args=[1])
-        self.client.patch(url, data=data, content_type="application/json")
-        self.assertEqual(DayPreference.objects.filter(id=99).count(), 0)
-        self.assertEqual(
-            DayPreference.objects.get(pk=1).start, datetime.date(1900, 7, 6)
-        )
-
-    def test_day_preference_404(self):
-        url = reverse("day_preference", args=[99])
-        r = self.client.patch(
-            url,
-            data={
-                "id": 99,
-                "start": datetime.date(1900, 1, 1),
-                "available": True,
-            },
-        )
-        self.assertEqual(r.status_code, 404)
