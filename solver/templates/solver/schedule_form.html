@@ -2,8 +2,15 @@
 
 {% block main %}
 <div class="container mx-auto max-w-4xl px-4">
-  <h1 class="font-semibold text-xl mt-8">
-    {% if object %}Stundenplan {{ object.pk }}{% else %}Neuer Stundenplan{% endif %}
+  <h1 class="font-semibold text-xl mt-8 flex flex-row space-x-2">
+    <a class="text-blue-500 hover:underline cursor-pointer"
+       href="{% url 'index' %}">
+      Übersicht
+    </a>
+    <span>&rsaquo;</span>
+    <span class="text-blue-500">
+      {% if object %}Stundenplan {{ object.pk }}{% else %}Neuer Stundenplan{% endif %}
+    </span>
   </h1>
   <form action="" method="POST">
     {% csrf_token %}
