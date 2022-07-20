@@ -2,10 +2,12 @@ import json
 import datetime
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from solver.models import DayPreference, Schedule
+
+from .utils import fast_password_hashing
 
 User = get_user_model()
 
@@ -34,12 +36,7 @@ class AssertionsMixin:
         self.assert_get_200(reverse("register"))
 
 
-# https://docs.djangoproject.com/en/4.0/topics/testing/overview/#password-hashing
-@override_settings(
-    PASSWORD_HASHERS=[
-        "django.contrib.auth.hashers.MD5PasswordHasher",
-    ]
-)
+@fast_password_hashing
 class AuthTest(TestCase, AssertionsMixin):
     def test_post_to_register_view(self):
         data = {

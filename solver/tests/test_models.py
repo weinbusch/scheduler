@@ -1,19 +1,14 @@
 import datetime
 
 from django.db import IntegrityError
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.contrib.auth import get_user_model
 
 from solver.models import DayPreference, Schedule
 
-User = get_user_model()
+from .utils import fast_password_hashing
 
-# https://docs.djangoproject.com/en/4.0/topics/testing/overview/#password-hashing
-fast_password_hashing = override_settings(
-    PASSWORD_HASHERS=[
-        "django.contrib.auth.hashers.MD5PasswordHasher",
-    ]
-)
+User = get_user_model()
 
 
 class TestDayPreference(TestCase):
