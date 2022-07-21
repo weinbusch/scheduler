@@ -5,7 +5,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from solver.models import DayPreference, Schedule
+from solver.models import DayPreference, Schedule, Assignment
 
 from .utils import fast_password_hashing
 
@@ -112,3 +112,15 @@ class TestSchedule(TestCase):
                     for u in [u1, u2]
                 },
             )
+
+
+@fast_password_hashing
+class TestAssignment(TestCase):
+    def test_create_assignment(self):
+        u = User.objects.create_user(username="foo", password="1234")
+        s = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+        a = Assignment.objects.create(schedule=s, user=u, date=datetime.date.today())
+        self.assertEqual(u.assignments.first(), a)
+        self.assertEqual(s.assignments.first(), a)

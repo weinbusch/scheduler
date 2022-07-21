@@ -67,3 +67,15 @@ class Schedule(models.Model):
 
     def get_absolute_url(self):
         return reverse("schedule", args=[self.pk])
+
+
+class Assignment(models.Model):
+    schedule = models.ForeignKey(
+        Schedule, on_delete=models.CASCADE, related_name="assignments"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="assignments",
+    )
+    date = models.DateField()
