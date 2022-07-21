@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 
 from django.db import IntegrityError
 from django.test import TestCase
@@ -77,5 +78,8 @@ class TestSchedule(TestCase):
             [datetime.date(2022, 7, x) for x in [11, 12, 13, 14, 15, 18]],
         )
 
-    def test_schedule_solve(self):
-        self.fail("implement test")
+    def test_schedule_solve_calls_solver(self):
+        s = Schedule(start=datetime.date.today(), end=datetime.date.today())
+        with patch("solver.models.get_schedule") as solver_function:
+            s.solve()
+            solver_function.assert_called_once()

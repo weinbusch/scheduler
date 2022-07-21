@@ -56,7 +56,7 @@ class Schedule(models.Model):
         return [d for d in date_range(self.start, self.end) if d.weekday() < 5]
 
     def solve(self):
-        raise NotImplementedError
+        get_schedule()
 
     def get_absolute_url(self):
         return reverse("schedule", args=[self.pk])
