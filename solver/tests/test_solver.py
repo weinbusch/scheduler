@@ -17,7 +17,7 @@ class SchedulerTest(unittest.TestCase):
         ]
         families = ["foo", "bar"]
         available_dates = {f: days for f in families}
-        schedule = get_schedule(days, families, available_dates)
+        schedule = get_schedule(days, available_dates)
         self.assertTrue(all([f in families for _, f in schedule]))
 
     def test_equal_number_of_assignements(self):
@@ -29,7 +29,7 @@ class SchedulerTest(unittest.TestCase):
             for x in range(len(families) * n)
         ]
         available_dates = {f: days for f in families}
-        schedule = get_schedule(days, families, available_dates)
+        schedule = get_schedule(days, available_dates)
         counts = collections.Counter([f for _, f in schedule])
         self.assertTrue(all([counts[f] == n for f in families]))
 
@@ -38,7 +38,7 @@ class SchedulerTest(unittest.TestCase):
         days = [datetime.date.today() + datetime.timedelta(days=x) for x in range(3)]
         families = ["foo", "bar"]
         available_dates = {f: days for f in families}
-        schedule = get_schedule(days, families, available_dates)
+        schedule = get_schedule(days, available_dates)
         counts = collections.Counter([f for _, f in schedule])
         self.assertTrue(
             (counts["foo"] == 2 and counts["bar"] == 1)
@@ -58,7 +58,7 @@ class SchedulerTest(unittest.TestCase):
                     datetime.date.today() + datetime.timedelta(days=x) for x in range(n)
                 ]
                 available_dates = {f: days for f in families}
-                schedule = get_schedule(days, families, available_dates)
+                schedule = get_schedule(days, available_dates)
                 counts = collections.Counter([f for _, f in schedule])
                 self.assertTrue(
                     all([counts[f] >= math.floor(n / len(families)) for f in families])
@@ -72,9 +72,8 @@ class SchedulerTest(unittest.TestCase):
             datetime.date.today() + datetime.timedelta(days=2),
             datetime.date.today() + datetime.timedelta(days=3),
         ]
-        families = ["foo", "bar"]
         available_dates = {"foo": [days[0], days[3]], "bar": days}
-        schedule = get_schedule(days, families, available_dates)
+        schedule = get_schedule(days, available_dates)
         self.assertListEqual([f for _, f in schedule], ["foo", "bar", "bar", "foo"])
 
     def test_infeasible_constraints(self):
@@ -85,7 +84,6 @@ class SchedulerTest(unittest.TestCase):
             datetime.date.today() + datetime.timedelta(days=2),
             datetime.date.today() + datetime.timedelta(days=3),
         ]
-        families = ["foo", "bar"]
         available_dates = {"foo": [days[0]], "bar": days}
         with self.assertRaises(Exception):
-            get_schedule(days, families, available_dates)
+            get_schedule(days, available_dates)

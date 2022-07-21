@@ -107,7 +107,6 @@ class TestSchedule(TestCase):
             s.solve()
             solver_function.assert_called_with(
                 [datetime.date(2022, 7, day) for day in [21, 22]],
-                [u1, u2],
                 {
                     u: u.user_preferences.get_available_dates(s.start, s.end)
                     for u in [u1, u2]

@@ -62,7 +62,6 @@ class Schedule(models.Model):
         }
         get_schedule(
             self.days(),
-            list(available_dates.keys()),
             available_dates,
         )
 

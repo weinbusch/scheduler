@@ -2,15 +2,13 @@ import math
 import scipy
 
 
-def get_schedule(days, families, available_dates):
-    """get_schedule(days, families, available_dates)
+def get_schedule(days, available_dates):
+    """get_schedule(days, available_dates)
 
     Parameters:
 
         days: list of datetime.date objects indicating all dates to
               which a family has to be assigned to
-
-        families: list of family names (strings)
 
         available_dates: dictionary of family name/date list pairs
                          indicating on which dates each family is
@@ -39,6 +37,7 @@ def get_schedule(days, families, available_dates):
        available dates.
 
     """
+    families = list(available_dates.keys())
     constraints = make_constraints(days, families, available_dates)
     result = run_model(len(days) * len(families), constraints)
     return make_schedule(result, days, families)
