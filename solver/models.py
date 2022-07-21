@@ -56,7 +56,15 @@ class Schedule(models.Model):
         return [d for d in date_range(self.start, self.end) if d.weekday() < 5]
 
     def solve(self):
-        get_schedule()
+        available_dates = {
+            u: u.user_preferences.get_available_dates(self.start, self.end)
+            for u in self.users.all()
+        }
+        get_schedule(
+            self.days(),
+            list(available_dates.keys()),
+            available_dates,
+        )
 
     def get_absolute_url(self):
         return reverse("schedule", args=[self.pk])
