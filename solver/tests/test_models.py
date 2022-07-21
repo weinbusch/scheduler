@@ -103,7 +103,7 @@ class TestSchedule(TestCase):
             ]
         )
         s.users.set([u1, u2])
-        with patch("solver.models.get_schedule") as solver_function:
+        with patch("solver.models.get_schedule", autospec=True) as solver_function:
             s.solve()
             solver_function.assert_called_with(
                 [datetime.date(2022, 7, day) for day in [21, 22]],
