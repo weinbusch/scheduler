@@ -33,12 +33,12 @@ class AssertionsMixin:
         else:
             self.assertEqual(r.status_code, 302)
 
-    def test_register_view(self):
-        self.assert_get_200(reverse("register"))
-
 
 @fast_password_hashing
 class AuthTest(TestCase, AssertionsMixin):
+    def test_get_register_view(self):
+        self.assert_get_200(reverse("register"))
+
     def test_post_to_register_view(self):
         data = {
             "username": "foo",
@@ -63,11 +63,6 @@ class AuthTest(TestCase, AssertionsMixin):
             "password2": "A12iofa",
         }
         self.assert_post_200(reverse("register"), data)
-
-    def test_index_view_redirects_to_login(self):
-        self.assert_get_302(
-            reverse("index"), to=reverse("login") + "?next=" + reverse("index")
-        )
 
     def test_get_login_view(self):
         self.assert_get_200(reverse("login"))
@@ -100,11 +95,24 @@ class ViewTests(TestCase, AssertionsMixin):
     def setUp(self):
         self.client.force_login(self.user)
 
+    def test_unauthorized_index_view_redirects_to_login(self):
+        self.client.logout()
+        self.assert_get_302(
+            reverse("index"), to=reverse("login") + "?next=" + reverse("index")
+        )
+
     def test_get_index(self):
         self.assert_get_200(reverse("login"))
 
     def test_get_add_schedule(self):
         self.assert_get_200(reverse("add_schedule"))
+
+    def test_unauthorized_add_schedule_redirects_to_login(self):
+        self.client.logout()
+        self.assert_get_302(
+            reverse("add_schedule"),
+            to=reverse("login") + "?next=" + reverse("add_schedule"),
+        )
 
     def test_post_to_add_schedule(self):
         data = {
@@ -119,6 +127,14 @@ class ViewTests(TestCase, AssertionsMixin):
             start=datetime.date.today(), end=datetime.date.today()
         )
         self.assert_get_200(reverse("schedule", args=[s.pk]))
+
+    def test_unauthorized_schedule_detail_redirects_to_login(self):
+        s = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+        url = reverse("schedule", args=[s.pk])
+        self.client.logout()
+        self.assert_get_302(url, to=reverse("login") + "?next=" + url)
 
     def test_post_to_schedule_detail(self):
         s = Schedule.objects.create(
@@ -141,6 +157,14 @@ class ViewTests(TestCase, AssertionsMixin):
         )
         url = reverse("solution", args=[s.pk])
         self.assert_get_200(url)
+
+    def test_unauthorized_schedule_solver(self):
+        s = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+        url = reverse("solution", args=[s.pk])
+        self.client.logout()
+        self.assert_get_302(url, to=reverse("login") + "?next=" + url)
 
 
 @fast_password_hashing
