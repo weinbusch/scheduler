@@ -60,9 +60,13 @@ class Schedule(models.Model):
             u: u.user_preferences.get_available_dates(self.start, self.end)
             for u in self.users.all()
         }
-        get_schedule(
+        solution = get_schedule(
             self.days(),
             available_dates,
+        )
+        self.assignments.all().delete()
+        return Assignment.objects.bulk_create(
+            [Assignment(schedule=self, user=u, date=d) for u, d in solution]
         )
 
     def get_absolute_url(self):
