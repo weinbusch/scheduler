@@ -113,6 +113,28 @@ class TestSchedule(TestCase):
                 },
             )
 
+    def test_schedule_solve_creates_assignments(self):
+        s = Schedule.objects.create(
+            start=datetime.date(2022, 7, 21),
+            end=datetime.date(2022, 7, 22),
+        )
+        u1 = User.objects.create_user(username="foo", password="1234")
+        u2 = User.objects.create_user(username="bar", password="1234")
+        solution = [
+            (u1, datetime.date(2022, 7, 21)),
+            (u2, datetime.date(2022, 7, 22)),
+        ]
+        with patch(
+            "solver.models.get_schedule",
+            autospec=True,
+            return_value=solution,
+        ):
+            s.solve()
+            a1 = Assignment.objects.get(user=u1)
+            self.assertEqual(a1.date, datetime.date(2022, 7, 21))
+            a2 = Assignment.objects.get(user=u2)
+            self.assertEqual(a2.date, datetime.date(2022, 7, 22))
+
 
 @fast_password_hashing
 class TestAssignment(TestCase):
