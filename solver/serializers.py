@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from solver.models import DayPreference
+from solver.models import DayPreference, Assignment
 
 
 class DayPreferenceSerializer(serializers.ModelSerializer):
@@ -18,3 +18,12 @@ class DayPreferenceSerializer(serializers.ModelSerializer):
             "start",
             "url",
         ]
+
+
+class AssignmentSerializer(serializers.ModelSerializer):
+
+    username = serializers.CharField(source="user.username")
+
+    class Meta:
+        model = Assignment
+        fields = ["id", "username", "date"]
