@@ -4,15 +4,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
 from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
-from django.shortcuts import render, reverse, redirect
+from django.shortcuts import render, reverse, redirect, get_object_or_404
 from django.views.generic import CreateView, UpdateView, DetailView
 
 from rest_framework import generics
-from rest_framework import mixins
 from rest_framework import permissions
 
-from solver.models import UserPreferences, DayPreference, Schedule
-from solver.serializers import DayPreferenceSerializer
+from solver.models import UserPreferences, DayPreference, Schedule, Assignment
+from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 from solver.permissions import DayPreferenceChangePermission
 
 
@@ -63,6 +62,19 @@ class DayPreferenceDeleteAPIView(generics.DestroyAPIView):
 
 
 day_preference = DayPreferenceDeleteAPIView.as_view()
+
+
+class AssignmentsAPIView(generics.ListAPIView):
+    serializer_class = AssignmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        pk = self.kwargs["pk"]
+        schedule = get_object_or_404(Schedule, pk=pk)
+        return Assignment.objects.filter(schedule=schedule)
+
+
+assignments = AssignmentsAPIView.as_view()
 
 
 class ScheduleForm(ModelForm):

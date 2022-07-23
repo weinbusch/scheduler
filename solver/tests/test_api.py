@@ -5,8 +5,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from solver.models import DayPreference, Schedule
-from solver.serializers import DayPreferenceSerializer
+from solver.models import DayPreference, Schedule, Assignment
+from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 
 from .utils import fast_password_hashing
 
@@ -104,4 +104,43 @@ class APITests(TestCase):
         day = DayPreference.objects.get(user_preferences__user__username="bar")
         url = reverse("day_preference", args=[day.pk])
         r = self.client.delete(url)
+        self.assertEqual(r.status_code, 403)
+
+
+@fast_password_hashing
+class AssignmentTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="foo", password="1234")
+        cls.schedule = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+        Assignment.objects.create(
+            schedule=cls.schedule,
+            user=cls.user,
+            date=datetime.date.today(),
+        )
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_get_assignment_list(self):
+        s = self.schedule
+        url = reverse("assignments", args=[s.pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        expected = AssignmentSerializer(
+            Assignment.objects.filter(schedule=s), many=True
+        )
+        self.assertListEqual(json.loads(r.content), expected.data)
+
+    def test_get_assignments_404(self):
+        url = reverse("assignments", args=[99])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 404)
+
+    def test_get_assignment_unauthorized(self):
+        self.client.logout()
+        url = reverse("assignments", args=[1])
+        r = self.client.get(url)
         self.assertEqual(r.status_code, 403)
