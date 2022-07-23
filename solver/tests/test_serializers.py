@@ -36,12 +36,12 @@ class SerializerTests(TestCase):
         d = datetime.date(2022, 7, 20)
         u = User.objects.create_user(username="foo", password="1234")
         s = Schedule.objects.create(start=d, end=d)
-        a = Assignment.objects.create(schedule=s, user=u, date=d)
+        a = Assignment.objects.create(schedule=s, user=u, start=d)
         self.assertDictEqual(
             AssignmentSerializer(a).data,
             {
                 "id": a.id,
                 "username": u.username,
-                "date": "2022-07-20",
+                "start": "2022-07-20",
             },
         )

@@ -26,4 +26,4 @@ class AssignmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assignment
-        fields = ["id", "username", "date"]
+        fields = ["id", "username", "start"]

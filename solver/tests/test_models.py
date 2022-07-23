@@ -131,9 +131,9 @@ class TestSchedule(TestCase):
         ):
             s.solve()
             a1 = Assignment.objects.get(user=u1)
-            self.assertEqual(a1.date, datetime.date(2022, 7, 21))
+            self.assertEqual(a1.start, datetime.date(2022, 7, 21))
             a2 = Assignment.objects.get(user=u2)
-            self.assertEqual(a2.date, datetime.date(2022, 7, 22))
+            self.assertEqual(a2.start, datetime.date(2022, 7, 22))
 
     def test_schedule_solve_deletes_old_assignments(self):
         s = Schedule.objects.create(
@@ -144,7 +144,7 @@ class TestSchedule(TestCase):
         Assignment.objects.create(
             schedule=s,
             user=u1,
-            date=datetime.date.today(),
+            start=datetime.date.today(),
         )
         u2 = User.objects.create_user(username="bar", password="1234")
         solution = [
@@ -168,7 +168,7 @@ class TestSchedule(TestCase):
         Assignment.objects.create(
             schedule=s1,
             user=u1,
-            date=datetime.date.today(),
+            start=datetime.date.today(),
         )
         s2 = Schedule.objects.create(
             start=datetime.date(2022, 7, 21),
@@ -194,6 +194,6 @@ class TestAssignment(TestCase):
         s = Schedule.objects.create(
             start=datetime.date.today(), end=datetime.date.today()
         )
-        a = Assignment.objects.create(schedule=s, user=u, date=datetime.date.today())
+        a = Assignment.objects.create(schedule=s, user=u, start=datetime.date.today())
         self.assertEqual(u.assignments.first(), a)
         self.assertEqual(s.assignments.first(), a)

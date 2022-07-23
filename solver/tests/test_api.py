@@ -118,7 +118,7 @@ class AssignmentTest(TestCase):
         Assignment.objects.create(
             schedule=cls.schedule,
             user=cls.user,
-            date=datetime.date.today(),
+            start=datetime.date.today(),
         )
 
     def setUp(self):
