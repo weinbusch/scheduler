@@ -31,10 +31,18 @@
 	  "month": "Monatsansicht",
       },
       eventSources: [
+	  {
+	      url: "{% url 'assignments' object.pk %}",
+	  }
       ],
       eventClick: function(info){
 	  info.jsEvent.preventDefault();
       },
+      eventDataTransform: function(data){
+	  data.title = data.username;
+	  return data;
+      },
+
   };
   const calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
   calendar.render();
