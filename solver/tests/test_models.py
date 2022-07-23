@@ -121,8 +121,8 @@ class TestSchedule(TestCase):
         u1 = User.objects.create_user(username="foo", password="1234")
         u2 = User.objects.create_user(username="bar", password="1234")
         solution = [
-            (u1, datetime.date(2022, 7, 21)),
-            (u2, datetime.date(2022, 7, 22)),
+            (datetime.date(2022, 7, 21), u1),
+            (datetime.date(2022, 7, 22), u2),
         ]
         with patch(
             "solver.models.get_schedule",
@@ -148,7 +148,7 @@ class TestSchedule(TestCase):
         )
         u2 = User.objects.create_user(username="bar", password="1234")
         solution = [
-            (u2, datetime.date(2022, 7, 21)),
+            (datetime.date(2022, 7, 21), u2),
         ]
         with patch(
             "solver.models.get_schedule",
@@ -175,7 +175,7 @@ class TestSchedule(TestCase):
             end=datetime.date(2022, 7, 22),
         )
         solution = [
-            (u1, datetime.date(2022, 7, 21)),
+            (datetime.date(2022, 7, 21), u1),
         ]
         with patch(
             "solver.models.get_schedule",

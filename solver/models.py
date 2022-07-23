@@ -66,7 +66,7 @@ class Schedule(models.Model):
         )
         self.assignments.all().delete()
         return Assignment.objects.bulk_create(
-            [Assignment(schedule=self, user=u, start=d) for u, d in solution]
+            [Assignment(schedule=self, user=u, start=d) for d, u in solution]
         )
 
     def get_absolute_url(self):
