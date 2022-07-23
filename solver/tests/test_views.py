@@ -85,6 +85,7 @@ class AuthTest(TestCase, AssertionsMixin):
         self.assert_get_302(reverse("logout"), reverse("login"))
 
 
+@fast_password_hashing
 class ViewTests(TestCase, AssertionsMixin):
     @classmethod
     def setUpTestData(cls):
