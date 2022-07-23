@@ -43,7 +43,7 @@ class ScheduleDayPreferencesListView(generics.ListAPIView):
 
     def get_queryset(self):
         pk = self.kwargs["pk"]
-        schedule = Schedule.objects.get(pk=pk)
+        schedule = get_object_or_404(Schedule, pk=pk)
         return DayPreference.objects.filter(
             user_preferences__user__in=schedule.users.all()
         )

@@ -52,6 +52,11 @@ class APITests(TestCase):
         )
         self.assertListEqual(json.loads(r.content), expected.data)
 
+    def test_get_day_preferences_for_schedule_404(self):
+        url = reverse("schedule_day_preferences", args=[99])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 404)
+
     def test_method_not_allowed_schedule_day_preferences(self):
         url = reverse("schedule_day_preferences", args=[self.schedule.pk])
         for method in ["delete", "put", "patch", "post"]:
