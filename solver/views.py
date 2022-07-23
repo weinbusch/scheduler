@@ -20,6 +20,9 @@ def index(request):
     return render(request, "solver/index.html")
 
 
+# API views
+
+
 class UserDayPreferencesListAPIView(generics.ListCreateAPIView):
     serializer_class = DayPreferenceSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -77,6 +80,9 @@ class AssignmentsAPIView(generics.ListAPIView):
 assignments = AssignmentsAPIView.as_view()
 
 
+# Schedule views
+
+
 class ScheduleForm(ModelForm):
     class Meta:
         model = Schedule
@@ -110,6 +116,9 @@ class ScheduleSolveView(LoginRequiredMixin, DetailView):
 
 
 solve_schedule = ScheduleSolveView.as_view()
+
+
+# Auth views
 
 
 class LoginForm(AuthenticationForm):
