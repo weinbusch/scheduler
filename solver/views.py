@@ -9,6 +9,8 @@ from django.views.generic import CreateView, UpdateView, DetailView
 
 from rest_framework import generics
 from rest_framework import permissions
+from rest_framework import status
+from rest_framework.response import Response
 
 from solver.models import UserPreferences, DayPreference, Schedule, Assignment
 from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
@@ -80,6 +82,22 @@ class AssignmentsAPIView(generics.ListAPIView):
 assignments = AssignmentsAPIView.as_view()
 
 
+class SolveScheduleAPIView(generics.GenericAPIView):
+    queryset = Schedule.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, *args, **kwargs):
+        schedule = self.get_object()
+        try:
+            schedule.solve()
+        except Exception:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+solve_schedule = SolveScheduleAPIView.as_view()
+
+
 # Schedule views
 
 
@@ -110,12 +128,12 @@ class ScheduleUpdateView(LoginRequiredMixin, UpdateView):
 update_schedule = ScheduleUpdateView.as_view()
 
 
-class ScheduleSolveView(LoginRequiredMixin, DetailView):
+class ScheduleSolutionView(LoginRequiredMixin, DetailView):
     model = Schedule
     template_name = "solver/solution.html"
 
 
-solve_schedule = ScheduleSolveView.as_view()
+schedule_solution = ScheduleSolutionView.as_view()
 
 
 # Auth views

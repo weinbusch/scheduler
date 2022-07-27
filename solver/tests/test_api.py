@@ -1,5 +1,6 @@
 import json
 import datetime
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -149,3 +150,47 @@ class AssignmentTest(TestCase):
         url = reverse("assignments", args=[1])
         r = self.client.get(url)
         self.assertEqual(r.status_code, 403)
+
+
+@fast_password_hashing
+class ScheduleTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="foo", password="1234")
+        cls.schedule = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_patch_calls_schedule_solve(self):
+        url = reverse("solve_schedule", args=[self.schedule.pk])
+        with patch.object(Schedule, "solve") as solve_function:
+            r = self.client.patch(url)
+            self.assertEqual(r.status_code, 204)
+            solve_function.assert_called_once()
+
+    def test_method_not_allowed(self):
+        url = reverse("solve_schedule", args=[self.schedule.pk])
+        for method in ["get", "delete", "put", "post"]:
+            with self.subTest(method=method):
+                client = getattr(self.client, method)
+                self.assertEqual(client(url).status_code, 405)
+
+    def test_schedule_not_found(self):
+        url = reverse("solve_schedule", args=[99])
+        r = self.client.patch(url)
+        self.assertEqual(r.status_code, 404)
+
+    def test_not_authorized(self):
+        self.client.logout()
+        url = reverse("solve_schedule", args=[self.schedule.pk])
+        r = self.client.patch(url)
+        self.assertEqual(r.status_code, 403)
+
+    def test_solve_raises_exception(self):
+        url = reverse("solve_schedule", args=[self.schedule.pk])
+        with patch.object(Schedule, "solve", side_effect=Exception):
+            r = self.client.patch(url)
+            self.assertEqual(r.status_code, 500)
