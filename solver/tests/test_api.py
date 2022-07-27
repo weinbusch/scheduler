@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from solver.models import DayPreference, Schedule, Assignment
+from solver.models import DayPreference, Schedule, Assignment, ScheduleException
 from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 
 from .utils import fast_password_hashing
@@ -191,6 +191,21 @@ class ScheduleTest(TestCase):
 
     def test_solve_raises_exception(self):
         url = reverse("solve_schedule", args=[self.schedule.pk])
-        with patch.object(Schedule, "solve", side_effect=Exception):
+        with patch.object(
+            Schedule,
+            "solve",
+            side_effect=ScheduleException("foo"),
+        ):
             r = self.client.patch(url)
             self.assertEqual(r.status_code, 500)
+            self.assertDictEqual(json.loads(r.content), {"error": "foo"})
+
+    def test_unspecific_exception(self):
+        url = reverse("solve_schedule", args=[self.schedule.pk])
+        with patch.object(
+            Schedule,
+            "solve",
+            side_effect=Exception,
+        ):
+            with self.assertRaises(Exception):
+                self.client.patch(url)

@@ -12,7 +12,13 @@ from rest_framework import permissions
 from rest_framework import status
 from rest_framework.response import Response
 
-from solver.models import UserPreferences, DayPreference, Schedule, Assignment
+from solver.models import (
+    UserPreferences,
+    DayPreference,
+    Schedule,
+    Assignment,
+    ScheduleException,
+)
 from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 from solver.permissions import DayPreferenceChangePermission
 
@@ -90,8 +96,11 @@ class SolveScheduleAPIView(generics.GenericAPIView):
         schedule = self.get_object()
         try:
             schedule.solve()
-        except Exception:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except ScheduleException as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

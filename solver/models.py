@@ -45,6 +45,10 @@ class DayPreference(models.Model):
         ]
 
 
+class ScheduleException(Exception):
+    pass
+
+
 class Schedule(models.Model):
     start = models.DateField()
     end = models.DateField()
@@ -60,10 +64,13 @@ class Schedule(models.Model):
             u: u.user_preferences.get_available_dates(self.start, self.end)
             for u in self.users.all()
         }
-        solution = get_schedule(
-            self.days(),
-            available_dates,
-        )
+        try:
+            solution = get_schedule(
+                self.days(),
+                available_dates,
+            )
+        except Exception as e:
+            raise ScheduleException(e)
         self.assignments.all().delete()
         return Assignment.objects.bulk_create(
             [Assignment(schedule=self, user=u, start=d) for d, u in solution]
