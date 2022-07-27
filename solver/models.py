@@ -72,6 +72,10 @@ class Schedule(models.Model):
     def get_absolute_url(self):
         return reverse("schedule", args=[self.pk])
 
+    @property
+    def has_assignments(self):
+        return self.assignments.count() > 0
+
 
 class Assignment(models.Model):
     schedule = models.ForeignKey(

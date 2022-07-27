@@ -186,6 +186,20 @@ class TestSchedule(TestCase):
             self.assertEqual(Assignment.objects.count(), 2)
             self.assertEqual(s1.assignments.count(), 1)
 
+    def test_has_assignments(self):
+        u = User.objects.create_user(username="foo", password="1234")
+        s = Schedule.objects.create(
+            start=datetime.date.today(), end=datetime.date.today()
+        )
+        Assignment.objects.create(
+            user=u,
+            schedule=s,
+            start=datetime.date.today(),
+        )
+        self.assertTrue(s.has_assignments)
+        s.assignments.all().delete()
+        self.assertFalse(s.has_assignments)
+
 
 @fast_password_hashing
 class TestAssignment(TestCase):
