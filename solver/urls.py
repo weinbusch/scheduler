@@ -24,7 +24,6 @@ urlpatterns = [
     ),
     path("schedules", views.add_schedule, name="add_schedule"),
     path("schedules/<int:pk>", views.update_schedule, name="schedule"),
-    path("schedules/<int:pk>/solution", views.schedule_solution, name="solution"),
     path("schedules/<int:pk>/assignments", views.assignments, name="assignments"),
     path("schedules/<int:pk>/solve", views.solve_schedule, name="solve_schedule"),
 ]

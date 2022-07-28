@@ -149,18 +149,3 @@ class ViewTests(TestCase, AssertionsMixin):
             },
             to=url,
         )
-
-    def test_get_schedule_solver(self):
-        s = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
-        )
-        url = reverse("solution", args=[s.pk])
-        self.assert_get_200(url)
-
-    def test_unauthorized_schedule_solver(self):
-        s = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
-        )
-        url = reverse("solution", args=[s.pk])
-        self.client.logout()
-        self.assert_get_302(url, to=reverse("login") + "?next=" + url)

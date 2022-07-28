@@ -137,14 +137,6 @@ class ScheduleUpdateView(LoginRequiredMixin, UpdateView):
 update_schedule = ScheduleUpdateView.as_view()
 
 
-class ScheduleSolutionView(LoginRequiredMixin, DetailView):
-    model = Schedule
-    template_name = "solver/solution.html"
-
-
-schedule_solution = ScheduleSolutionView.as_view()
-
-
 # Auth views
 
 
