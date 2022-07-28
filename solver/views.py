@@ -13,7 +13,6 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from solver.models import (
-    UserPreferences,
     DayPreference,
     Schedule,
     Assignment,
@@ -37,12 +36,11 @@ class UserDayPreferencesListAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return DayPreference.objects.filter(user_preferences__user=user)
+        return DayPreference.objects.filter(user=user)
 
     def perform_create(self, serializer):
         user = self.request.user
-        prefs = UserPreferences.objects.get(user=user)
-        return serializer.save(user_preferences=prefs)
+        return serializer.save(user=user)
 
 
 user_day_preferences = UserDayPreferencesListAPIView.as_view()
@@ -55,9 +53,7 @@ class ScheduleDayPreferencesListView(generics.ListAPIView):
     def get_queryset(self):
         pk = self.kwargs["pk"]
         schedule = get_object_or_404(Schedule, pk=pk)
-        return DayPreference.objects.filter(
-            user_preferences__user__in=schedule.users.all()
-        )
+        return DayPreference.objects.filter(user__in=schedule.users.all())
 
 
 schedule_day_preferences = ScheduleDayPreferencesListView.as_view()

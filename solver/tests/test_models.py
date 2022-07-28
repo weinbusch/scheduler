@@ -1,45 +1,45 @@
 import datetime
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 
-from solver.models import DayPreference, Schedule, Assignment
+from solver.models import (
+    DayPreference,
+    Schedule,
+    Assignment,
+    get_available_dates,
+)
+
 
 from .utils import fast_password_hashing
 
 User = get_user_model()
 
 
+@fast_password_hashing
 class TestDayPreference(TestCase):
     def test_day_preference_date_user_unique(self):
         s = datetime.date(2022, 7, 11)
-        DayPreference.objects.create(user_preferences_id=99, start=s)
+        DayPreference.objects.create(user_id=99, start=s)
         with self.assertRaises(IntegrityError):
-            DayPreference.objects.create(user_preferences_id=99, start=s)
-
-
-@fast_password_hashing
-class TestUserPreferences(TestCase):
-    def test_user_creation_also_creates_user_preferences(self):
-        u = User.objects.create_user(username="bar", password="1234")
-        self.assertIsNotNone(u.user_preferences)
+            DayPreference.objects.create(user_id=99, start=s)
 
     def test_available_dates(self):
         u = User.objects.create_user(username="bar", password="1234")
-        p = u.user_preferences
         DayPreference.objects.bulk_create(
             [
                 DayPreference(
-                    user_preferences=p,
+                    user=u,
                     start=datetime.date(2022, 7, day),
                 )
                 for day in [3, 5, 7]
             ]
         )
         self.assertListEqual(
-            p.get_available_dates(
+            get_available_dates(
+                u,
                 start=datetime.date(2022, 7, 4),
                 end=datetime.date(2022, 7, 6),
             ),
@@ -96,7 +96,7 @@ class TestSchedule(TestCase):
         DayPreference.objects.bulk_create(
             [
                 DayPreference(
-                    user_preferences=u.user_preferences,
+                    user=u,
                     start=datetime.date(2022, 7, day),
                 )
                 for u, day in zip([u1, u2], [21, 22])
@@ -107,10 +107,7 @@ class TestSchedule(TestCase):
             s.solve()
             solver_function.assert_called_with(
                 [datetime.date(2022, 7, day) for day in [21, 22]],
-                {
-                    u: u.user_preferences.get_available_dates(s.start, s.end)
-                    for u in [u1, u2]
-                },
+                {u: get_available_dates(u, s.start, s.end) for u in [u1, u2]},
             )
 
     def test_schedule_solve_creates_assignments(self):

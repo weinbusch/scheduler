@@ -18,7 +18,7 @@ class SerializerTests(TestCase):
         date = datetime.date(2022, 7, 20)
         u = User.objects.create(username="foo", password="1234")
         d = DayPreference.objects.create(
-            user_preferences=u.user_preferences,
+            user=u,
             start=date,
         )
         s = DayPreferenceSerializer(d)

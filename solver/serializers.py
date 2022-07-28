@@ -5,9 +5,7 @@ from solver.models import DayPreference, Assignment
 
 class DayPreferenceSerializer(serializers.ModelSerializer):
     url = serializers.URLField(source="get_absolute_url", read_only=True)
-    username = serializers.CharField(
-        source="user_preferences.user.username", read_only=True
-    )
+    username = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
 
@@ -22,7 +20,7 @@ class DayPreferenceSerializer(serializers.ModelSerializer):
 
 class AssignmentSerializer(serializers.ModelSerializer):
 
-    username = serializers.CharField(source="user.username")
+    username = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Assignment

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 
@@ -6,27 +7,20 @@ from solver.utils import date_range
 from solver.solver import get_schedule
 
 
-class UserPreferences(models.Model):
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="user_preferences",
-    )
-
-    def get_available_dates(self, start, end):
-        return [
-            d.start
-            for d in self.day_preferences.filter(
-                start__gte=start,
-                start__lte=end,
-            )
-        ]
+def get_available_dates(user, start, end):
+    return [
+        d.start
+        for d in user.day_preferences.filter(
+            start__gte=start,
+            start__lte=end,
+        )
+    ]
 
 
 class DayPreference(models.Model):
 
-    user_preferences = models.ForeignKey(
-        UserPreferences,
+    user = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="day_preferences",
     )
@@ -39,7 +33,7 @@ class DayPreference(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user_preferences", "start"],
+                fields=["user_id", "start"],
                 name="unique_day_preference",
             )
         ]
@@ -61,8 +55,7 @@ class Schedule(models.Model):
 
     def solve(self):
         available_dates = {
-            u: u.user_preferences.get_available_dates(self.start, self.end)
-            for u in self.users.all()
+            u: get_available_dates(u, self.start, self.end) for u in self.users.all()
         }
         try:
             solution = get_schedule(
