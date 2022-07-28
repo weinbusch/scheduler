@@ -65,8 +65,11 @@
 	{% endfor %}
       </div>
     </div>
-    <div class="flex flex-row justify-between items-baseline mt-4">
-      <input class="px-4 p-2 leading-tight rounded bg-green-600 hover:bg-green-500 hover:underline text-white leading-none cursor-pointer" type="submit" value="Speichern">
+    <div class="flex flex-row justify-between items-baseline mt-4 -m-2">
+      <input class="m-2 px-4 p-2 leading-tight rounded bg-green-600 hover:bg-green-500 hover:underline text-white leading-none cursor-pointer" type="submit" value="Speichern">
+      <a id="solve_button" class="m-2 p-2 rounded bg-blue-500 hover:bg-blue-600 text-white leading-tight cursor-pointer">
+	Dienstplan erstellen
+      </a>
     </div>
   </form>
   {% if object %}
@@ -101,8 +104,24 @@
       let index = stringToNumber(s) % groupColors.length;
       return groupColors[index];
   }
-  const eventUrl = "{% url 'schedule_day_preferences' object.pk %}";
-  const calendarEl = document.getElementById("calendar");
+  function createSchedule(event){
+      event.preventDefault();
+      const url = "{% url 'solve_schedule' object.pk %}"
+      fetch(url, {
+	  method: "PATCH",
+	  headers: {
+	      "X-CSRFToken": "{{ csrf_token }}",
+	  },
+      })
+	  .then(r => {
+	      if (r.ok) {
+		  calendar.refetchEvents();		  
+	      } else {
+		  r.json().then(json => console.log(json.error));
+	      }
+	  })
+  }
+  document.getElementById("solve_button").addEventListener("click", createSchedule)
   const calendarOptions = {
       initialView: "dayGridMonth",
       locale: "de",
@@ -113,23 +132,29 @@
       },
       eventSources: [
 	  {
-	      url: eventUrl,
+	      id: "available_dates",
+	      url: "{% url 'schedule_day_preferences' object.pk %}",
+	      color: "gray",
+	  },
+	  {
+	      id: "assignments",
+	      url: "{% url 'assignments' object.pk %}",
 	  },
       ],
       eventDataTransform: function(data){
 	  let color = stringToColor(data.username);
 	  data.title = data.username;
-	  data.groupId = data.username;
-	  data.url = "";
-	  data.backgroundColor = color;
-	  data.borderColor = color;
+	  // data.groupId = data.username;
+	  // data.url = "";
+	  // data.backgroundColor = color;
+	  // data.borderColor = color;
 	  return data;
       },
       eventClick: function(info){
 	  info.jsEvent.preventDefault();
       },
   };
-  const calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
+  const calendar = new FullCalendar.Calendar(document.getElementById("calendar"), calendarOptions);
   calendar.render();
 </script>
 {% endif %}
