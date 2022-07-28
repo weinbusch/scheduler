@@ -15,12 +15,35 @@
     <span>&rsaquo;</span>
     <span class="text-blue-500">Dienstverteilung</span>
   </h1>
+  <div class="mt-2 flex flex-row -m-2">
+    <a id="solve_button" class="m-2 p-2 rounded bg-green-500 hover:bg-green-500 text-white leading-tight cursor-pointer">
+      Dienstplan erstellen
+    </a>
+  </div>
   <div class="mt-2" id="calendar"></div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+  function createSchedule(event){
+      event.preventDefault();
+      const url = "{% url 'solve_schedule' object.pk %}"
+      fetch(url, {
+	  method: "PATCH",
+	  headers: {
+	      "X-CSRFToken": "{{ csrf_token }}",
+	  },
+      })
+	  .then(r => {
+	      if (r.ok) {
+		  calendar.refetchEvents();		  
+	      } else {
+		  r.json().then(json => console.log(json.error));
+	      }
+	  })
+  }
+  document.getElementById("solve_button").addEventListener("click", createSchedule)
   const calendarEl = document.getElementById("calendar");
   const calendarOptions = {
       initialView: "dayGridMonth",
