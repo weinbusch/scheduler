@@ -44,13 +44,13 @@ class DayPreferencesAPIView(generics.ListAPIView):
     def get_queryset(self):
         qs = DayPreference.objects.all()
 
-        schedule_id = parse_int(self.request.query_params.get("schedule_id"))
+        schedule_id = parse_int(self.request.query_params.get("schedule"))
         if schedule_id is not None:
             if not self.request.user.schedules.filter(id=schedule_id).exists():
                 qs = qs.none()
             qs = qs.filter(schedule_id=schedule_id)
 
-        user_id = parse_int(self.request.query_params.get("user_id"))
+        user_id = parse_int(self.request.query_params.get("user"))
         if user_id is not None:
             if user_id != self.request.user.id and schedule_id is None:
                 qs = qs.none()

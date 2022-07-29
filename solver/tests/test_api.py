@@ -53,9 +53,9 @@ class APITests(TestCase):
         url = reverse("day_preferences")
         test_data = [
             {},
-            {"user_id": self.user.pk},
-            {"schedule_id": self.schedule.pk},
-            {"user_id": self.user.pk, "schedule_id": self.schedule.pk},
+            {"user": self.user.pk},
+            {"schedule": self.schedule.pk},
+            {"user": self.user.pk, "schedule": self.schedule.pk},
         ]
         for query_args in test_data:
             with self.subTest(query_args=query_args):
@@ -77,13 +77,13 @@ class APITests(TestCase):
 
     def test_only_members_can_get_day_preferences_from_schedule(self):
         url = reverse("day_preferences")
-        data = {"schedule_id": 2}
+        data = {"schedule": 2}
         r = self.client.get(url, data=data)
         self.assertListEqual(json.loads(r.content), [])
 
     def test_different_users_cannot_be_accessed_if_schedule_not_set(self):
         url = reverse("day_preferences")
-        data = {"user_id": 2}
+        data = {"user": 2}
         r = self.client.get(url, data=data)
         self.assertListEqual(json.loads(r.content), [])
 
