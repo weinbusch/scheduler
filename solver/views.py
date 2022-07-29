@@ -30,6 +30,13 @@ def index(request):
 # API views
 
 
+def parse_int(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+
 class DayPreferencesAPIView(generics.ListAPIView):
     serializer_class = DayPreferenceSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -37,12 +44,16 @@ class DayPreferencesAPIView(generics.ListAPIView):
     def get_queryset(self):
         qs = DayPreference.objects.all()
 
-        schedule_id = self.request.query_params.get("schedule_id")
+        schedule_id = parse_int(self.request.query_params.get("schedule_id"))
         if schedule_id is not None:
+            if not self.request.user.schedules.filter(id=schedule_id).exists():
+                qs = qs.none()
             qs = qs.filter(schedule_id=schedule_id)
 
-        user_id = self.request.query_params.get("user_id")
+        user_id = parse_int(self.request.query_params.get("user_id"))
         if user_id is not None:
+            if user_id != self.request.user.id and schedule_id is None:
+                qs = qs.none()
             qs = qs.filter(user_id=user_id)
 
         return qs
