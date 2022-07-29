@@ -49,55 +49,25 @@ class APITests(TestCase):
     def setUp(self):
         self.client.force_login(self.user)
 
-    def test_get_day_preferences_for_user(self):
+    def test_get_day_preferences_api_list_view(self):
         url = reverse("day_preferences")
-        r = self.client.get(url, data={"user_id": self.user.pk})
-        self.assertEqual(r.status_code, 200)
-        self.assertListEqual(
-            json.loads(r.content),
-            DayPreferenceSerializer(
-                DayPreference.objects.filter(user=self.user),
-                many=True,
-            ).data,
-        )
-
-    def test_get_day_preferences_for_user_and_schedule(self):
-        url = reverse("day_preferences")
-        r = self.client.get(
-            url,
-            data={
-                "user_id": self.user.pk,
-                "schedule_id": self.schedule.pk,
-            },
-        )
-        self.assertEqual(r.status_code, 200)
-        self.assertListEqual(
-            json.loads(r.content),
-            DayPreferenceSerializer(
-                DayPreference.objects.filter(
-                    user=self.user,
-                    schedule=self.schedule,
-                ),
-                many=True,
-            ).data,
-        )
-
-    def test_get_day_preferences_for_schedule(self):
-        url = reverse("day_preferences")
-        r = self.client.get(
-            url,
-            data={
-                "schedule_id": self.schedule.pk,
-            },
-        )
-        self.assertEqual(r.status_code, 200)
-        self.assertListEqual(
-            json.loads(r.content),
-            DayPreferenceSerializer(
-                DayPreference.objects.filter(schedule=self.schedule),
-                many=True,
-            ).data,
-        )
+        test_data = [
+            {},
+            {"user_id": self.user.pk},
+            {"schedule_id": self.schedule.pk},
+            {"user_id": self.user.pk, "schedule_id": self.schedule.pk},
+        ]
+        for query_args in test_data:
+            with self.subTest(query_args=query_args):
+                r = self.client.get(url, data=query_args)
+                self.assertEqual(r.status_code, 200)
+                self.assertListEqual(
+                    json.loads(r.content),
+                    DayPreferenceSerializer(
+                        DayPreference.objects.filter(**query_args),
+                        many=True,
+                    ).data,
+                )
 
     def test_get_day_preferences_for_schedule_404(self):
         url = reverse("schedule_day_preferences", args=[99])
