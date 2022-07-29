@@ -104,7 +104,7 @@
       let index = stringToNumber(s) % groupColors.length;
       return groupColors[index];
   }
-  function createSchedule(event){
+  function solveSchedule(event){
       event.preventDefault();
       const url = "{% url 'solve_schedule' object.pk %}"
       fetch(url, {
@@ -121,7 +121,7 @@
 	      }
 	  })
   }
-  document.getElementById("solve_button").addEventListener("click", createSchedule)
+  document.getElementById("solve_button").addEventListener("click", solveSchedule)
   const calendarOptions = {
       initialView: "dayGridMonth",
       locale: "de",
