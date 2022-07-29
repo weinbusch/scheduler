@@ -1,5 +1,6 @@
+import datetime
+
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 
@@ -7,10 +8,11 @@ from solver.utils import date_range
 from solver.solver import get_schedule
 
 
-def get_available_dates(user, start, end):
+def get_available_dates(user, schedule, start, end):
     return [
         d.start
         for d in user.day_preferences.filter(
+            schedule=schedule,
             start__gte=start,
             start__lte=end,
         )
@@ -25,6 +27,12 @@ class DayPreference(models.Model):
         related_name="day_preferences",
     )
 
+    schedule = models.ForeignKey(
+        to="Schedule",
+        on_delete=models.CASCADE,
+        related_name="day_preferences",
+    )
+
     start = models.DateField()
 
     def get_absolute_url(self):
@@ -33,7 +41,7 @@ class DayPreference(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user_id", "start"],
+                fields=["user_id", "start", "schedule"],
                 name="unique_day_preference",
             )
         ]
@@ -44,8 +52,8 @@ class ScheduleException(Exception):
 
 
 class Schedule(models.Model):
-    start = models.DateField()
-    end = models.DateField()
+    start = models.DateField(default=datetime.date.today)
+    end = models.DateField(default=datetime.date.today)
     users = models.ManyToManyField(
         to=settings.AUTH_USER_MODEL, related_name="schedules", blank=True
     )
@@ -55,7 +63,8 @@ class Schedule(models.Model):
 
     def solve(self):
         available_dates = {
-            u: get_available_dates(u, self.start, self.end) for u in self.users.all()
+            u: get_available_dates(u, self, self.start, self.end)
+            for u in self.users.all()
         }
         try:
             solution = get_schedule(

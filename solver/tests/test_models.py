@@ -20,18 +20,25 @@ User = get_user_model()
 
 @fast_password_hashing
 class TestDayPreference(TestCase):
-    def test_day_preference_date_user_unique(self):
+    def test_day_preference_date_user_schedule_unique(self):
         s = datetime.date(2022, 7, 11)
-        DayPreference.objects.create(user_id=99, start=s)
+        DayPreference.objects.create(user_id=1, schedule_id=1, start=s)
+        DayPreference.objects.create(user_id=1, schedule_id=2, start=s)
+        DayPreference.objects.create(user_id=2, schedule_id=1, start=s)
+        DayPreference.objects.create(
+            user_id=1, schedule_id=1, start=s + datetime.timedelta(days=1)
+        )
         with self.assertRaises(IntegrityError):
-            DayPreference.objects.create(user_id=99, start=s)
+            DayPreference.objects.create(user_id=1, schedule_id=1, start=s)
 
     def test_available_dates(self):
         u = User.objects.create_user(username="bar", password="1234")
+        s = Schedule.objects.create()
         DayPreference.objects.bulk_create(
             [
                 DayPreference(
                     user=u,
+                    schedule=s,
                     start=datetime.date(2022, 7, day),
                 )
                 for day in [3, 5, 7]
@@ -40,6 +47,7 @@ class TestDayPreference(TestCase):
         self.assertListEqual(
             get_available_dates(
                 u,
+                s,
                 start=datetime.date(2022, 7, 4),
                 end=datetime.date(2022, 7, 6),
             ),
@@ -97,6 +105,7 @@ class TestSchedule(TestCase):
             [
                 DayPreference(
                     user=u,
+                    schedule=s,
                     start=datetime.date(2022, 7, day),
                 )
                 for u, day in zip([u1, u2], [21, 22])
@@ -107,7 +116,7 @@ class TestSchedule(TestCase):
             s.solve()
             solver_function.assert_called_with(
                 [datetime.date(2022, 7, day) for day in [21, 22]],
-                {u: get_available_dates(u, s.start, s.end) for u in [u1, u2]},
+                {u: get_available_dates(u, s, s.start, s.end) for u in [u1, u2]},
             )
 
     def test_schedule_solve_creates_assignments(self):
