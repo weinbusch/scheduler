@@ -23,12 +23,14 @@ class SerializerTests(TestCase):
             schedule=s,
             start=date,
         )
-        s = DayPreferenceSerializer(d)
+        serializer = DayPreferenceSerializer(d)
         self.assertDictEqual(
-            s.data,
+            serializer.data,
             {
                 "id": 1,
-                "username": "foo",
+                "user": u.pk,
+                "username": u.username,
+                "schedule": s.pk,
                 "start": "2022-07-20",
                 "url": reverse("day_preference", args=[d.pk]),
             },

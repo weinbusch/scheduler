@@ -12,7 +12,9 @@ class DayPreferenceSerializer(serializers.ModelSerializer):
         model = DayPreference
         fields = [
             "id",
+            "user",
             "username",
+            "schedule",
             "start",
             "url",
         ]
