@@ -69,6 +69,12 @@ class APITests(TestCase):
                     ).data,
                 )
 
+    def test_day_preference_unauthenticated(self):
+        url = reverse("day_preferences")
+        self.client.logout()
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 403)
+
     def test_get_day_preferences_for_schedule_404(self):
         url = reverse("schedule_day_preferences", args=[99])
         r = self.client.get(url)

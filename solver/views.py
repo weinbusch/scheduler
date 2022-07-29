@@ -32,6 +32,7 @@ def index(request):
 
 class DayPreferencesAPIView(generics.ListAPIView):
     serializer_class = DayPreferenceSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         qs = DayPreference.objects.all()
