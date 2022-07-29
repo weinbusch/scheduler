@@ -5,7 +5,7 @@ from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
 from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
 from django.shortcuts import render, reverse, redirect, get_object_or_404
-from django.views.generic import CreateView, UpdateView, DetailView
+from django.views.generic import CreateView, UpdateView
 
 from rest_framework import generics
 from rest_framework import permissions
@@ -28,6 +28,26 @@ def index(request):
 
 
 # API views
+
+
+class DayPreferencesAPIView(generics.ListAPIView):
+    serializer_class = DayPreferenceSerializer
+
+    def get_queryset(self):
+        qs = DayPreference.objects.all()
+
+        schedule_id = self.request.query_params.get("schedule_id")
+        if schedule_id is not None:
+            qs = qs.filter(schedule_id=schedule_id)
+
+        user_id = self.request.query_params.get("user_id")
+        if user_id is not None:
+            qs = qs.filter(user_id=user_id)
+
+        return qs
+
+
+day_preferences = DayPreferencesAPIView.as_view()
 
 
 class UserDayPreferencesListAPIView(generics.ListCreateAPIView):
@@ -111,8 +131,12 @@ class ScheduleForm(ModelForm):
         model = Schedule
         fields = ["start", "end", "users"]
         widgets = {
-            "start": DateInput(attrs={"class": "p-2 border w-full leading-tight"}),
-            "end": DateInput(attrs={"class": "p-2 border w-full leading-tight"}),
+            "start": DateInput(
+                attrs={"class": "p-2 border w-full leading-tight"},
+            ),
+            "end": DateInput(
+                attrs={"class": "p-2 border w-full leading-tight"},
+            ),
             "users": CheckboxSelectMultiple,
         }
 
