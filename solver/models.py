@@ -15,6 +15,7 @@ def get_available_dates(user, schedule, start, end):
             schedule=schedule,
             start__gte=start,
             start__lte=end,
+            active=True,
         )
     ]
 
@@ -34,6 +35,8 @@ class DayPreference(models.Model):
     )
 
     start = models.DateField()
+
+    active = models.BooleanField(default=True)
 
     def get_absolute_url(self):
         return reverse("api:day_preference", args=[self.id])

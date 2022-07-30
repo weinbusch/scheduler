@@ -20,6 +20,13 @@ User = get_user_model()
 
 @fast_password_hashing
 class TestDayPreference(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        u = User.objects.create_user(username="bar", password="1234")
+        s = Schedule.objects.create()
+        cls.user = u
+        cls.schedule = s
+
     def test_day_preference_date_user_schedule_unique(self):
         s = datetime.date(2022, 7, 11)
         DayPreference.objects.create(user_id=1, schedule_id=1, start=s)
@@ -32,13 +39,11 @@ class TestDayPreference(TestCase):
             DayPreference.objects.create(user_id=1, schedule_id=1, start=s)
 
     def test_available_dates(self):
-        u = User.objects.create_user(username="bar", password="1234")
-        s = Schedule.objects.create()
         DayPreference.objects.bulk_create(
             [
                 DayPreference(
-                    user=u,
-                    schedule=s,
+                    user=self.user,
+                    schedule=self.schedule,
                     start=datetime.date(2022, 7, day),
                 )
                 for day in [3, 5, 7]
@@ -46,12 +51,36 @@ class TestDayPreference(TestCase):
         )
         self.assertListEqual(
             get_available_dates(
-                u,
-                s,
-                start=datetime.date(2022, 7, 4),
-                end=datetime.date(2022, 7, 6),
+                self.user,
+                self.schedule,
+                datetime.date(2022, 7, 4),
+                datetime.date(2022, 7, 6),
             ),
             [datetime.date(2022, 7, 5)],
+        )
+
+    def test_available_dates_excludes_inactive_dates(self):
+        DayPreference.objects.bulk_create(
+            [
+                DayPreference(
+                    user=self.user,
+                    schedule=self.schedule,
+                    start=datetime.date(2022, 7, day),
+                    active=active,
+                )
+                for day, active in zip(
+                    range(1, 8), [True, True, True, True, False, False, False]
+                )
+            ]
+        )
+        self.assertListEqual(
+            get_available_dates(
+                self.user,
+                self.schedule,
+                datetime.date(2022, 7, 1),
+                datetime.date(2022, 7, 7),
+            ),
+            [d.start for d in DayPreference.objects.filter(active=True)],
         )
 
 
