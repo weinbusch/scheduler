@@ -9,16 +9,6 @@ urlpatterns = [
     path("register", views.register_user, name="register"),
     path("day_preferences", views.day_preferences, name="day_preferences"),
     path(
-        "user/day_preferences",
-        views.user_day_preferences,
-        name="user_day_preferences",
-    ),
-    path(
-        "schedules/<int:pk>/day_preferences",
-        views.schedule_day_preferences,
-        name="schedule_day_preferences",
-    ),
-    path(
         "day_preferences/<int:pk>",
         views.day_preference,
         name="day_preference",

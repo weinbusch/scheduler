@@ -68,35 +68,6 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
 day_preferences = DayPreferencesAPIView.as_view()
 
 
-class UserDayPreferencesListAPIView(generics.ListCreateAPIView):
-    serializer_class = DayPreferenceSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return DayPreference.objects.filter(user=user)
-
-    def perform_create(self, serializer):
-        user = self.request.user
-        return serializer.save(user=user)
-
-
-user_day_preferences = UserDayPreferencesListAPIView.as_view()
-
-
-class ScheduleDayPreferencesListView(generics.ListAPIView):
-    serializer_class = DayPreferenceSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        pk = self.kwargs["pk"]
-        schedule = get_object_or_404(Schedule, pk=pk)
-        return DayPreference.objects.filter(user__in=schedule.users.all())
-
-
-schedule_day_preferences = ScheduleDayPreferencesListView.as_view()
-
-
 class DayPreferenceDeleteAPIView(generics.DestroyAPIView):
     serializer_class = DayPreferenceSerializer
     queryset = DayPreference.objects.all()

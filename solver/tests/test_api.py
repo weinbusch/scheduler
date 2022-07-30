@@ -1,4 +1,3 @@
-import unittest
 import json
 import datetime
 from unittest.mock import patch
@@ -21,7 +20,7 @@ User = get_user_model()
 
 
 @fast_password_hashing
-class APITests(TestCase):
+class DayPreferenceAPITests(TestCase):
     @classmethod
     def setUpTestData(cls):
         u1 = User.objects.create_user(username="foo", password="bar")
@@ -119,46 +118,6 @@ class APITests(TestCase):
         r = self.client.post(url, data)
         self.assertEqual(r.status_code, 403)
 
-    def test_get_day_preferences_for_schedule_404(self):
-        url = reverse("schedule_day_preferences", args=[99])
-        r = self.client.get(url)
-        self.assertEqual(r.status_code, 404)
-
-    def test_method_not_allowed_schedule_day_preferences(self):
-        url = reverse("schedule_day_preferences", args=[self.schedule.pk])
-        for method in ["delete", "put", "patch", "post"]:
-            with self.subTest(method=method):
-                client = getattr(self.client, method)
-                self.assertEqual(client(url).status_code, 405)
-
-    def test_get_day_preferences_for_user(self):
-        url = reverse("user_day_preferences")
-        r = self.client.get(url)
-        self.assertEqual(r.status_code, 200)
-        expected = DayPreferenceSerializer(
-            DayPreference.objects.filter(user=self.user),
-            many=True,
-        )
-        self.assertListEqual(json.loads(r.content), expected.data)
-
-    def test_method_not_allowed_user_day_preferences(self):
-        url = reverse("user_day_preferences")
-        for method in ["delete", "put", "patch"]:
-            with self.subTest(method=method):
-                client = getattr(self.client, method)
-                self.assertEqual(client(url).status_code, 405)
-
-    @unittest.skip("")
-    def test_create_new_user_day_preference(self):
-        url = reverse("user_day_preferences")
-        data = {"start": "2022-07-08", "available": True}
-        r = self.client.post(url, data=data)
-        self.assertEqual(r.status_code, 201)
-        self.assertEqual(
-            DayPreference.objects.filter(user=self.user).last().start,
-            datetime.date(2022, 7, 8),
-        )
-
     def test_delete_day_preference(self):
         url = reverse("day_preference", args=[1])
         r = self.client.delete(url)
@@ -166,16 +125,8 @@ class APITests(TestCase):
         with self.assertRaises(DayPreference.DoesNotExist):
             DayPreference.objects.get(id=1)
 
-    def test_method_not_allowed_day_preference(self):
-        url = reverse("day_preference", args=[1])
-        for method in ["get", "post", "put", "patch"]:
-            with self.subTest(method=method):
-                client = getattr(self.client, method)
-                self.assertEqual(client(url).status_code, 405)
-
-    @unittest.skip("")
-    def test_day_preference_not_authorized(self):
-        day = DayPreference.objects.get(user__username="bar")
+    def test_only_user_can_delete_day_preference(self):
+        day = DayPreference.objects.filter(user__username="bar").first()
         url = reverse("day_preference", args=[day.pk])
         r = self.client.delete(url)
         self.assertEqual(r.status_code, 403)
