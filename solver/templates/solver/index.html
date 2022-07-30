@@ -2,92 +2,26 @@
 
 {% block main %}
 <div class="container mx-auto max-w-4xl px-4">
-  <div class="mt-8">
+  <div class="mt-8 border rounded-lg p-6">
     <h1 class="text-lg font-semibold">Deine Stundenpläne</h1>
-    <div class="mt-2 -m-2 flex flex-row">
+    <div class="mt-6">
       {% for schedule in user.schedules.all %}
-      <div class="m-2">
+      <div class="mt-2">
 	<a href="{% url 'schedule' schedule.pk %}"
-	   class="inline-block p-2 border rounded leading-tight hover:underline hover:text-blue-500 cursor-pointer">
+	   class="hover:underline hover:text-blue-500 cursor-pointer">
 	  Stundenplan {{ schedule.pk }}
 	</a>
       </div>
       {% endfor %}
     </div>
-    <div class="mt-2 -m-2 flex flex-row">
+    <div class="mt-6 pt-6 border-t flex flex-row">
       <a href="{% url 'add_schedule' %}"
-	 class="m-2 inline-block p-2 border rounded leading-tight bg-blue-500 text-white hover:bg-blue-600 
-		cursor-pointer">
-
+	 class="inline-block px-4 py-2 border rounded-lg leading-none 
+		bg-blue-500 hover:bg-blue-600 text-white cursor-pointer">
 	Neuen Stundenplan hinzufügen
       </a>
     </div>
   </div>
-  <div class="mt-8">
-    <h1 class="text-lg font-semibold">Deine Verfügbarkeit</h1>
-    <p class="mt-2">Trage bitte hier die Tage ein, an denen Du
-    grundsätzlich verfügbar bist. Ein Klick auf ein leeres Datumsfeld
-    markiert dieses Datum als verfügbar (grün). Ein Klick auf einen
-    verfügbaren Tag entfernt die Markierung. An den Tagen ohne
-    Markierung giltst Du als nicht verfügbar.
-    </p>
-  </div>
-  <div id="calendar" class="mt-8"></div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-  function addEvent(url, data){
-      return fetch(url, {
-	  method: "POST",
-	  headers: {
-	      "Content-Type": "application/json",
-	      "X-CSRFToken": "{{ csrf_token }}",
-	  },
-	  body: JSON.stringify(data),
-      });
-  }
-  function deleteEvent(event){
-      let url = event.url;
-      return fetch(url, {
-	  method: "DELETE",
-	  headers: {
-	      "X-CSRFToken": "{{ csrf_token }}",
-	  },
-      })
-  }
-  const calendarEl = document.getElementById("calendar");
-  const calendarOptions = {
-      initialView: "dayGridMonth",
-      locale: "de",
-      height: "auto",
-      buttonText: {
-	  "today": "Heute",
-	  "month": "Monatsansicht",
-      },
-      eventSources: [
-	  {
-	      url: "{% url 'day_preferences' %}",
-	      backgroundColor: "rgb(34 197 94)",
-	      borderColor: "rgb(34 197 94)",
-	  },
-      ],
-      eventClick: function(info){
-	  info.jsEvent.preventDefault();
-	  deleteEvent(info.event).then(_ => info.event.source.refetch())
-      },
-      dateClick: function(info){
-	  let start = info.dateStr,
-	      events = this.getEvents().filter(e => e.startStr == start),
-	      source = this.getEventSources()[0],
-	      promise = (events.length == 0)
-	      ? addEvent(source.url, { start: start })
-	      : Promise.all(events.map(e => deleteEvent(e)));
-	  promise.then(_ => source.refetch());
-      },
-  };
-  const calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
-  calendar.render();
-</script>
-{% endblock %}
