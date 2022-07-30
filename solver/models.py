@@ -36,7 +36,7 @@ class DayPreference(models.Model):
     start = models.DateField()
 
     def get_absolute_url(self):
-        return reverse("day_preference", args=[self.id])
+        return reverse("api:day_preference", args=[self.id])
 
     class Meta:
         constraints = [

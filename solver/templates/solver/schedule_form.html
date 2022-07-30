@@ -97,7 +97,7 @@
 <script>
   function solveSchedule(event){
       event.preventDefault();
-      const url = "{% url 'solve_schedule' object.pk %}"
+      const url = "{% url 'api:schedule' object.pk %}"
       fetch(url, {
 	  method: "PATCH",
 	  headers: {
@@ -125,7 +125,7 @@
       eventSources: [
 	  {
 	      id: "available_dates",
-	      url: "{% url 'day_preferences' object.pk %}",
+	      url: "{% url 'api:day_preferences' object.pk %}",
 	  },
       ],
       eventDataTransform: function(data){

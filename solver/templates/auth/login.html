@@ -30,9 +30,13 @@
       {% endfor %}
       <input type="hidden" name="next" value="{{ next }}">
       <div class="flex flex-row justify-between items-baseline mt-8">
-	<input class="px-4 p-2 leading-tight rounded bg-green-600 hover:bg-green-500 hover:underline text-white leading-none cursor-pointer" type="submit" value="Anmelden">
+	<input class="px-4 p-2 leading-tight rounded bg-green-600 hover:bg-green-500 hover:underline text-white leading-none cursor-pointer"
+	       type="submit" value="Anmelden">
 	<span class="mx-2 text-gray-800 italic">oder</span>
-	<a class="px-4 p-2 rounded border leading-tight hover:underline hover:text-blue-600" href="{% url 'register' %}">Registrieren</a>
+	<a class="px-4 p-2 rounded border leading-tight hover:underline hover:text-blue-600"
+	   href="{% url 'auth:register' %}">
+	  Registrieren
+	</a>
       </div>
     </form>
   </div>

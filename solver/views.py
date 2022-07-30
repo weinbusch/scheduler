@@ -16,10 +16,9 @@ from rest_framework.response import Response
 from solver.models import (
     DayPreference,
     Schedule,
-    Assignment,
     ScheduleException,
 )
-from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
+from solver.serializers import DayPreferenceSerializer
 from solver.permissions import DayPreferenceChangePermission
 
 
@@ -56,7 +55,7 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
         serializer.save()
 
 
-day_preferences = DayPreferencesAPIView.as_view()
+day_preferences_api = DayPreferencesAPIView.as_view()
 
 
 class DayPreferenceDeleteAPIView(generics.DestroyAPIView):
@@ -68,23 +67,10 @@ class DayPreferenceDeleteAPIView(generics.DestroyAPIView):
     ]
 
 
-day_preference = DayPreferenceDeleteAPIView.as_view()
+day_preference_api = DayPreferenceDeleteAPIView.as_view()
 
 
-class AssignmentsAPIView(generics.ListAPIView):
-    serializer_class = AssignmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        pk = self.kwargs["pk"]
-        schedule = get_object_or_404(Schedule, pk=pk)
-        return Assignment.objects.filter(schedule=schedule)
-
-
-assignments = AssignmentsAPIView.as_view()
-
-
-class SolveScheduleAPIView(generics.GenericAPIView):
+class ScheduleAPIView(generics.GenericAPIView):
     queryset = Schedule.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
@@ -100,7 +86,7 @@ class SolveScheduleAPIView(generics.GenericAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-solve_schedule = SolveScheduleAPIView.as_view()
+schedule_api = ScheduleAPIView.as_view()
 
 
 # Schedule views
@@ -136,7 +122,6 @@ class ScheduleUpdateView(LoginRequiredMixin, UpdateView):
 
 update_schedule = ScheduleUpdateView.as_view()
 
-
 # Auth views
 
 
@@ -158,7 +143,7 @@ login_user = LoginView.as_view()
 
 
 def logout_user(request):
-    return logout_then_login(request, reverse("login"))
+    return logout_then_login(request, reverse("auth:login"))
 
 
 class RegisterForm(UserCreationForm):
@@ -175,7 +160,7 @@ def register_user(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect(reverse("login"))
+            return redirect(reverse("auth:login"))
     else:
         form = RegisterForm()
     return render(request, "auth/register.html", context=dict(form=form))

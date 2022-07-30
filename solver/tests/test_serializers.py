@@ -2,10 +2,9 @@ import datetime
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.urls import reverse
 
-from solver.models import DayPreference, Schedule, Assignment
-from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
+from solver.models import DayPreference, Schedule
+from solver.serializers import DayPreferenceSerializer
 
 from .utils import fast_password_hashing
 
@@ -35,7 +34,7 @@ class SerializerTests(TestCase):
                 "username": self.user.username,
                 "schedule": self.schedule.pk,
                 "start": "2022-07-20",
-                "url": reverse("day_preference", args=[d.pk]),
+                "url": d.get_absolute_url(),
             },
         )
 
@@ -59,20 +58,4 @@ class SerializerTests(TestCase):
                 ),
             ).count(),
             1,
-        )
-
-    def test_assignment_serializer(self):
-        d = datetime.date(2022, 7, 20)
-        a = Assignment.objects.create(
-            schedule=self.schedule,
-            user=self.user,
-            start=d,
-        )
-        self.assertDictEqual(
-            AssignmentSerializer(a).data,
-            {
-                "id": a.id,
-                "username": self.user.username,
-                "start": "2022-07-20",
-            },
         )

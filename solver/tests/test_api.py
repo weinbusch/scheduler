@@ -9,10 +9,9 @@ from django.urls import reverse
 from solver.models import (
     DayPreference,
     Schedule,
-    Assignment,
     ScheduleException,
 )
-from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
+from solver.serializers import DayPreferenceSerializer
 
 from .utils import fast_password_hashing
 
@@ -20,7 +19,7 @@ User = get_user_model()
 
 
 @fast_password_hashing
-class DayPreferenceAPITests(TestCase):
+class DayPreferencesAPITests(TestCase):
     @classmethod
     def setUpTestData(cls):
         u1 = User.objects.create_user(username="foo", password="bar")
@@ -53,8 +52,11 @@ class DayPreferenceAPITests(TestCase):
     def setUp(self):
         self.client.force_login(self.user)
 
+    def list_url(self, pk):
+        return reverse("api:day_preferences", args=[pk])
+
     def test_get_day_preferences_api_list_view(self):
-        url = reverse("day_preferences", args=[self.schedule.pk])
+        url = self.list_url(self.schedule.pk)
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
         self.assertListEqual(
@@ -66,7 +68,7 @@ class DayPreferenceAPITests(TestCase):
         )
 
     def test_filter_user(self):
-        url = reverse("day_preferences", args=[self.schedule.pk])
+        url = self.list_url(self.schedule.pk)
         r = self.client.get(url, data={"user": self.user.id})
         self.assertEqual(r.status_code, 200)
         self.assertListEqual(
@@ -81,18 +83,18 @@ class DayPreferenceAPITests(TestCase):
         )
 
     def test_day_preference_unauthorized(self):
-        url = reverse("day_preferences", args=[self.schedule.pk])
+        url = self.list_url(self.schedule.pk)
         self.client.logout()
         r = self.client.get(url)
         self.assertEqual(r.status_code, 403)
 
     def test_only_members_can_get_day_preferences_from_schedule(self):
-        url = reverse("day_preferences", args=[2])
+        url = self.list_url(2)
         r = self.client.get(url)
         self.assertEqual(r.status_code, 403)
 
     def test_create_day_preference(self):
-        url = reverse("day_preferences", args=[self.schedule.pk])
+        url = self.list_url(self.schedule.pk)
         data = {
             "user": self.user.pk,
             "schedule": self.schedule.pk,
@@ -109,7 +111,7 @@ class DayPreferenceAPITests(TestCase):
         )
 
     def test_only_members_can_create(self):
-        url = reverse("day_preferences", args=[2])
+        url = self.list_url(2)
         data = {
             "user": self.user.pk,
             "schedule": self.schedule.pk,
@@ -119,7 +121,7 @@ class DayPreferenceAPITests(TestCase):
         self.assertEqual(r.status_code, 403)
 
     def test_delete_day_preference(self):
-        url = reverse("day_preference", args=[1])
+        url = reverse("api:day_preference", args=[1])
         r = self.client.delete(url)
         self.assertEqual(r.status_code, 204)
         with self.assertRaises(DayPreference.DoesNotExist):
@@ -127,52 +129,13 @@ class DayPreferenceAPITests(TestCase):
 
     def test_only_user_can_delete_day_preference(self):
         day = DayPreference.objects.filter(user__username="bar").first()
-        url = reverse("day_preference", args=[day.pk])
+        url = reverse("api:day_preference", args=[day.pk])
         r = self.client.delete(url)
         self.assertEqual(r.status_code, 403)
 
 
 @fast_password_hashing
-class AssignmentTest(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = User.objects.create_user(username="foo", password="1234")
-        cls.schedule = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
-        )
-        Assignment.objects.create(
-            schedule=cls.schedule,
-            user=cls.user,
-            start=datetime.date.today(),
-        )
-
-    def setUp(self):
-        self.client.force_login(self.user)
-
-    def test_get_assignment_list(self):
-        s = self.schedule
-        url = reverse("assignments", args=[s.pk])
-        r = self.client.get(url)
-        self.assertEqual(r.status_code, 200)
-        expected = AssignmentSerializer(
-            Assignment.objects.filter(schedule=s), many=True
-        )
-        self.assertListEqual(json.loads(r.content), expected.data)
-
-    def test_get_assignments_404(self):
-        url = reverse("assignments", args=[99])
-        r = self.client.get(url)
-        self.assertEqual(r.status_code, 404)
-
-    def test_get_assignment_unauthorized(self):
-        self.client.logout()
-        url = reverse("assignments", args=[1])
-        r = self.client.get(url)
-        self.assertEqual(r.status_code, 403)
-
-
-@fast_password_hashing
-class ScheduleTest(TestCase):
+class ScheduleAPITest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user(username="foo", password="1234")
@@ -180,36 +143,34 @@ class ScheduleTest(TestCase):
             start=datetime.date.today(), end=datetime.date.today()
         )
 
+    def url(self, pk=None):
+        if pk is None:
+            pk = self.schedule.pk
+        return reverse("api:schedule", args=[pk])
+
     def setUp(self):
         self.client.force_login(self.user)
 
-    def test_patch_calls_schedule_solve(self):
-        url = reverse("solve_schedule", args=[self.schedule.pk])
+    def test_patch_schedule_calls_solve(self):
+        url = self.url()
         with patch.object(Schedule, "solve") as solve_function:
             r = self.client.patch(url)
             self.assertEqual(r.status_code, 204)
             solve_function.assert_called_once()
 
-    def test_method_not_allowed(self):
-        url = reverse("solve_schedule", args=[self.schedule.pk])
-        for method in ["get", "delete", "put", "post"]:
-            with self.subTest(method=method):
-                client = getattr(self.client, method)
-                self.assertEqual(client(url).status_code, 405)
-
-    def test_schedule_not_found(self):
-        url = reverse("solve_schedule", args=[99])
+    def test_patch_schedule_not_found(self):
+        url = self.url(99)
         r = self.client.patch(url)
         self.assertEqual(r.status_code, 404)
 
-    def test_not_authorized(self):
+    def test_patch_schedule_not_authorized(self):
+        url = self.url()
         self.client.logout()
-        url = reverse("solve_schedule", args=[self.schedule.pk])
         r = self.client.patch(url)
         self.assertEqual(r.status_code, 403)
 
-    def test_solve_raises_exception(self):
-        url = reverse("solve_schedule", args=[self.schedule.pk])
+    def test_patch_schedule_captures_specific_exception(self):
+        url = self.url()
         with patch.object(
             Schedule,
             "solve",
@@ -219,8 +180,8 @@ class ScheduleTest(TestCase):
             self.assertEqual(r.status_code, 500)
             self.assertDictEqual(json.loads(r.content), {"error": "foo"})
 
-    def test_unspecific_exception(self):
-        url = reverse("solve_schedule", args=[self.schedule.pk])
+    def test_patch_schedule_raises_unspecific_exception(self):
+        url = self.url()
         with patch.object(
             Schedule,
             "solve",
