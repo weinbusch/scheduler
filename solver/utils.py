@@ -22,3 +22,10 @@ def parse_date_list(xs):
         else datetime.datetime.strptime(x, "%Y-%m-%d").date()
         for x in xs
     ]
+
+
+def parse_int(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None

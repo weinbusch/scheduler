@@ -31,13 +31,6 @@ def index(request):
 # API views
 
 
-def parse_int(value):
-    try:
-        return int(value)
-    except (ValueError, TypeError):
-        return None
-
-
 class DayPreferencesAPIView(generics.ListCreateAPIView):
     serializer_class = DayPreferenceSerializer
     permission_classes = [permissions.IsAuthenticated]
