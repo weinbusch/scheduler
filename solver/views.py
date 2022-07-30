@@ -42,25 +42,23 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
     serializer_class = DayPreferenceSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_schedule(self):
+        pk = self.kwargs.get("pk")
+        return get_object_or_404(Schedule, pk=pk)
+
     def get_queryset(self):
-        qs = DayPreference.objects.all()
-
-        schedule_id = parse_int(self.request.query_params.get("schedule"))
-        if schedule_id is not None:
-            if not self.request.user.schedules.filter(id=schedule_id).exists():
-                qs = qs.none()
-            qs = qs.filter(schedule_id=schedule_id)
-
-        user_id = parse_int(self.request.query_params.get("user"))
+        schedule = self.get_schedule()
+        if self.request.user not in schedule.users.all():
+            raise exceptions.PermissionDenied
+        qs = DayPreference.objects.filter(schedule=schedule)
+        user_id = self.request.query_params.get("user")
         if user_id is not None:
-            if user_id != self.request.user.id and schedule_id is None:
-                qs = qs.none()
             qs = qs.filter(user_id=user_id)
-
         return qs
 
     def perform_create(self, serializer):
-        if serializer.validated_data.get("user") != self.request.user:
+        schedule = self.get_schedule()
+        if self.request.user not in schedule.users.all():
             raise exceptions.PermissionDenied
         serializer.save()
 

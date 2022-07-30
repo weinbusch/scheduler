@@ -14,13 +14,16 @@ User = get_user_model()
 
 @fast_password_hashing
 class SerializerTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create(username="foo", password="1234")
+        cls.schedule = Schedule.objects.create()
+
     def test_day_preference_serializer(self):
         date = datetime.date(2022, 7, 20)
-        u = User.objects.create(username="foo", password="1234")
-        s = Schedule.objects.create()
         d = DayPreference.objects.create(
-            user=u,
-            schedule=s,
+            user=self.user,
+            schedule=self.schedule,
             start=date,
         )
         serializer = DayPreferenceSerializer(d)
@@ -28,24 +31,48 @@ class SerializerTests(TestCase):
             serializer.data,
             {
                 "id": 1,
-                "user": u.pk,
-                "username": u.username,
-                "schedule": s.pk,
+                "user": self.user.pk,
+                "username": self.user.username,
+                "schedule": self.schedule.pk,
                 "start": "2022-07-20",
                 "url": reverse("day_preference", args=[d.pk]),
             },
         )
 
+    def test_save_day_preference_serializer(self):
+        data = {
+            "user": self.user.id,
+            "schedule": self.schedule.id,
+            "start": "2022-07-21",
+        }
+        s = DayPreferenceSerializer(data=data)
+        self.assertTrue(s.is_valid())
+        s.save()
+        self.assertEquals(
+            DayPreference.objects.filter(
+                user=self.user,
+                schedule=self.schedule,
+                start=datetime.date(
+                    2022,
+                    7,
+                    21,
+                ),
+            ).count(),
+            1,
+        )
+
     def test_assignment_serializer(self):
         d = datetime.date(2022, 7, 20)
-        u = User.objects.create_user(username="foo", password="1234")
-        s = Schedule.objects.create(start=d, end=d)
-        a = Assignment.objects.create(schedule=s, user=u, start=d)
+        a = Assignment.objects.create(
+            schedule=self.schedule,
+            user=self.user,
+            start=d,
+        )
         self.assertDictEqual(
             AssignmentSerializer(a).data,
             {
                 "id": a.id,
-                "username": u.username,
+                "username": self.user.username,
                 "start": "2022-07-20",
             },
         )

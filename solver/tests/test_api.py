@@ -54,45 +54,45 @@ class DayPreferenceAPITests(TestCase):
         self.client.force_login(self.user)
 
     def test_get_day_preferences_api_list_view(self):
-        url = reverse("day_preferences")
-        test_data = [
-            {},
-            {"user": self.user.pk},
-            {"schedule": self.schedule.pk},
-            {"user": self.user.pk, "schedule": self.schedule.pk},
-        ]
-        for query_args in test_data:
-            with self.subTest(query_args=query_args):
-                r = self.client.get(url, data=query_args)
-                self.assertEqual(r.status_code, 200)
-                self.assertListEqual(
-                    json.loads(r.content),
-                    DayPreferenceSerializer(
-                        DayPreference.objects.filter(**query_args),
-                        many=True,
-                    ).data,
-                )
+        url = reverse("day_preferences", args=[self.schedule.pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertListEqual(
+            json.loads(r.content),
+            DayPreferenceSerializer(
+                DayPreference.objects.filter(schedule=self.schedule),
+                many=True,
+            ).data,
+        )
+
+    def test_filter_user(self):
+        url = reverse("day_preferences", args=[self.schedule.pk])
+        r = self.client.get(url, data={"user": self.user.id})
+        self.assertEqual(r.status_code, 200)
+        self.assertListEqual(
+            json.loads(r.content),
+            DayPreferenceSerializer(
+                DayPreference.objects.filter(
+                    schedule=self.schedule,
+                    user=self.user,
+                ),
+                many=True,
+            ).data,
+        )
 
     def test_day_preference_unauthorized(self):
-        url = reverse("day_preferences")
+        url = reverse("day_preferences", args=[self.schedule.pk])
         self.client.logout()
         r = self.client.get(url)
         self.assertEqual(r.status_code, 403)
 
     def test_only_members_can_get_day_preferences_from_schedule(self):
-        url = reverse("day_preferences")
-        data = {"schedule": 2}
-        r = self.client.get(url, data=data)
-        self.assertListEqual(json.loads(r.content), [])
-
-    def test_different_users_cannot_be_accessed_if_schedule_not_set(self):
-        url = reverse("day_preferences")
-        data = {"user": 2}
-        r = self.client.get(url, data=data)
-        self.assertListEqual(json.loads(r.content), [])
+        url = reverse("day_preferences", args=[2])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 403)
 
     def test_create_day_preference(self):
-        url = reverse("day_preferences")
+        url = reverse("day_preferences", args=[self.schedule.pk])
         data = {
             "user": self.user.pk,
             "schedule": self.schedule.pk,
@@ -108,10 +108,10 @@ class DayPreferenceAPITests(TestCase):
             ).exists()
         )
 
-    def test_cannot_create_for_different_user(self):
-        url = reverse("day_preferences")
+    def test_only_members_can_create(self):
+        url = reverse("day_preferences", args=[2])
         data = {
-            "user": 2,
+            "user": self.user.pk,
             "schedule": self.schedule.pk,
             "start": "2022-07-30",
         }
