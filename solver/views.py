@@ -7,6 +7,7 @@ from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
 from django.shortcuts import render, reverse, redirect, get_object_or_404
 from django.views.generic import CreateView, UpdateView
 
+from rest_framework import exceptions
 from rest_framework import generics
 from rest_framework import permissions
 from rest_framework import status
@@ -37,7 +38,7 @@ def parse_int(value):
         return None
 
 
-class DayPreferencesAPIView(generics.ListAPIView):
+class DayPreferencesAPIView(generics.ListCreateAPIView):
     serializer_class = DayPreferenceSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -57,6 +58,11 @@ class DayPreferencesAPIView(generics.ListAPIView):
             qs = qs.filter(user_id=user_id)
 
         return qs
+
+    def perform_create(self, serializer):
+        if serializer.validated_data.get("user") != self.request.user:
+            raise exceptions.PermissionDenied
+        serializer.save()
 
 
 day_preferences = DayPreferencesAPIView.as_view()

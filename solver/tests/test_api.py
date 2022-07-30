@@ -7,7 +7,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from solver.models import DayPreference, Schedule, Assignment, ScheduleException
+from solver.models import (
+    DayPreference,
+    Schedule,
+    Assignment,
+    ScheduleException,
+)
 from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 
 from .utils import fast_password_hashing
@@ -86,6 +91,33 @@ class APITests(TestCase):
         data = {"user": 2}
         r = self.client.get(url, data=data)
         self.assertListEqual(json.loads(r.content), [])
+
+    def test_create_day_preference(self):
+        url = reverse("day_preferences")
+        data = {
+            "user": self.user.pk,
+            "schedule": self.schedule.pk,
+            "start": "2022-07-30",
+        }
+        r = self.client.post(url, data)
+        self.assertEqual(r.status_code, 201)
+        self.assertTrue(
+            DayPreference.objects.filter(
+                user=self.user,
+                schedule=self.schedule,
+                start=datetime.date(2022, 7, 30),
+            ).exists()
+        )
+
+    def test_cannot_create_for_different_user(self):
+        url = reverse("day_preferences")
+        data = {
+            "user": 2,
+            "schedule": self.schedule.pk,
+            "start": "2022-07-30",
+        }
+        r = self.client.post(url, data)
+        self.assertEqual(r.status_code, 403)
 
     def test_get_day_preferences_for_schedule_404(self):
         url = reverse("schedule_day_preferences", args=[99])
