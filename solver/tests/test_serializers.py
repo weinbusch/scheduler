@@ -34,6 +34,7 @@ class SerializerTests(TestCase):
                 "username": self.user.username,
                 "schedule": self.schedule.pk,
                 "start": "2022-07-20",
+                "active": True,
                 "url": d.get_absolute_url(),
             },
         )
@@ -59,3 +60,17 @@ class SerializerTests(TestCase):
             ).count(),
             1,
         )
+
+    def test_update_day_preference_serializer(self):
+        instance = DayPreference.objects.create(
+            user=self.user,
+            schedule=self.schedule,
+            start=datetime.date.today(),
+            active=True,
+        )
+        data = {"active": False}
+        s = DayPreferenceSerializer(instance=instance, partial=True, data=data)
+        self.assertTrue(s.is_valid())
+        s.save()
+        instance.refresh_from_db()
+        self.assertFalse(instance.active)

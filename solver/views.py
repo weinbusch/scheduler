@@ -9,6 +9,7 @@ from django.views.generic import CreateView, UpdateView
 
 from rest_framework import exceptions
 from rest_framework import generics
+from rest_framework import mixins
 from rest_framework import permissions
 from rest_framework import status
 from rest_framework.response import Response
@@ -42,7 +43,7 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
         schedule = self.get_schedule()
         if self.request.user not in schedule.users.all():
             raise exceptions.PermissionDenied
-        qs = DayPreference.objects.filter(schedule=schedule)
+        qs = DayPreference.objects.filter(schedule=schedule, active=True)
         user_id = self.request.query_params.get("user")
         if user_id is not None:
             qs = qs.filter(user_id=user_id)
@@ -67,7 +68,19 @@ class DayPreferenceDeleteAPIView(generics.DestroyAPIView):
     ]
 
 
-day_preference_api = DayPreferenceDeleteAPIView.as_view()
+class DayPreferenceAPI(generics.UpdateAPIView, mixins.DestroyModelMixin):
+    serializer_class = DayPreferenceSerializer
+    queryset = DayPreference.objects.all()
+    permission_classes = [
+        permissions.IsAuthenticated,
+        DayPreferenceChangePermission,
+    ]
+
+    def delete(self, *args, **kwargs):
+        return self.destroy(*args, **kwargs)
+
+
+day_preference_api = DayPreferenceAPI.as_view()
 
 
 class ScheduleAPIView(generics.GenericAPIView):

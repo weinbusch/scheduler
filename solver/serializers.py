@@ -17,4 +17,5 @@ class DayPreferenceSerializer(serializers.ModelSerializer):
             "schedule",
             "start",
             "url",
+            "active",
         ]

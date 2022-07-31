@@ -120,17 +120,63 @@ class DayPreferencesAPITests(TestCase):
         r = self.client.post(url, data)
         self.assertEqual(r.status_code, 403)
 
+
+@fast_password_hashing
+class DayPreferenceAPITest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="foo", password="1234")
+        cls.schedule = Schedule.objects.create()
+        cls.schedule.users.add(cls.user)
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def url(self, pk):
+        return reverse("api:day_preference", args=[pk])
+
+    def create_day_preference(self):
+        return DayPreference.objects.create(
+            user=self.user,
+            schedule=self.schedule,
+            start=datetime.date(2022, 7, 30),
+        )
+
+    def test_patch_day_preference_active_flag(self):
+        d = self.create_day_preference()
+        r = self.client.patch(
+            self.url(d.pk),
+            data={"active": False},
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 200)
+        d.refresh_from_db()
+        self.assertFalse(d.active)
+
+    def test_only_user_can_patch(self):
+        u = User.objects.create_user(username="bar", password="1234")
+        self.client.force_login(u)
+        d = self.create_day_preference()
+        r = self.client.patch(
+            self.url(d.pk),
+            data={"active": False},
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 403)
+
     def test_delete_day_preference(self):
-        url = reverse("api:day_preference", args=[1])
-        r = self.client.delete(url)
+        d = self.create_day_preference()
+        r = self.client.delete(self.url(d.pk))
         self.assertEqual(r.status_code, 204)
         with self.assertRaises(DayPreference.DoesNotExist):
-            DayPreference.objects.get(id=1)
+            DayPreference.objects.get(pk=1)
 
-    def test_only_user_can_delete_day_preference(self):
-        day = DayPreference.objects.filter(user__username="bar").first()
-        url = reverse("api:day_preference", args=[day.pk])
-        r = self.client.delete(url)
+    def test_only_user_can_delete(self):
+        u = User.objects.create_user(username="bar", password="1234")
+        self.schedule.users.add(u)
+        self.client.force_login(u)
+        d = self.create_day_preference()
+        r = self.client.delete(self.url(d.pk))
         self.assertEqual(r.status_code, 403)
 
 

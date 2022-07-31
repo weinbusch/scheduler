@@ -95,6 +95,14 @@
 {% block scripts %}
 {% if object %}
 <script>
+  function reloadCalendar(response){
+      if (response.ok){
+	  calendar.refetchEvents();
+      } else {
+	  response.json().then(json=>console.log(json.error))
+      }
+  }
+  
   function solveSchedule(event){
       event.preventDefault();
       const url = "{% url 'api:schedule' object.pk %}"
@@ -103,16 +111,22 @@
 	  headers: {
 	      "X-CSRFToken": "{{ csrf_token }}",
 	  },
-      })
-	  .then(r => {
-	      if (r.ok) {
-		  calendar.refetchEvents();		  
-	      } else {
-		  r.json().then(json => console.log(json.error));
-	      }
-	  })
+      }).then(reloadCalendar)
   }
   document.getElementById("solve_button").addEventListener("click", solveSchedule)
+
+  function inactivateEvent(url){
+      fetch(url, {
+	  method: "PATCH",
+	  headers: {
+	      "X-CSRFToken": "{{ csrf_token }}",
+	      "Content-Type": "application/json"
+	  },
+	  body: JSON.stringify({
+	      active: false,
+	  }),
+      }).then(reloadCalendar)
+  }
 
   const calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
       initialView: "dayGridMonth",
@@ -131,6 +145,11 @@
       eventDataTransform: function(data){
 	  data.title = data.username;
 	  return data;
+      },
+      eventClick: function(info){
+	  info.jsEvent.preventDefault();
+	  console.log(info.event);
+	  inactivateEvent(info.event.url);
       },
   });
   calendar.render();
