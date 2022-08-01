@@ -19,3 +19,4 @@ class DayPreferenceSerializer(serializers.ModelSerializer):
             "url",
             "active",
         ]
+        read_only = ["schedule"]
