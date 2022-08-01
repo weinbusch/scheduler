@@ -136,6 +136,23 @@ class DayPreferencesAPITests(TestCase):
         r = self.client.post(url, data)
         self.assertEqual(r.status_code, 403)
 
+    def test_create_updates_active_item_if_it_exists(self):
+        start = datetime.date(2022, 8, 1)
+        d = DayPreference.objects.create(
+            user=self.user,
+            schedule=self.schedule,
+            start=start,
+            active=False,
+        )
+        data = {
+            "user": self.user.pk,
+            "schedule": self.schedule.pk,
+            "start": str(start),
+        }
+        self.client.post(self.list_url(self.schedule.pk), data=data)
+        d.refresh_from_db()
+        self.assertTrue(d.active)
+
 
 @fast_password_hashing
 class DayPreferenceAPITest(TestCase):

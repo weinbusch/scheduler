@@ -53,7 +53,15 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
         schedule = self.get_schedule()
         if self.request.user not in schedule.users.all():
             raise exceptions.PermissionDenied
-        serializer.save()
+        data = serializer.validated_data
+        try:
+            instance = DayPreference.objects.get(
+                user=data["user"], schedule=schedule, start=data["start"]
+            )
+        except DayPreference.DoesNotExist:
+            instance = None
+        serializer.instance = instance
+        serializer.save(active=True)
 
 
 day_preferences_api = DayPreferencesAPIView.as_view()
