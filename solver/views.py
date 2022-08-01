@@ -39,10 +39,13 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
         pk = self.kwargs.get("pk")
         return get_object_or_404(Schedule, pk=pk)
 
-    def get_queryset(self):
-        schedule = self.get_schedule()
+    def check_user(self, schedule):
         if self.request.user not in schedule.users.all():
             raise exceptions.PermissionDenied
+
+    def get_queryset(self):
+        schedule = self.get_schedule()
+        self.check_user(schedule)
         qs = DayPreference.objects.filter(schedule=schedule, active=True)
         user_id = self.request.query_params.get("user")
         if user_id is not None:
@@ -51,8 +54,7 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         schedule = self.get_schedule()
-        if self.request.user not in schedule.users.all():
-            raise exceptions.PermissionDenied
+        self.check_user(schedule)
         data = serializer.validated_data
         try:
             instance = DayPreference.objects.get(
