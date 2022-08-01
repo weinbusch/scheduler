@@ -67,6 +67,22 @@ class DayPreferencesAPITests(TestCase):
             ).data,
         )
 
+    def test_day_preference_list_does_not_contain_inactive_items(self):
+        DayPreference.objects.create(
+            user=self.user,
+            schedule=self.schedule,
+            start=datetime.date.today(),
+            active=False,
+        )
+        r = self.client.get(self.list_url(self.schedule.pk))
+        self.assertListEqual(
+            json.loads(r.content),
+            DayPreferenceSerializer(
+                DayPreference.objects.filter(schedule=self.schedule, active=True),
+                many=True,
+            ).data,
+        )
+
     def test_filter_user(self):
         url = self.list_url(self.schedule.pk)
         r = self.client.get(url, data={"user": self.user.id})
