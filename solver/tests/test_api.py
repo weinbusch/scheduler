@@ -52,13 +52,14 @@ class DayPreferencesAPITests(TestCase):
     def setUp(self):
         self.client.force_login(self.user)
 
-    def list_url(self, pk):
-        return reverse("api:day_preferences", args=[pk])
+    def list_url(self, schedule=None):
+        if schedule is None:
+            schedule = self.schedule
+        return reverse("api:day_preferences", args=[schedule.pk])
 
-    def test_get_day_preferences_api_list_view(self):
-        url = self.list_url(self.schedule.pk)
+    def test_get_day_preferences_list(self):
+        url = self.list_url()
         r = self.client.get(url)
-        self.assertEqual(r.status_code, 200)
         self.assertListEqual(
             json.loads(r.content),
             DayPreferenceSerializer(
@@ -67,14 +68,15 @@ class DayPreferencesAPITests(TestCase):
             ).data,
         )
 
-    def test_day_preference_list_does_not_contain_inactive_items(self):
+    def test_list_does_not_contain_inactive_items(self):
         DayPreference.objects.create(
             user=self.user,
             schedule=self.schedule,
             start=datetime.date.today(),
             active=False,
         )
-        r = self.client.get(self.list_url(self.schedule.pk))
+        url = self.list_url()
+        r = self.client.get(url)
         self.assertListEqual(
             json.loads(r.content),
             DayPreferenceSerializer(
@@ -83,10 +85,9 @@ class DayPreferencesAPITests(TestCase):
             ).data,
         )
 
-    def test_filter_user(self):
-        url = self.list_url(self.schedule.pk)
+    def test_filter_list_for_user(self):
+        url = self.list_url()
         r = self.client.get(url, data={"user": self.user.id})
-        self.assertEqual(r.status_code, 200)
         self.assertListEqual(
             json.loads(r.content),
             DayPreferenceSerializer(
@@ -98,24 +99,24 @@ class DayPreferencesAPITests(TestCase):
             ).data,
         )
 
-    def test_day_preference_unauthorized(self):
-        url = self.list_url(self.schedule.pk)
+    def test_block_unauthorized_access_to_list(self):
         self.client.logout()
+        url = self.list_url()
         r = self.client.get(url)
         self.assertEqual(r.status_code, 403)
 
-    def test_only_members_can_get_day_preferences_from_schedule(self):
-        url = self.list_url(2)
+    def test_allow_list_access_for_members_only(self):
+        url = self.list_url(Schedule.objects.get(pk=2))
         r = self.client.get(url)
         self.assertEqual(r.status_code, 403)
 
     def test_create_day_preference(self):
-        url = self.list_url(self.schedule.pk)
         data = {
             "user": self.user.pk,
             "schedule": self.schedule.pk,
             "start": "2022-07-30",
         }
+        url = self.list_url()
         r = self.client.post(url, data)
         self.assertEqual(r.status_code, 201)
         self.assertTrue(
@@ -126,13 +127,13 @@ class DayPreferencesAPITests(TestCase):
             ).exists()
         )
 
-    def test_only_members_can_create(self):
-        url = self.list_url(2)
+    def test_only_allow_members_to_create(self):
         data = {
             "user": self.user.pk,
             "schedule": self.schedule.pk,
             "start": "2022-07-30",
         }
+        url = self.list_url(Schedule.objects.get(pk=2))
         r = self.client.post(url, data)
         self.assertEqual(r.status_code, 403)
 
@@ -149,7 +150,9 @@ class DayPreferencesAPITests(TestCase):
             "schedule": self.schedule.pk,
             "start": str(start),
         }
-        self.client.post(self.list_url(self.schedule.pk), data=data)
+        url = self.list_url()
+        r = self.client.post(url, data=data)
+        self.assertEqual(r.status_code, 201)
         d.refresh_from_db()
         self.assertTrue(d.active)
 
@@ -165,8 +168,8 @@ class DayPreferenceAPITest(TestCase):
     def setUp(self):
         self.client.force_login(self.user)
 
-    def url(self, pk):
-        return reverse("api:day_preference", args=[pk])
+    def url(self, instance):
+        return reverse("api:day_preference", args=[instance.pk])
 
     def create_day_preference(self):
         return DayPreference.objects.create(
@@ -178,7 +181,7 @@ class DayPreferenceAPITest(TestCase):
     def test_patch_day_preference_active_flag(self):
         d = self.create_day_preference()
         r = self.client.patch(
-            self.url(d.pk),
+            self.url(d),
             data={"active": False},
             content_type="application/json",
         )
@@ -191,7 +194,7 @@ class DayPreferenceAPITest(TestCase):
         self.client.force_login(u)
         d = self.create_day_preference()
         r = self.client.patch(
-            self.url(d.pk),
+            self.url(d),
             data={"active": False},
             content_type="application/json",
         )
@@ -199,7 +202,7 @@ class DayPreferenceAPITest(TestCase):
 
     def test_delete_day_preference(self):
         d = self.create_day_preference()
-        r = self.client.delete(self.url(d.pk))
+        r = self.client.delete(self.url(d))
         self.assertEqual(r.status_code, 204)
         with self.assertRaises(DayPreference.DoesNotExist):
             DayPreference.objects.get(pk=1)
@@ -209,7 +212,7 @@ class DayPreferenceAPITest(TestCase):
         self.schedule.users.add(u)
         self.client.force_login(u)
         d = self.create_day_preference()
-        r = self.client.delete(self.url(d.pk))
+        r = self.client.delete(self.url(d))
         self.assertEqual(r.status_code, 403)
 
 
