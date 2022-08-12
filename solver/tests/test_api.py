@@ -171,12 +171,14 @@ class DayPreferenceAPITest(TestCase):
     def url(self, instance):
         return reverse("api:day_preference", args=[instance.pk])
 
-    def create_day_preference(self):
-        return DayPreference.objects.create(
-            user=self.user,
-            schedule=self.schedule,
-            start=datetime.date(2022, 7, 30),
-        )
+    def create_day_preference(self, **kwargs):
+        data = {
+            "user": self.user,
+            "schedule": self.schedule,
+            "start": datetime.date(2022, 7, 30),
+        }
+        data.update(kwargs)
+        return DayPreference.objects.create(**data)
 
     def test_patch_day_preference_active_flag(self):
         d = self.create_day_preference()
@@ -200,12 +202,12 @@ class DayPreferenceAPITest(TestCase):
         )
         self.assertEqual(r.status_code, 403)
 
-    def test_delete_day_preference(self):
-        d = self.create_day_preference()
+    def test_delete_day_preference_sets_active_flag(self):
+        d = self.create_day_preference(active=True)
         r = self.client.delete(self.url(d))
         self.assertEqual(r.status_code, 204)
-        with self.assertRaises(DayPreference.DoesNotExist):
-            DayPreference.objects.get(pk=1)
+        d.refresh_from_db()
+        self.assertFalse(d.active)
 
     def test_only_user_can_delete(self):
         u = User.objects.create_user(username="bar", password="1234")

@@ -78,7 +78,7 @@ class DayPreferenceDeleteAPIView(generics.DestroyAPIView):
     ]
 
 
-class DayPreferenceAPI(generics.UpdateAPIView, mixins.DestroyModelMixin):
+class DayPreferenceAPI(generics.UpdateAPIView):
     serializer_class = DayPreferenceSerializer
     queryset = DayPreference.objects.all()
     permission_classes = [
@@ -87,7 +87,10 @@ class DayPreferenceAPI(generics.UpdateAPIView, mixins.DestroyModelMixin):
     ]
 
     def delete(self, *args, **kwargs):
-        return self.destroy(*args, **kwargs)
+        obj = self.get_object()
+        obj.active = False
+        obj.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 day_preference_api = DayPreferenceAPI.as_view()
