@@ -147,7 +147,6 @@ class DayPreferencesAPITests(TestCase):
         )
         data = {
             "user": self.user.pk,
-            "schedule": self.schedule.pk,
             "start": str(start),
         }
         url = self.list_url()

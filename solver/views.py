@@ -9,7 +9,6 @@ from django.views.generic import CreateView, UpdateView
 
 from rest_framework import exceptions
 from rest_framework import generics
-from rest_framework import mixins
 from rest_framework import permissions
 from rest_framework import status
 from rest_framework.response import Response
@@ -63,7 +62,7 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
         except DayPreference.DoesNotExist:
             instance = None
         serializer.instance = instance
-        serializer.save(active=True)
+        serializer.save(active=True, schedule=schedule)
 
 
 day_preferences_api = DayPreferencesAPIView.as_view()

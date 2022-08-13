@@ -42,12 +42,11 @@ class SerializerTests(TestCase):
     def test_save_day_preference_serializer(self):
         data = {
             "user": self.user.id,
-            "schedule": self.schedule.id,
             "start": "2022-07-21",
         }
         s = DayPreferenceSerializer(data=data)
         self.assertTrue(s.is_valid())
-        s.save()
+        s.save(schedule=self.schedule)
         self.assertEquals(
             DayPreference.objects.filter(
                 user=self.user,
