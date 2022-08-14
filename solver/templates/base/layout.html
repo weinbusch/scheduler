@@ -1,17 +1,14 @@
 {% extends "base/base.html" %}
 {% block body %}
-<header class="">
-  <div class="container mx-auto max-w-4xl p-4 flex flex-row justify-between">
+<header>
+  <div class="container mx-auto p-2 flex flex-row justify-between items-center">
     <div>
       Hallo, <a href="{% url 'index' %}"
 		class="text-blue-500 font-semibold hover:underline cursor-pointer">{{ user }}</a>
     </div>
-    <div>
-      <a href="{% url 'auth:logout' %}" class="cursor-pointer hover:text-blue-500 hover:underline border rounded p-2 px-4 leading-tight">Abmelden</a>
-    </div>
+    <a href="{% url 'auth:logout' %}"
+       class="p-2 px-4 leading-tight cursor-pointer hover:text-blue-500 hover:underline border rounded">Abmelden</a>
   </div>
 </header>
-<main>
-  {% block main %}{% endblock %}  
-</main>
+{% block main %}{% endblock %}  
 {% endblock %}
