@@ -85,6 +85,18 @@ class DayPreferencesAPITests(TestCase):
             ).data,
         )
 
+    def test_list_does_not_contain_items_from_non_members(self):
+        d = DayPreference.objects.create(
+            user=User.objects.get(pk=3),
+            schedule=self.schedule,
+            start=datetime.date.today(),
+            active=True,
+        )
+        url = self.list_url()
+        r = self.client.get(url)
+        data = json.loads(r.content)
+        self.assertEqual([x for x in data if x["id"] == d.id], [])
+
     def test_filter_list_for_user(self):
         url = self.list_url()
         r = self.client.get(url, data={"user": self.user.id})
