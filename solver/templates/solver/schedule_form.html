@@ -1,158 +1,116 @@
 {% extends "base/layout.html" %}
+{% load static %}
 
 {% block main %}
-<div class="container mx-auto max-w-4xl px-4">
-  <h1 class="font-semibold text-xl mt-8 flex flex-row space-x-2">
-    <a class="text-blue-500 hover:underline cursor-pointer"
-       href="{% url 'index' %}">
-      Übersicht
-    </a>
-    <span>&rsaquo;</span>
-    <span class="text-blue-500">
-      {% if object %}Stundenplan {{ object.pk }}{% else %}Neuer Stundenplan{% endif %}
-    </span>
-  </h1>
-  <form action="" method="POST">
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{{ next }}">
-    <div class="flex flex-row w-full">
-      <div class="flex-grow max-w-sm">
-	<div class="flex flex-col mt-2">
-	  <div>
-	    <label for="{{ form.start.id_for_label }}"
-		   class="font-semibold text-sm">
-	      {{ form.start.label }}
-	    </label>
-	  </div>
-	  <div class="mt-1">
-	    {{ form.start }}
-	  </div>
-	  {% for error in form.start.errors %}
-	  <div class="mt-1 text-red-600">
-	    {{ error }}
-	  </div>
-	  {% endfor %}
+<main class="container mx-auto p-2 grid grid-cols-12 gap-4">
+  <header class="col-span-12">
+    <h1 class="font-semibold text-xl flex flex-row space-x-2">
+      <a class="text-blue-500 hover:underline cursor-pointer"
+         href="{% url 'index' %}">
+        Übersicht
+      </a>
+      <span>&rsaquo;</span>
+      <span class="text-blue-500">
+        {% if object %}Stundenplan {{ object.pk }}{% else %}Neuer Stundenplan{% endif %}
+      </span>
+    </h1>
+  </header>
+  <section class="col-span-3">
+    <form action="" method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div>
+	<label for="{{ form.start.id_for_label }}"
+	       class="font-semibold text-sm">
+	  Beginn
+	</label>
+	<div class="mt-1">
+	  {{ form.start }}
 	</div>
-	<div class="flex flex-col mt-2">
-	  <div>
-	    <label for="{{ form.end.id_for_label }}"
-		   class="font-semibold text-sm">
-	      {{ form.end.label }}
-	    </label>
-	  </div>
-	  <div class="mt-1">
-	    {{ form.end }}
-	  </div>
-	  {% for error in form.end.errors %}
-	  <div class="mt-1 text-red-600">
-	    {{ error }}
-	  </div>
-	  {% endfor %}
-	</div>
-      </div>
-      <div class="flex-grow ml-4">
-	<h1 class="font-semibold">{{ form.users.label }}</h1>
-	<div class="mt-2 border-b border-r border-l max-h-64 overflow-y-auto">
-	  {% for choice in form.users %}
-	  <div class="flex flex-row p-2 border-t items-baseline bg-white">
-	    {{ choice.tag }}
-	    <label class="ml-2 flex-grow" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>	
-	  </div>
-	  {% endfor %}
-	</div>
-	{% for error in form.users.errors %}
+	{% for error in form.start.errors %}
 	<div class="mt-1 text-red-600">
 	  {{ error }}
 	</div>
 	{% endfor %}
       </div>
-    </div>
-    <div class="flex flex-row justify-between items-baseline mt-4 -m-2">
-      <button type="submit"
-	      class="m-2 px-4 p-2 leading-none cursor-pointer rounded-lg 
-		     bg-green-600 hover:bg-green-500 text-white">
-	Speichern
-      </button>
-      <a id="solve_button"
-	 class="m-2 px-4 p-2 leading-none cursor-pointer rounded-lg 
-		bg-blue-600 hover:bg-blue-500 text-white">
-	Dienstplan erstellen
-      </a>
-    </div>
-  </form>
+      <div class="mt-4">
+        <label for="{{ form.end.id_for_label }}"
+	       class="font-semibold text-sm">
+          Ende
+        </label>
+        <div class="mt-1">
+          {{ form.end }}
+        </div>
+        {% for error in form.end.errors %}
+        <div class="mt-1 text-red-600">
+          {{ error }}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mt-4">
+        <h1 class="font-semibold text-sm">Teilnehmer</h1>
+        <p class="mt-1 text-sm">
+          Füge Teilnehmer zu diesem Stundenplan hinzu oder entferne
+          sie.
+        </p>
+        <div class="mt-2 border-b border-r border-l max-h-64 overflow-y-auto">
+          {% for choice in form.users %}
+          <div class="p-2 border-t flex flex-row items-baseline bg-white">
+            {{ choice.tag }}
+            <label class="ml-2 flex-grow" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>	
+          </div>
+          {% endfor %}
+        </div>
+        {% for error in form.users.errors %}
+        <div class="mt-1 text-red-600">
+          {{ error }}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="flex flex-row flex-wrap justify-between items-baseline mt-4 -m-2">
+        <button type="submit"
+	        class="m-2 px-4 p-2 leading-none cursor-pointer rounded-lg 
+		       bg-green-600 hover:bg-green-500 text-white">
+          Speichern
+        </button>
+        {% if object %}
+        <a id="solve_button"
+           class="m-2 px-4 p-2 leading-none cursor-pointer rounded-lg 
+	          bg-blue-600 hover:bg-blue-500 text-white">
+          Dienstplan erstellen
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </section>
   {% if object %}
-  <h2 class="mt-8 font-semibold text-lg">Verfügbarkeiten</h2>
-  <p class="mt-2">Die bisherigen Teilnehmer sind an den folgenden
-    Tagen grundsätzlich verfügbar. Klicke
-    auf <span class="text-green-600 font-semibold">Speichern</span>, um
-    die Anzeige der Teilnehmer zu aktualisieren.
-  </p>
-  <div id="calendar" class="mt-8"></div>
-  {% endif %}
-</div>
+  <section class="col-span-9">
+    <div class="border">
+      <h2 class="p-4 pb-0 font-semibold text-lg">Verfügbarkeit bearbeiten für</h2>
+      <div class="flex flex-row overflow-auto" id="calendar_users">
+        {% for u in object.users.all %}
+        <label class="p-4 flex flex-row items-center hover:bg-blue-500 hover:text-slate-100 cursor-pointer"
+               for="user_{{ u.pk }}">
+          <input type="radio" id="user_{{ u.pk }}" name="calendar_user" value="{{ u.pk }}" {% if u == user %}checked{% endif %}>
+          <span class="ml-2 leading-tight">{{ u.username }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div id="calendar" class="mt-4"></div>
+  </section>
+  {% endif %}    
+</main>
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'solver/js/calendar.js' %}"></script>
 {% if object %}
 <script>
-  function reloadCalendar(response){
-      if (response.ok){
-	  calendar.refetchEvents();
-      } else {
-	  response.json().then(json=>console.log(json.error))
-      }
-  }
-  
-  function solveSchedule(event){
-      event.preventDefault();
-      const url = "{% url 'api:schedule' object.pk %}"
-      fetch(url, {
-	  method: "PATCH",
-	  headers: {
-	      "X-CSRFToken": "{{ csrf_token }}",
-	  },
-      }).then(reloadCalendar)
-  }
-  document.getElementById("solve_button").addEventListener("click", solveSchedule)
-
-  function inactivateEvent(url){
-      fetch(url, {
-	  method: "PATCH",
-	  headers: {
-	      "X-CSRFToken": "{{ csrf_token }}",
-	      "Content-Type": "application/json"
-	  },
-	  body: JSON.stringify({
-	      active: false,
-	  }),
-      }).then(reloadCalendar)
-  }
-
-  const calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
-      initialView: "dayGridMonth",
-      locale: "de",
-      height: "auto",
-      buttonText: {
-	  "today": "Heute",
-	  "month": "Monatsansicht",
-      },
-      eventSources: [
-	  {
-	      id: "available_dates",
-	      url: "{% url 'api:day_preferences' object.pk %}",
-	  },
-      ],
-      eventDataTransform: function(data){
-	  data.title = data.username;
-	  return data;
-      },
-      eventClick: function(info){
-	  info.jsEvent.preventDefault();
-	  console.log(info.event);
-	  inactivateEvent(info.event.url);
-      },
-  });
-  calendar.render();
+  calendar(document.getElementById("calendar"), {
+      url: "{% url 'api:day_preferences' object.pk %}",
+      csrf_token: "{{ csrf_token }}",
+  })
 </script>
 {% endif %}
 {% endblock %}
