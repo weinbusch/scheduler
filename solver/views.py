@@ -169,6 +169,17 @@ class ScheduleUpdateView(LoginRequiredMixin, UpdateView):
 
 update_schedule = ScheduleUpdateView.as_view()
 
+
+@login_required
+def assignments(request, pk):
+    s = get_object_or_404(Schedule, pk=pk)
+    return render(
+        request,
+        "solver/assignments.html",
+        context=dict(schedule=s),
+    )
+
+
 # Auth views
 
 

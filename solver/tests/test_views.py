@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from solver.models import Schedule
+from solver.models import Schedule, Assignment
 
 from .utils import fast_password_hashing
 
@@ -149,3 +149,28 @@ class ViewTests(TestCase, AssertionsMixin):
             },
             to=url,
         )
+
+    def test_view_assignments(self):
+        s = Schedule.objects.create()
+        s.users.add(self.user)
+        Assignment.objects.create(
+            schedule=s,
+            user=self.user,
+            start=datetime.date.today(),
+        )
+        url = reverse("assignments", args=[s.pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+
+    def test_view_assignments_unauthorized(self):
+        self.client.logout()
+        s = Schedule.objects.create()
+        s.users.add(self.user)
+        Assignment.objects.create(
+            schedule=s,
+            user=self.user,
+            start=datetime.date.today(),
+        )
+        url = reverse("assignments", args=[s.pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 302)

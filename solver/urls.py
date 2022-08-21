@@ -31,6 +31,11 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("schedules/add", views.add_schedule, name="add_schedule"),
     path("schedules/<int:pk>", views.update_schedule, name="schedule"),
+    path(
+        "schedules/<int:pk>/assignments",
+        views.assignments,
+        name="assignments",
+    ),
     path("", include((auth_patterns, "solver"), namespace="auth")),
     path("api/", include((api_patterns, "solver"), namespace="api")),
 ]
