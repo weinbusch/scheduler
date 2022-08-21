@@ -10,8 +10,9 @@ from solver.models import (
     DayPreference,
     Schedule,
     ScheduleException,
+    Assignment,
 )
-from solver.serializers import DayPreferenceSerializer
+from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 
 from .utils import fast_password_hashing
 
@@ -284,3 +285,31 @@ class ScheduleAPITest(TestCase):
         ):
             with self.assertRaises(Exception):
                 self.client.patch(url)
+
+
+@fast_password_hashing
+class AssignmentsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        u = User.objects.create(username="foo", password="123")
+        s = Schedule.objects.create()
+        s.users.add(u)
+        Assignment.objects.create(
+            schedule=s,
+            user=u,
+            start=datetime.date.today(),
+        )
+        cls.user = u
+        cls.schedule = s
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_get_list_of_assignments(self):
+        url = reverse("api:assignments", args=[self.schedule.pk])
+        r = self.client.get(url)
+        data = json.loads(r.content)
+        self.assertListEqual(
+            data,
+            AssignmentSerializer(Assignment.objects.all(), many=True).data,
+        )

@@ -16,6 +16,11 @@ api_patterns = [
         name="day_preferences",
     ),
     path(
+        "schedules/<int:pk>/assignments",
+        views.assignments_api,
+        name="assignments",
+    ),
+    path(
         "days/<int:pk>",
         views.day_preference_api,
         name="day_preference",

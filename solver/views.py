@@ -13,12 +13,8 @@ from rest_framework import permissions
 from rest_framework import status
 from rest_framework.response import Response
 
-from solver.models import (
-    DayPreference,
-    Schedule,
-    ScheduleException,
-)
-from solver.serializers import DayPreferenceSerializer
+from solver.models import DayPreference, Schedule, ScheduleException, Assignment
+from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 from solver.permissions import DayPreferenceChangePermission
 
 
@@ -116,6 +112,28 @@ class ScheduleAPIView(generics.GenericAPIView):
 
 
 schedule_api = ScheduleAPIView.as_view()
+
+
+class AssignmentAPIView(generics.ListAPIView):
+    serializer_class = AssignmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_schedule(self):
+        pk = self.kwargs.get("pk")
+        return get_object_or_404(Schedule, pk=pk)
+
+    def check_user(self, schedule):
+        if self.request.user not in schedule.users.all():
+            raise exceptions.PermissionDenied
+
+    def get_queryset(self):
+        schedule = self.get_schedule()
+        self.check_user(schedule)
+        qs = Assignment.objects.filter(schedule=schedule)
+        return qs
+
+
+assignments_api = AssignmentAPIView.as_view()
 
 
 # Schedule views

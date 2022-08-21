@@ -3,8 +3,8 @@ import datetime
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from solver.models import DayPreference, Schedule
-from solver.serializers import DayPreferenceSerializer
+from solver.models import DayPreference, Schedule, Assignment
+from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 
 from .utils import fast_password_hashing
 
@@ -73,3 +73,30 @@ class SerializerTests(TestCase):
         s.save()
         instance.refresh_from_db()
         self.assertFalse(instance.active)
+
+
+@fast_password_hashing
+class AssignmentSerializerTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create(username="foo", password="1234")
+        cls.schedule = Schedule.objects.create()
+
+    def test_assignment_serializer(self):
+        date = datetime.date(2022, 7, 20)
+        a = Assignment.objects.create(
+            user=self.user,
+            schedule=self.schedule,
+            start=date,
+        )
+        serializer = AssignmentSerializer(a)
+        self.assertDictEqual(
+            serializer.data,
+            {
+                "id": 1,
+                "user": self.user.pk,
+                "username": self.user.username,
+                "schedule": self.schedule.pk,
+                "start": "2022-07-20",
+            },
+        )
