@@ -8,6 +8,7 @@ from django.test import TestCase
 from solver.models import (
     DayPreference,
     Schedule,
+    ScheduleException,
     Assignment,
     get_available_dates,
 )
@@ -193,6 +194,37 @@ class TestSchedule(TestCase):
             s.solve()
             self.assertEqual(Assignment.objects.count(), 1)
             self.assertEqual(Assignment.objects.first().user, u2)
+
+    def test_schedule_solve_raises_specific_exception(self):
+        s = Schedule.objects.create()
+        with patch(
+            "solver.models.get_schedule",
+            autospec=True,
+            side_effect=Exception,
+        ):
+            with self.assertRaises(ScheduleException):
+                s.solve()
+
+    def test_schedule_if_solve_fails_old_assignments_are_deleted(self):
+        s = Schedule.objects.create(
+            start=datetime.date(2022, 7, 21),
+            end=datetime.date(2022, 7, 22),
+        )
+        u1 = User.objects.create_user(username="foo", password="1234")
+        Assignment.objects.create(
+            schedule=s,
+            user=u1,
+            start=datetime.date.today(),
+        )
+        with patch(
+            "solver.models.get_schedule",
+            autospec=True,
+            side_effect=Exception,
+        ):
+            try:
+                s.solve()
+            except ScheduleException:
+                self.assertEqual(Assignment.objects.count(), 0)
 
     def test_schedule_solve_does_not_delete_other_assignments(self):
         s1 = Schedule.objects.create(

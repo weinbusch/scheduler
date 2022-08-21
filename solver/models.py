@@ -76,7 +76,8 @@ class Schedule(models.Model):
             )
         except Exception as e:
             raise ScheduleException(e)
-        self.assignments.all().delete()
+        finally:
+            self.assignments.all().delete()
         return Assignment.objects.bulk_create(
             [Assignment(schedule=self, user=u, start=d) for d, u in solution]
         )
