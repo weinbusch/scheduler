@@ -246,3 +246,14 @@ class TestAssignment(TestCase):
         a = Assignment.objects.create(schedule=s, user=u, start=datetime.date.today())
         self.assertEqual(u.assignments.first(), a)
         self.assertEqual(s.assignments.first(), a)
+
+    def test_assignment_unique_constraint(self):
+        """there should be only one assignment for each day and schedule"""
+        u1 = User.objects.create_user(username="foo", password="123")
+        u2 = User.objects.create_user(username="bar", password="123")
+        s = Schedule.objects.create()
+        s.users.set([u1, u2])
+        start = datetime.date.today()
+        Assignment.objects.create(schedule=s, user=u1, start=start)
+        with self.assertRaises(IntegrityError):
+            Assignment.objects.create(schedule=s, user=u2, start=start)

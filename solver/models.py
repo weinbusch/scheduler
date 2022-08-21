@@ -99,3 +99,11 @@ class Assignment(models.Model):
         related_name="assignments",
     )
     start = models.DateField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["start", "schedule"],
+                name="unique_assignment",
+            )
+        ]
