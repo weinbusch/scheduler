@@ -2,8 +2,8 @@
 {% load static %}
 
 {% block main %}
-<main class="container mx-auto p-2 grid grid-cols-12 gap-4">
-  <header class="col-span-12">
+<main class="container mx-auto p-4 flex flex-col space-y-8">
+  <header>
     <h1 class="font-semibold text-xl flex flex-row space-x-2">
       <a class="text-blue-500 hover:underline cursor-pointer"
          href="{% url 'index' %}">
@@ -15,87 +15,93 @@
       </span>
     </h1>
   </header>
-  <section class="col-span-3">
+  <section>
     <form action="" method="POST">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ next }}">
-      <div>
-	<label for="{{ form.start.id_for_label }}"
-	       class="font-semibold text-sm">
-	  Beginn
-	</label>
-	<div class="mt-1">
-	  {{ form.start }}
-	</div>
-	{% for error in form.start.errors %}
-	<div class="mt-1 text-red-600">
-	  {{ error }}
-	</div>
-	{% endfor %}
-      </div>
-      <div class="mt-4">
-        <label for="{{ form.end.id_for_label }}"
-	       class="font-semibold text-sm">
-          Ende
-        </label>
-        <div class="mt-1">
-          {{ form.end }}
+      <div class="flex flex-col space-y-4">
+        <div>
+	  <label for="{{ form.start.id_for_label }}"
+	         class="font-semibold text-sm">
+	    Beginn
+	  </label>
+	  <div class="mt-1">
+	    {{ form.start }}
+	  </div>
+	  {% for error in form.start.errors %}
+	  <div class="mt-1 text-red-600">
+	    {{ error }}
+	  </div>
+	  {% endfor %}
         </div>
-        {% for error in form.end.errors %}
-        <div class="mt-1 text-red-600">
-          {{ error }}
-        </div>
-        {% endfor %}
-      </div>
-      <div class="mt-4">
-        <h1 class="font-semibold text-sm">Teilnehmer</h1>
-        <p class="mt-1 text-sm">
-          Füge Teilnehmer zu diesem Stundenplan hinzu oder entferne
-          sie.
-        </p>
-        <div class="mt-2 border-b border-r border-l max-h-64 overflow-y-auto">
-          {% for choice in form.users %}
-          <div class="p-2 border-t flex flex-row items-baseline bg-white">
-            {{ choice.tag }}
-            <label class="ml-2 flex-grow" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>	
+        <div>
+          <label for="{{ form.end.id_for_label }}"
+	         class="font-semibold text-sm">
+            Ende
+          </label>
+          <div class="mt-1">
+            {{ form.end }}
+          </div>
+          {% for error in form.end.errors %}
+          <div class="mt-1 text-red-600">
+            {{ error }}
           </div>
           {% endfor %}
         </div>
-        {% for error in form.users.errors %}
-        <div class="mt-1 text-red-600">
-          {{ error }}
+        <div>
+          <h1 class="font-semibold text-sm">Teilnehmer</h1>
+          <p class="mt-1 text-sm">
+            Füge Teilnehmer zu diesem Stundenplan hinzu oder entferne
+            sie.
+          </p>
+          <div class="mt-2 border-b border-r border-l max-h-64 overflow-y-auto">
+            {% for choice in form.users %}
+            <div class="p-2 border-t flex flex-row items-baseline bg-white">
+              {{ choice.tag }}
+              <label class="ml-2 flex-grow" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>	
+            </div>
+            {% endfor %}
+          </div>
+          {% for error in form.users.errors %}
+          <div class="mt-1 text-red-600">
+            {{ error }}
+          </div>
+          {% endfor %}
         </div>
-        {% endfor %}
-      </div>
-      <div class="flex flex-row flex-wrap justify-between items-baseline mt-4 -m-2">
-        <button type="submit"
-	        class="m-2 px-4 p-2 leading-none cursor-pointer rounded-lg 
-		       bg-green-600 hover:bg-green-500 text-white">
-          Speichern
-        </button>
-        {% if object %}
-        <a id="solve_button"
-           class="m-2 px-4 p-2 leading-none cursor-pointer rounded-lg 
-	          bg-blue-600 hover:bg-blue-500 text-white">
-          Dienstplan erstellen
-        </a>
-        {% endif %}
+        <div class="flex flex-row justify-between items-baseline space-x-2">
+          <button type="submit"
+	          class="px-4 p-2 leading-none cursor-pointer rounded-lg 
+		         bg-green-600 hover:bg-green-500 text-white">
+            Speichern
+          </button>
+          {% if object %}
+          <a href="{% url 'assignments' object.pk %}"
+             class="px-4 p-2 leading-none cursor-pointer rounded-lg 
+	            bg-green-600 hover:bg-green-500 text-white">
+            Dienstplan ansehen
+          </a>
+          {% endif %}
+        </div>
       </div>
     </form>
   </section>
   {% if object %}
-  <section class="col-span-9">
-    <div class="border">
-      <h2 class="p-4 pb-0 font-semibold text-lg">Verfügbarkeit bearbeiten für</h2>
-      <div class="flex flex-row overflow-auto" id="calendar_users">
+  <section>
+    <header>
+      <h2 class="text-blue-500 font-semibold text-xl">Verfügbarkeit bearbeiten für</h2>
+      <div class="mt-4 flex flex-row overflow-auto space-x-2" id="calendar_users">
         {% for u in object.users.all %}
-        <label class="p-4 flex flex-row items-center hover:bg-blue-500 hover:text-slate-100 cursor-pointer"
-               for="user_{{ u.pk }}">
-          <input type="radio" id="user_{{ u.pk }}" name="calendar_user" value="{{ u.pk }}" {% if u == user %}checked{% endif %}>
-          <span class="ml-2 leading-tight">{{ u.username }}</span>
+        <label for="user_{{ u.pk }}">
+          <input class="peer hidden" type="radio" id="user_{{ u.pk }}" name="calendar_user" value="{{ u.pk }}" {% if u == user %}checked{% endif %}>
+          <div class="px-4 py-2 rounded-lg
+                      peer-checked:bg-blue-500 peer-checked:text-slate-100
+                      hover:bg-blue-500 hover:text-slate-100
+                      bg-slate-200 cursor-pointer" >
+            {{ u.username}}
+          </div>
         </label>
         {% endfor %}
-      </div>
+    </header>
     </div>
     <div id="calendar" class="mt-4"></div>
   </section>
@@ -110,6 +116,8 @@
   calendar(document.getElementById("calendar"), {
       url: "{% url 'api:day_preferences' object.pk %}",
       csrf_token: "{{ csrf_token }}",
+      start: "{{ object.start.isoformat }}",
+      end: "{{ object.end.isoformat }}",
   })
 </script>
 {% endif %}

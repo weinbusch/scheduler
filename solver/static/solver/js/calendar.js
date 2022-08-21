@@ -36,6 +36,14 @@ function calendar(el, options){
             events: {
                 url: options.url,
             },
+            eventClassNames(info){
+                let u = info.event.extendedProps.user;
+                if (u == getSelectedUser()){
+                    return "px-2 py-1 hover:ring"
+                } else {
+                    return "text-slate-100"
+                }
+            },
             eventClick(info){
                 info.jsEvent.preventDefault();
                 inactivateEvent(info.event.url).then(r => {
