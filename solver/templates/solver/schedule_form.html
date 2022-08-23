@@ -2,24 +2,31 @@
 {% load static %}
 
 {% block main %}
-<main class="container mx-auto p-4 flex flex-col space-y-8">
-  <header>
-    <h1 class="font-semibold text-xl flex flex-row space-x-2">
-      <a class="text-blue-500 hover:underline cursor-pointer"
-         href="{% url 'index' %}">
-        Übersicht
-      </a>
-      <span>&rsaquo;</span>
-      <span class="text-blue-500">
-        {% if object %}Stundenplan {{ object.pk }}{% else %}Neuer Stundenplan{% endif %}
-      </span>
-    </h1>
-  </header>
+<div class="container mx-auto px-4">
+  <h1 class="font-semibold flex flex-row space-x-2">
+    <a class="text-blue-500 hover:underline cursor-pointer"
+       href="{% url 'index' %}">
+      Übersicht
+    </a>
+    <span>&rsaquo;</span>
+    <span class="text-blue-500">
+      {% if object %}Zeitplan {{ object.pk }}{% else %}Neuer Zeitplan{% endif %}
+    </span>
+  </h1>
+</div>
+<main class="max-w-screen-lg container mx-auto p-4 flex flex-col space-y-8">
   <section>
     <form action="" method="POST">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ next }}">
       <div class="flex flex-col space-y-4">
+        <header>
+          <h2 class="text-blue-500 text-xl font-semibold">Einstellungen</h2>
+          <p class="mt-1 text-sm">
+            Änderungen hier wirken sich erst aus, wenn Du sie
+            durch <span class="bg-slate-100 px-2 py-1 rounded font-mono">Speichern</span> bestätigst.
+          </p>
+        </header>
         <div>
 	  <label for="{{ form.start.id_for_label }}"
 	         class="font-semibold text-sm">
@@ -51,7 +58,7 @@
         <div>
           <h1 class="font-semibold text-sm">Teilnehmer</h1>
           <p class="mt-1 text-sm">
-            Füge Teilnehmer zu diesem Stundenplan hinzu oder entferne
+            Füge Teilnehmer zu diesem Zeitplan hinzu oder entferne
             sie.
           </p>
           <div class="mt-2 border-b border-r border-l max-h-64 overflow-y-auto">
@@ -74,13 +81,14 @@
 		         bg-green-600 hover:bg-green-500 text-white">
             Speichern
           </button>
-          {% if object %}
+          {% if object.pk %}
           <a href="{% url 'assignments' object.pk %}"
-             class="px-4 p-2 leading-none cursor-pointer rounded-lg 
-	            bg-green-600 hover:bg-green-500 text-white">
-            Dienstplan ansehen
+             class="px-4 py-2 leading-none cursor-pointer rounded-lg 
+	            bg-purple-600 hover:bg-purple-500 text-white ">
+            Dienstplan {% if object.has_assignments %}ansehen{% else %}erstellen{% endif %}
           </a>
           {% endif %}
+
         </div>
       </div>
     </form>
@@ -116,6 +124,9 @@
   calendar(document.getElementById("calendar"), {
       url: "{% url 'api:day_preferences' object.pk %}",
       csrf_token: "{{ csrf_token }}",
+      canAdd: true,
+      canDelete: true,
+      selectUser: true,
       start: "{{ object.start.isoformat }}",
       end: "{{ object.end.isoformat }}",
   })

@@ -2,83 +2,119 @@
 {% load static %}
 
 {% block main %}
-<main class="container mx-auto p-4 flex flex-col space-y-8">
-  <header>
-    <h1 class="font-semibold text-xl flex flex-row space-x-2">
-      <a class="text-blue-500 hover:underline cursor-pointer"
-         href="{% url 'index' %}">
-        Übersicht
-      </a>
-      <span>&rsaquo;</span>
-      <a class="text-blue-500 hover:underline cursor-pointer"
-         href="{% url 'schedule' schedule.pk %}">
-        Stundenplan {{ schedule.pk }}
-      </a>
-      <span>&rsaquo;</span>
-      <span class="text-blue-500">
-        Dienstplan
-      </span>
-    </h1>
-  </header>
-  <section class="flex flex-row space-x-2">
-    <button id="solve"
-            class="px-4 p-2 leading-none cursor-pointer rounded-lg 
-		   bg-green-600 hover:bg-green-500 text-white">
-      Dienstplan erstellen
-    </button>
-  </section>
-  <section class="hidden px-4 py-2 border rounded-lg text-white"
-           id="info"></section>
-  <div id="calendar"></div>
+<div class="container mx-auto px-4">
+  <h1 class="font-semibold flex flex-row space-x-2">
+    <a class="text-blue-500 hover:underline cursor-pointer"
+       href="{% url 'index' %}">
+      Übersicht
+    </a>
+    <span>&rsaquo;</span>
+    <a class="text-blue-500 hover:underline cursor-pointer"
+       href="{% url 'schedule' schedule.pk %}">
+      Zeitplan {{ schedule.pk }}
+    </a>
+    <span>&rsaquo;</span>
+    <span class="text-blue-500">
+      Verteilung
+    </span>
+  </h1>
+</div>
+<main class="container mx-auto p-4">
+  <div id="app" class="flex flex-col space-y-8"></div>
+  <template id="assignments">
+    <section>
+      <div id="calendar"></div>
+    </section>
+    <section>
+      <button id="solve"
+              class="px-4 p-2 leading-none cursor-pointer rounded-lg 
+		     bg-green-600 hover:bg-green-500 text-white">
+        Verteilung neu erstellen
+      </button>
+    </section>
+  </template>
+  <template id="error">
+    <section class="space-y-4 max-w-screen-md">
+      <p class="text-red-600 font-semibold text-lg">
+        Oh weh, oh weh, da ist etwas schiefgelaufen.
+      </p>
+      <p>Der Dienstplan konnte nicht erstellt werden. Das könnte die folgenden Ursachen haben:</p>
+      <ol class="list-disc space-y-4 px-4">
+        <li>
+          An mindestens einem der Tage ist kein Teilnehmer als
+          verfügbar eingetragen.
+        </li>
+        <li>
+          Die verfügbaren Tage sind unter den Teilnehmern ungleich
+          verteilt. Es gibt wahrscheinlich einige Teilnehmer, die
+          deutlich weniger verfügbare Tage angegeben haben, als
+          andere. Möglicherweise haben einige Teilnehmer überhaupt
+          keine verfügbaren Tage eingetragen.
+        </li>
+      </ol>
+      <p>Der Server hat diese hilfreiche Fehlermeldung geschickt:</p>
+      <p class="font-mono p-2 bg-slate-100 rounded-lg" id="info"></p>
+      <p>Was nun?</p>
+      <p>
+        Gehe zurück zu den Einstellungen, um das Start- und Enddatum
+         zu ändern, die verfügbaren Tage zu bearbeiten, oder
+         Teilnehmer, die gar nicht verfügbar sind, zu entfernen.
+      </p>
+      <p class="flex flex-row justify-around">
+        <a href="{% url 'schedule' schedule.pk %}"
+           class="bg-green-600 p-2 rounded-lg hover:bg-green-500 text-white">
+          Zurück
+        </a>
+      </p>
+    </section>
+  </template>
 </main>
 {% endblock %}
 
 {% block scripts %}
 <script src="{% static 'solver/js/calendar.js' %}"></script>
 <script>
-  function patchSchedule(){
-      let info = document.getElementById("info");
-      fetch("{% url 'api:schedule' schedule.pk %}", {
-          method: "PATCH",
-          headers: {
-              "X-CSRFToken": "{{ csrf_token }}",
-          }
-      }).then(r => {
-          if (r.ok) {
-              info.classList.remove("hidden");
-              info.classList.remove("border-red-600", "bg-red-600");
-              info.classList.add("border-green-600", "bg-green-600");
-              info.innerText = "Dienstplan wurde erstellt.";
-          } else {
-              info.classList.remove("hidden");
-              info.classList.add("border-red-600", "bg-red-600");
-              info.classList.remove("border-green-600", "bg-green-600");
-              console.log(r);
-              r.json().then(json => {
-                  info.innerText = json.error;
-              })
-          }
-      }).then(() => c.refetchEvents())
+  function renderTemplate(name){
+      let template = document.getElementById(name),
+          clone = template.content.cloneNode(true),
+          app = document.getElementById("app");
+      deleteChildren(app);
+      app.appendChild(clone);
   }
-
-  document.getElementById("solve").addEventListener("click", patchSchedule);
-
-  
-  let c = new FullCalendar.Calendar(document.getElementById("calendar"), {
-      locale: "de",
-      buttonText: {
-          "today": "Heute",
-      },
-      initialView: "dayGridMonth",
-      events: {
-          url: "{% url 'api:assignments' schedule.pk %}",
-      },
-      eventClassNames: "p-2",
-      eventDataTransform(data){
-          data.title = data.username;
-          return data;
-      },
-  });
-  c.render();
+  function deleteChildren(el){
+      while (el.firstChild){
+          el.removeChild(el.firstChild);
+      }
+  }
+  function showCalendar(){
+      renderTemplate("assignments");
+      let el = document.getElementById("calendar");
+      let c = calendar(el, { url: "{% url 'api:assignments' schedule.pk %}" });
+      let button = document.getElementById("solve");
+      button.addEventListener("click", solveSchedule);
+  }
+  function solveSchedule(){
+      patchSchedule("{% url 'api:schedule' schedule.pk %}", "{{ csrf_token }}")
+          .then(r => {
+              if (r.ok) {
+                  showCalendar();
+              } else {
+                  r.json().then(json => {
+                      console.log(json);
+                      showError(json.error);
+                  })
+              }
+          })
+  }
+  function showError(error){
+      renderTemplate("error");
+      let el = document.getElementById("info");
+      el.innerText = error;
+  }
+  {% if schedule.has_assignments %}
+  showCalendar();
+  {% else %}
+  solveSchedule();
+  {% endif %}
 </script>
 {% endblock %}
