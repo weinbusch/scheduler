@@ -5,7 +5,7 @@ from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
 from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
 from django.shortcuts import render, reverse, redirect, get_object_or_404
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import UpdateView
 
 from rest_framework import exceptions
 from rest_framework import generics
