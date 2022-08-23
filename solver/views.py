@@ -172,6 +172,8 @@ def add_schedule(request):
 @login_required
 def update_schedule(request, pk):
     schedule = get_object_or_404(Schedule, pk=pk)
+    if request.user != schedule.owner and request.user not in schedule.users.all():
+        return render(request, "solver/unauthorized.html")
     if request.method == "POST":
         form = ScheduleForm(request.POST, instance=schedule)
         if form.is_valid():
@@ -187,6 +189,8 @@ def update_schedule(request, pk):
 @login_required
 def assignments(request, pk):
     s = get_object_or_404(Schedule, pk=pk)
+    if request.user != s.owner and request.user not in s.users.all():
+        return render(request, "solver/unauthorized.html")
     return render(
         request,
         "solver/assignments.html",

@@ -165,6 +165,11 @@ class ViewTests(TestCase, AssertionsMixin):
         self.client.logout()
         self.assert_get_302(url, to=reverse("auth:login") + "?next=" + url)
 
+    def test_only_owner_and_members_can_access_schedule_view(self):
+        s = Schedule.objects.create(owner=self.other)
+        r = self.client.get(s.get_absolute_url())
+        self.assertTemplateUsed(r, "solver/unauthorized.html")
+
     def test_post_to_schedule_detail(self):
         s = Schedule.objects.create(
             owner=self.user,
@@ -195,6 +200,11 @@ class ViewTests(TestCase, AssertionsMixin):
         url = reverse("assignments", args=[s.pk])
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
+
+    def test_only_owner_and_members_can_access_assignments(self):
+        s = Schedule.objects.create(owner=self.other)
+        r = self.client.get(reverse("assignment", args=[s.pk]))
+        self.assertTemplateUsed(r, "solver/unauthorized.html")
 
     def test_view_assignments_unauthorized(self):
         self.client.logout()
