@@ -2,43 +2,50 @@
 {% load static %}
 
 {% block main %}
-<div class="container mx-auto px-4">
-  <h1 class="font-semibold flex flex-row space-x-2">
-    <a class="text-blue-500 hover:underline cursor-pointer"
-       href="{% url 'index' %}">
-      Übersicht
+<main class="container mx-auto p-4 space-y-8">
+  <header class="flex flex-row justify-between items-baseline">
+    <h1 class="text-xl font-semibold flex flex-row space-x-2">
+      <a class="text-blue-500 hover:underline cursor-pointer"
+         href="{% url 'index' %}">
+        Übersicht
+      </a>
+      <span>&rsaquo;</span>
+      <span class="text-blue-500">
+        Zeitplan {{ schedule.pk }}
+      </span>
+      <span>&rsaquo;</span>
+      <span class="text-blue-500">
+        Verteilung
+      </span>
+    </h1>
+    <a href="{% url 'schedule' schedule.pk %}"
+       class="px-4 py-2 leading-none cursor-pointer rounded-lg 
+	      bg-purple-600 hover:bg-purple-500 text-white ">
+      Einstellungen
     </a>
-    <span>&rsaquo;</span>
-    <a class="text-blue-500 hover:underline cursor-pointer"
-       href="{% url 'schedule' schedule.pk %}">
-      Zeitplan {{ schedule.pk }}
-    </a>
-    <span>&rsaquo;</span>
-    <span class="text-blue-500">
-      Verteilung
-    </span>
-  </h1>
-</div>
-<main class="container mx-auto p-4">
-  <div id="app" class="flex flex-col space-y-8"></div>
+  </header>
+
+  <div id="app"></div>
+  
   <template id="assignments">
-    <section>
+    <section class="space-y-8">
+      <div class="flex flex-row justify-end">
+        <button id="solve"
+                class="px-4 p-2 leading-none cursor-pointer rounded-lg 
+		       bg-blue-600 hover:bg-blue-500 text-white">
+          Verteilung neu erstellen
+        </button>
+      </div>
       <div id="calendar"></div>
     </section>
-    <section>
-      <button id="solve"
-              class="px-4 p-2 leading-none cursor-pointer rounded-lg 
-		     bg-green-600 hover:bg-green-500 text-white">
-        Verteilung neu erstellen
-      </button>
-    </section>
   </template>
+
   <template id="error">
     <section class="space-y-4 max-w-screen-md">
-      <p class="text-red-600 font-semibold text-lg">
-        Oh weh, oh weh, da ist etwas schiefgelaufen.
+      <p class="font-semibold text-lg">
+        Oh weh, oh weh, da ist wohl etwas schiefgelaufen.
       </p>
-      <p>Der Dienstplan konnte nicht erstellt werden. Das könnte die folgenden Ursachen haben:</p>
+      <p>Die Verteilung konnte nicht erstellt werden. Das könnte die folgenden Ursachen haben:</p>
       <ol class="list-disc space-y-4 px-4">
         <li>
           An mindestens einem der Tage ist kein Teilnehmer als
@@ -51,20 +58,20 @@
           andere. Möglicherweise haben einige Teilnehmer überhaupt
           keine verfügbaren Tage eingetragen.
         </li>
+        <li>
+          Vielleicht ist auch noch gar kein Teilnehmer eingetragen?
+        </li>
       </ol>
       <p>Der Server hat diese hilfreiche Fehlermeldung geschickt:</p>
       <p class="font-mono p-2 bg-slate-100 rounded-lg" id="info"></p>
       <p>Was nun?</p>
       <p>
-        Gehe zurück zu den Einstellungen, um das Start- und Enddatum
-         zu ändern, die verfügbaren Tage zu bearbeiten, oder
-         Teilnehmer, die gar nicht verfügbar sind, zu entfernen.
-      </p>
-      <p class="flex flex-row justify-around">
+        Gehe zurück zu den
         <a href="{% url 'schedule' schedule.pk %}"
-           class="bg-green-600 p-2 rounded-lg hover:bg-green-500 text-white">
-          Zurück
-        </a>
+           class="text-purple-600 hover:underline">
+          Einstellungen</a>, um das Start- und Enddatum zu ändern, Teilnehmer
+        hinzuzufügen, die verfügbaren Tage zu bearbeiten, oder
+        Teilnehmer, die gar nicht verfügbar sind, zu entfernen.
       </p>
     </section>
   </template>

@@ -6,7 +6,7 @@
     <header>
       <h1 class="font-semibold text-xl text-blue-500">Übersicht</h1>
     </header>
-    {% for schedule in user.schedules.all %}
+    {% for schedule in schedules %}
     <div>
       <a href="{% url 'schedule' schedule.pk %}"
 	 class="group cursor-pointer">
@@ -15,11 +15,15 @@
           Vom {{ schedule.start }} bis zum {{ schedule.end }}
         </p>
         <p class="mt-1 text-sm">
+          {% if schedule.users.all.count %}
           Mit
           {% for user in schedule.users.all %}
           {% if forloop.last and not forloop.first %}und{% endif %}
           {{ user.username }}{% if forloop.revcounter0 > 1 %},{% endif %}
           {% endfor %}
+          {% else %}
+          Noch keine Teilnehmer
+          {% endif %}
         </p>
       </a>
     </div>

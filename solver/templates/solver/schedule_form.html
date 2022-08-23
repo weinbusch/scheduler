@@ -2,31 +2,42 @@
 {% load static %}
 
 {% block main %}
-<div class="container mx-auto px-4">
-  <h1 class="font-semibold flex flex-row space-x-2">
-    <a class="text-blue-500 hover:underline cursor-pointer"
-       href="{% url 'index' %}">
-      Übersicht
-    </a>
-    <span>&rsaquo;</span>
-    <span class="text-blue-500">
-      {% if object %}Zeitplan {{ object.pk }}{% else %}Neuer Zeitplan{% endif %}
-    </span>
-  </h1>
-</div>
 <main class="container mx-auto p-4 space-y-8">
+  <header class="flex flex-row justify-between items-baseline">
+    <h1 class="text-xl font-semibold flex flex-row space-x-2">
+      <a class="text-blue-500 hover:underline cursor-pointer"
+         href="{% url 'index' %}">
+        Übersicht
+      </a>
+      <span>&rsaquo;</span>
+      <span class="text-blue-500">
+        {% if object %}Zeitplan {{ object.pk }}{% else %}Neuer Zeitplan{% endif %}
+      </span>
+      <span>&rsaquo;</span>
+      <span class="text-blue-500">
+        Einstellungen
+      </span>
+    </h1>
+    {% if object.pk %}
+    <a href="{% url 'assignments' object.pk %}"
+       class="px-4 py-2 leading-none cursor-pointer rounded-lg 
+	      bg-purple-600 hover:bg-purple-500 text-white ">
+      Verteilung {% if object.has_assignments %}ansehen{% else %}erstellen{% endif %}
+    </a>
+    {% endif %}
+  </header>
   <section>
     <form action="" method="POST">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ next }}">
-      <div class="flex flex-col space-y-4">
-        <header>
-          <h2 class="text-blue-500 text-xl font-semibold">Einstellungen</h2>
-          <p class="mt-1 text-sm">
+      <div class="space-y-4 max-w-screen-sm">
+        <div>
+          <p class="text-sm">
             Änderungen hier wirken sich erst aus, wenn Du sie
-            durch <span class="bg-slate-100 px-2 py-1 rounded font-mono">Speichern</span> bestätigst.
+            durch <span class="bg-slate-100 px-2 py-1 rounded
+                               font-mono">Speichern</span> bestätigst.
           </p>
-        </header>
+        </div>
         <div>
 	  <label for="{{ form.start.id_for_label }}"
 	         class="font-semibold text-sm">
@@ -75,43 +86,38 @@
           </div>
           {% endfor %}
         </div>
-        <div class="flex flex-col items-start space-y-4">
+        <div>
           <button type="submit"
 	          class="px-4 p-2 leading-none cursor-pointer rounded-lg 
 		         bg-green-600 hover:bg-green-500 text-white">
             Speichern
           </button>
-          {% if object.pk %}
-          <a href="{% url 'assignments' object.pk %}"
-             class="px-4 py-2 leading-none cursor-pointer rounded-lg 
-	            bg-purple-600 hover:bg-purple-500 text-white ">
-            Dienstplan {% if object.has_assignments %}ansehen{% else %}erstellen{% endif %}
-          </a>
-          {% endif %}
-
         </div>
       </div>
     </form>
   </section>
   {% if object %}
-  <section>
-    <header>
-      <h2 class="text-blue-500 font-semibold text-xl">Verfügbarkeit bearbeiten für</h2>
-      <div class="mt-4 flex flex-row overflow-auto space-x-2" id="calendar_users">
-        {% for u in object.users.all %}
-        <label for="user_{{ u.pk }}">
-          <input class="peer hidden" type="radio" id="user_{{ u.pk }}" name="calendar_user" value="{{ u.pk }}" {% if u == user %}checked{% endif %}>
-          <div class="px-4 py-2 rounded-lg
-                      peer-checked:bg-blue-500 peer-checked:text-slate-100
-                      hover:bg-blue-500 hover:text-slate-100
-                      bg-slate-200 cursor-pointer" >
-            {{ u.username}}
-          </div>
-        </label>
-        {% endfor %}
-    </header>
+  <section class="space-y-4">
+    <h2 class="text-blue-500 font-semibold text-xl">Verfügbarkeit bearbeiten für</h2>
+    <div class="flex flex-row overflow-auto space-x-2" id="calendar_users">
+      {% for u in object.users.all %}
+      <label for="user_{{ u.pk }}">
+        <input class="peer hidden"
+               type="radio"
+               id="user_{{ u.pk }}"
+               name="calendar_user"
+               value="{{ u.pk }}"
+               {% if u == user %}checked{% endif %}>
+        <div class="px-4 py-2 rounded-lg
+                    peer-checked:bg-blue-500 peer-checked:text-slate-100
+                    hover:bg-blue-500 hover:text-slate-100
+                    bg-slate-200 cursor-pointer" >
+          {{ u.username}}
+        </div>
+      </label>
+      {% endfor %}
     </div>
-    <div id="calendar" class="mt-4"></div>
+    <div id="calendar"></div>
   </section>
   {% endif %}    
 </main>
