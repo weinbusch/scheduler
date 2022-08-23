@@ -13,14 +13,26 @@ from rest_framework import permissions
 from rest_framework import status
 from rest_framework.response import Response
 
-from solver.models import DayPreference, Schedule, ScheduleException, Assignment
+from solver.models import (
+    DayPreference,
+    Schedule,
+    ScheduleException,
+    Assignment,
+)
 from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 from solver.permissions import DayPreferenceChangePermission
 
 
 @login_required
 def index(request):
-    return render(request, "solver/index.html")
+    schedules = request.user.my_schedules.all().union(
+        request.user.schedules.all(),
+    )
+    return render(
+        request,
+        "solver/index.html",
+        context={"schedules": schedules},
+    )
 
 
 # API views
@@ -145,12 +157,18 @@ class ScheduleForm(ModelForm):
         }
 
 
-class ScheduleCreateView(LoginRequiredMixin, CreateView):
-    model = Schedule
-    form_class = ScheduleForm
-
-
-add_schedule = ScheduleCreateView.as_view()
+@login_required
+def add_schedule(request):
+    if request.method == "POST":
+        form = ScheduleForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.owner = request.user
+            obj.save()
+            return redirect(obj.get_absolute_url())
+    else:
+        form = ScheduleForm()
+    return render(request, "solver/schedule_form.html", dict(form=form))
 
 
 class ScheduleUpdateView(LoginRequiredMixin, UpdateView):

@@ -23,15 +23,17 @@ User = get_user_model()
 class DayPreferencesAPITests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        owner = User.objects.create_user(username="owner", password="1234")
         u1 = User.objects.create_user(username="foo", password="bar")
         u2 = User.objects.create_user(username="bar", password="bar")
         u3 = User.objects.create_user(username="baz", password="baz")
         s1 = Schedule.objects.create(
+            owner=owner,
             start=datetime.date(2022, 7, 1),
             end=datetime.date(2022, 7, 30),
         )
         s1.users.set([u1, u2])
-        s2 = Schedule.objects.create()
+        s2 = Schedule.objects.create(owner=owner)
         s2.users.set([u2, u3])
         DayPreference.objects.bulk_create(
             [
@@ -47,8 +49,10 @@ class DayPreferencesAPITests(TestCase):
                 )
             ]
         )
+        cls.owner = owner
         cls.user = u1
         cls.schedule = s1
+        cls.other = User.objects.create_user(username="other", password="1234")
 
     def setUp(self):
         self.client.force_login(self.user)
@@ -81,14 +85,17 @@ class DayPreferencesAPITests(TestCase):
         self.assertListEqual(
             json.loads(r.content),
             DayPreferenceSerializer(
-                DayPreference.objects.filter(schedule=self.schedule, active=True),
+                DayPreference.objects.filter(
+                    schedule=self.schedule,
+                    active=True,
+                ),
                 many=True,
             ).data,
         )
 
     def test_list_does_not_contain_items_from_non_members(self):
         d = DayPreference.objects.create(
-            user=User.objects.get(pk=3),
+            user=self.other,
             schedule=self.schedule,
             start=datetime.date.today(),
             active=True,
@@ -173,8 +180,9 @@ class DayPreferencesAPITests(TestCase):
 class DayPreferenceAPITest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.owner = User.objects.create_user(username="owner", password="1234")
         cls.user = User.objects.create_user(username="foo", password="1234")
-        cls.schedule = Schedule.objects.create()
+        cls.schedule = Schedule.objects.create(owner=cls.owner)
         cls.schedule.users.add(cls.user)
 
     def setUp(self):
@@ -241,9 +249,12 @@ class DayPreferenceAPITest(TestCase):
 class ScheduleAPITest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.owner = User.objects.create_user(username="owner", password="1234")
         cls.user = User.objects.create_user(username="foo", password="1234")
         cls.schedule = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
+            owner=cls.owner,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
         )
 
     def url(self, pk=None):
@@ -298,8 +309,9 @@ class ScheduleAPITest(TestCase):
 class AssignmentsTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        owner = User.objects.create_user(username="owner", password="1234")
         u = User.objects.create(username="foo", password="123")
-        s = Schedule.objects.create()
+        s = Schedule.objects.create(owner=owner)
         s.users.add(u)
         Assignment.objects.create(
             schedule=s,

@@ -60,6 +60,11 @@ class Schedule(models.Model):
     users = models.ManyToManyField(
         to=settings.AUTH_USER_MODEL, related_name="schedules", blank=True
     )
+    owner = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        related_name="my_schedules",
+        on_delete=models.PROTECT,
+    )
 
     def days(self):
         return [d for d in date_range(self.start, self.end) if d.weekday() < 5]

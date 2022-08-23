@@ -23,8 +23,8 @@ User = get_user_model()
 class TestDayPreference(TestCase):
     @classmethod
     def setUpTestData(cls):
-        u = User.objects.create_user(username="bar", password="1234")
-        s = Schedule.objects.create()
+        u = User.objects.create_user(username="owner", password="1234")
+        s = Schedule.objects.create(owner=u)
         cls.user = u
         cls.schedule = s
 
@@ -87,8 +87,13 @@ class TestDayPreference(TestCase):
 
 @fast_password_hashing
 class TestSchedule(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="owner", password="1234")
+
     def test_schedule_start_end_date(self):
         Schedule.objects.create(
+            owner=self.user,
             start=datetime.date(2022, 7, 12),
             end=datetime.date(2022, 8, 12),
         )
@@ -97,17 +102,30 @@ class TestSchedule(TestCase):
         u1 = User.objects.create_user(username="foo", password="1234")
         u2 = User.objects.create_user(username="bar", password="1234")
         Schedule.objects.create(
+            owner=self.user,
             start=datetime.date(2022, 7, 12),
             end=datetime.date(2022, 8, 12),
         ).users.set([u1, u2])
         Schedule.objects.create(
-            start=datetime.date(2022, 7, 12), end=datetime.date(2022, 8, 12)
+            owner=self.user,
+            start=datetime.date(2022, 7, 12),
+            end=datetime.date(2022, 8, 12),
         ).users.set([u1])
         self.assertEqual(u1.schedules.count(), 2)
         self.assertEqual(u2.schedules.count(), 1)
 
+    def test_schedule_owner(self):
+        u = User.objects.create_user(username="bar", password="1234")
+        s = Schedule.objects.create(
+            owner=u,
+            start=datetime.date(2022, 7, 12),
+            end=datetime.date(2022, 8, 12),
+        )
+        self.assertEqual(u.my_schedules.first(), s)
+
     def test_schedule_days(self):
         s = Schedule(
+            owner=self.user,
             start=datetime.date(2022, 7, 11),  # a monday
             end=datetime.date(2022, 7, 18),  # the next monday
         )
@@ -118,7 +136,9 @@ class TestSchedule(TestCase):
 
     def test_schedule_solve_calls_solver(self):
         s = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
         )
         with patch("solver.models.get_schedule") as solver_function:
             s.solve()
@@ -126,6 +146,7 @@ class TestSchedule(TestCase):
 
     def test_schedule_solve_calls_solver_with_correct_arguments(self):
         s = Schedule.objects.create(
+            owner=self.user,
             start=datetime.date(2022, 7, 21),
             end=datetime.date(2022, 7, 22),
         )
@@ -151,6 +172,7 @@ class TestSchedule(TestCase):
 
     def test_schedule_solve_creates_assignments(self):
         s = Schedule.objects.create(
+            owner=self.user,
             start=datetime.date(2022, 7, 21),
             end=datetime.date(2022, 7, 22),
         )
@@ -173,6 +195,7 @@ class TestSchedule(TestCase):
 
     def test_schedule_solve_deletes_old_assignments(self):
         s = Schedule.objects.create(
+            owner=self.user,
             start=datetime.date(2022, 7, 21),
             end=datetime.date(2022, 7, 22),
         )
@@ -196,7 +219,9 @@ class TestSchedule(TestCase):
             self.assertEqual(Assignment.objects.first().user, u2)
 
     def test_schedule_solve_raises_specific_exception(self):
-        s = Schedule.objects.create()
+        s = Schedule.objects.create(
+            owner=self.user,
+        )
         with patch(
             "solver.models.get_schedule",
             autospec=True,
@@ -207,6 +232,7 @@ class TestSchedule(TestCase):
 
     def test_schedule_if_solve_fails_old_assignments_are_deleted(self):
         s = Schedule.objects.create(
+            owner=self.user,
             start=datetime.date(2022, 7, 21),
             end=datetime.date(2022, 7, 22),
         )
@@ -228,6 +254,7 @@ class TestSchedule(TestCase):
 
     def test_schedule_solve_does_not_delete_other_assignments(self):
         s1 = Schedule.objects.create(
+            owner=self.user,
             start=datetime.date(2022, 7, 21),
             end=datetime.date(2022, 7, 22),
         )
@@ -238,6 +265,7 @@ class TestSchedule(TestCase):
             start=datetime.date.today(),
         )
         s2 = Schedule.objects.create(
+            owner=self.user,
             start=datetime.date(2022, 7, 21),
             end=datetime.date(2022, 7, 22),
         )
@@ -256,7 +284,9 @@ class TestSchedule(TestCase):
     def test_has_assignments(self):
         u = User.objects.create_user(username="foo", password="1234")
         s = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
         )
         Assignment.objects.create(
             user=u,
@@ -273,17 +303,24 @@ class TestAssignment(TestCase):
     def test_create_assignment(self):
         u = User.objects.create_user(username="foo", password="1234")
         s = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
+            owner=u,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
         )
-        a = Assignment.objects.create(schedule=s, user=u, start=datetime.date.today())
+        a = Assignment.objects.create(
+            schedule=s,
+            user=u,
+            start=datetime.date.today(),
+        )
         self.assertEqual(u.assignments.first(), a)
         self.assertEqual(s.assignments.first(), a)
 
     def test_assignment_unique_constraint(self):
         """there should be only one assignment for each day and schedule"""
+        owner = User.objects.create_user(username="owner", password="1234")
         u1 = User.objects.create_user(username="foo", password="123")
         u2 = User.objects.create_user(username="bar", password="123")
-        s = Schedule.objects.create()
+        s = Schedule.objects.create(owner=owner)
         s.users.set([u1, u2])
         start = datetime.date.today()
         Assignment.objects.create(schedule=s, user=u1, start=start)

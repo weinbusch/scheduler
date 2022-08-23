@@ -89,7 +89,8 @@ class AuthTest(TestCase, AssertionsMixin):
 class ViewTests(TestCase, AssertionsMixin):
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username="foo", password="bar")
+        cls.user = User.objects.create_user(username="owner", password="1234")
+        cls.other = User.objects.create_user(username="other", password="1234")
 
     def setUp(self):
         self.client.force_login(self.user)
@@ -102,6 +103,21 @@ class ViewTests(TestCase, AssertionsMixin):
 
     def test_get_index(self):
         self.assert_get_200(reverse("index"))
+
+    def test_index_view_lists_owned_and_assigned_schedules(self):
+        Schedule.objects.create(owner=self.user)
+        s2 = Schedule.objects.create(owner=self.other)
+        s2.users.add(self.user)
+        r = self.client.get(reverse("index"))
+        self.assertListEqual(
+            [s.id for s in r.context["schedules"]],
+            [s.id for s in Schedule.objects.all()],
+        )
+
+    def test_index_view_does_not_list_other_schedules(self):
+        Schedule.objects.create(owner=self.other)
+        r = self.client.get(reverse("index"))
+        self.assertEqual(r.context["schedules"].count(), 0)
 
     def test_get_add_schedule(self):
         self.assert_get_200(reverse("add_schedule"))
@@ -121,15 +137,29 @@ class ViewTests(TestCase, AssertionsMixin):
         }
         self.assert_post_302(reverse("add_schedule"), data)
 
+    def test_user_is_set_as_schedule_owner(self):
+        data = {
+            "start": datetime.date.today(),
+            "end": datetime.date.today(),
+            "users": [self.user.pk],
+        }
+        self.client.post(reverse("add_schedule"), data)
+        schedule = Schedule.objects.first()
+        self.assertEqual(self.user, schedule.owner)
+
     def test_get_schedule_detail(self):
         s = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
         )
         self.assert_get_200(reverse("schedule", args=[s.pk]))
 
     def test_unauthorized_schedule_detail_redirects_to_login(self):
         s = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
         )
         url = reverse("schedule", args=[s.pk])
         self.client.logout()
@@ -137,7 +167,9 @@ class ViewTests(TestCase, AssertionsMixin):
 
     def test_post_to_schedule_detail(self):
         s = Schedule.objects.create(
-            start=datetime.date.today(), end=datetime.date.today()
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
         )
         url = reverse("schedule", args=[s.pk])
         self.assert_post_302(
@@ -151,7 +183,9 @@ class ViewTests(TestCase, AssertionsMixin):
         )
 
     def test_view_assignments(self):
-        s = Schedule.objects.create()
+        s = Schedule.objects.create(
+            owner=self.user,
+        )
         s.users.add(self.user)
         Assignment.objects.create(
             schedule=s,
@@ -164,7 +198,9 @@ class ViewTests(TestCase, AssertionsMixin):
 
     def test_view_assignments_unauthorized(self):
         self.client.logout()
-        s = Schedule.objects.create()
+        s = Schedule.objects.create(
+            owner=self.user,
+        )
         s.users.add(self.user)
         Assignment.objects.create(
             schedule=s,

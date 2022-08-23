@@ -16,7 +16,7 @@ class SerializerTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create(username="foo", password="1234")
-        cls.schedule = Schedule.objects.create()
+        cls.schedule = Schedule.objects.create(owner=cls.user)
 
     def test_day_preference_serializer(self):
         date = datetime.date(2022, 7, 20)
@@ -80,7 +80,7 @@ class AssignmentSerializerTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create(username="foo", password="1234")
-        cls.schedule = Schedule.objects.create()
+        cls.schedule = Schedule.objects.create(owner=cls.user)
 
     def test_assignment_serializer(self):
         date = datetime.date(2022, 7, 20)
