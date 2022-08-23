@@ -1,11 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
 from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
 from django.shortcuts import render, reverse, redirect, get_object_or_404
-from django.views.generic import UpdateView
 
 from rest_framework import exceptions
 from rest_framework import generics
@@ -171,12 +169,19 @@ def add_schedule(request):
     return render(request, "solver/schedule_form.html", dict(form=form))
 
 
-class ScheduleUpdateView(LoginRequiredMixin, UpdateView):
-    model = Schedule
-    form_class = ScheduleForm
-
-
-update_schedule = ScheduleUpdateView.as_view()
+@login_required
+def update_schedule(request, pk):
+    schedule = get_object_or_404(Schedule, pk=pk)
+    if request.method == "POST":
+        form = ScheduleForm(request.POST, instance=schedule)
+        if form.is_valid():
+            obj = form.save()
+            return redirect(obj.get_absolute_url())
+    else:
+        form = ScheduleForm(instance=schedule)
+    return render(
+        request, "solver/schedule_form.html", dict(form=form, object=schedule)
+    )
 
 
 @login_required
