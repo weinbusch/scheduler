@@ -9,6 +9,6 @@ class DayPreferenceChangePermission(permissions.BasePermission):
             return True
 
         if isinstance(obj, DayPreference):
-            return obj.user == request.user
+            return request.user in obj.schedule.users.all()
 
         return True

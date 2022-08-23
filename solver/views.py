@@ -68,15 +68,6 @@ class DayPreferencesAPIView(generics.ListCreateAPIView):
 day_preferences_api = DayPreferencesAPIView.as_view()
 
 
-class DayPreferenceDeleteAPIView(generics.DestroyAPIView):
-    serializer_class = DayPreferenceSerializer
-    queryset = DayPreference.objects.all()
-    permission_classes = [
-        permissions.IsAuthenticated,
-        DayPreferenceChangePermission,
-    ]
-
-
 class DayPreferenceAPI(generics.UpdateAPIView):
     serializer_class = DayPreferenceSerializer
     queryset = DayPreference.objects.all()

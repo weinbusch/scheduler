@@ -221,9 +221,16 @@ class DayPreferenceAPITest(TestCase):
         d.refresh_from_db()
         self.assertFalse(d.active)
 
-    def test_only_user_can_delete(self):
+    def test_member_of_schedule_can_also_delete(self):
         u = User.objects.create_user(username="bar", password="1234")
         self.schedule.users.add(u)
+        self.client.force_login(u)
+        d = self.create_day_preference()
+        r = self.client.delete(self.url(d))
+        self.assertEqual(r.status_code, 204)
+
+    def test_other_users_cannot_delete(self):
+        u = User.objects.create_user(username="bar", password="1234")
         self.client.force_login(u)
         d = self.create_day_preference()
         r = self.client.delete(self.url(d))
