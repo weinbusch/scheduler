@@ -69,7 +69,7 @@ function calendar(el, options){
                 }
             },
             dateClick(info){
-                if (options.canAdd) {
+                if (options.canAdd && info.date.getDay() > 0 && info.date.getDay() < 6) {
                     addEvent(options.url, info.dateStr).then(r => {
                         if (r.ok) {
                             this.refetchEvents()
