@@ -205,9 +205,7 @@ class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for fieldname in ["username", "password"]:
-            self.fields[fieldname].widget.attrs.update(
-                {"class": "p-2 border w-full leading-tight"}
-            )
+            self.fields[fieldname].widget.template_name = "auth/input.html"
 
 
 class LoginView(BaseLoginView):
@@ -226,9 +224,7 @@ class RegisterForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for fieldname in ["username", "password1", "password2"]:
-            self.fields[fieldname].widget.attrs.update(
-                {"class": "p-2 border w-full leading-tight"}
-            )
+            self.fields[fieldname].widget.template_name = "auth/input.html"
 
 
 def register_user(request):
