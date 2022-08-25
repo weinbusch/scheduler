@@ -203,7 +203,7 @@ class ViewTests(TestCase, AssertionsMixin):
 
     def test_only_owner_and_members_can_access_assignments(self):
         s = Schedule.objects.create(owner=self.other)
-        r = self.client.get(reverse("assignment", args=[s.pk]))
+        r = self.client.get(reverse("assignments", args=[s.pk]))
         self.assertTemplateUsed(r, "solver/unauthorized.html")
 
     def test_view_assignments_unauthorized(self):

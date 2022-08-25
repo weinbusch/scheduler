@@ -250,7 +250,6 @@ class ScheduleAPITest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.owner = User.objects.create_user(username="owner", password="1234")
-        cls.user = User.objects.create_user(username="foo", password="1234")
         cls.schedule = Schedule.objects.create(
             owner=cls.owner,
             start=datetime.date.today(),
@@ -263,7 +262,7 @@ class ScheduleAPITest(TestCase):
         return reverse("api:schedule", args=[pk])
 
     def setUp(self):
-        self.client.force_login(self.user)
+        self.client.force_login(self.owner)
 
     def test_patch_schedule_calls_solve(self):
         url = self.url()
@@ -332,3 +331,16 @@ class AssignmentsTest(TestCase):
             data,
             AssignmentSerializer(Assignment.objects.all(), many=True).data,
         )
+
+    def test_block_unauthorized_access_to_assignments_list(self):
+        self.client.logout()
+        url = reverse("api:assignments", args=[self.schedule.pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 403)
+
+    def test_only_owner_and_members_can_access_assignments(self):
+        other = User.objects.create_user(username="other", password="1234")
+        self.client.force_login(other)
+        url = reverse("api:assignments", args=[self.schedule.pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 403)

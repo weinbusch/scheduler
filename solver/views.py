@@ -5,20 +5,20 @@ from django.contrib.auth.views import logout_then_login
 from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
 from django.shortcuts import render, reverse, redirect, get_object_or_404
 
-from rest_framework import exceptions
-from rest_framework import generics
 from rest_framework import permissions
 from rest_framework import status
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+)
 from rest_framework.response import Response
 
 from solver.models import (
     DayPreference,
     Schedule,
     ScheduleException,
-    Assignment,
 )
 from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
-from solver.permissions import DayPreferenceChangePermission
 
 
 @login_required
@@ -36,105 +36,106 @@ def index(request):
 # API views
 
 
-class DayPreferencesAPIView(generics.ListCreateAPIView):
-    serializer_class = DayPreferenceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+@api_view(["GET", "POST"])
+@permission_classes([permissions.IsAuthenticated])
+def day_preferences_api(request, pk):
+    try:
+        schedule = Schedule.objects.get(pk=pk)
+    except Schedule.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    if request.user != schedule.owner and request.user not in schedule.users.all():
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
-    def get_schedule(self):
-        pk = self.kwargs.get("pk")
-        return get_object_or_404(Schedule, pk=pk)
+    if request.method == "POST":
+        serializer = DayPreferenceSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            try:
+                instance = DayPreference.objects.get(
+                    user=data["user"],
+                    schedule=schedule,
+                    start=data["start"],
+                )
+            except DayPreference.DoesNotExist:
+                instance = None
+            serializer.instance = instance
+            serializer.save(active=True, schedule=schedule)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def check_user(self, schedule):
-        if self.request.user not in schedule.users.all():
-            raise exceptions.PermissionDenied
+    preferences = DayPreference.objects.filter(
+        schedule=schedule,
+        active=True,
+        user__in=schedule.users.all(),
+    )
+    user_id = request.query_params.get("user")
+    if user_id is not None:
+        preferences = preferences.filter(user_id=user_id)
+    serializer = DayPreferenceSerializer(preferences, many=all)
+    return Response(serializer.data)
 
-    def get_queryset(self):
-        schedule = self.get_schedule()
-        self.check_user(schedule)
-        qs = DayPreference.objects.filter(
-            schedule=schedule,
-            active=True,
-            user__in=schedule.users.all(),
+
+@api_view(["DELETE", "PATCH"])
+@permission_classes([permissions.IsAuthenticated])
+def day_preference_api(request, pk):
+    try:
+        preference = DayPreference.objects.get(pk=pk)
+    except DayPreference.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if (
+        request.user != preference.user
+        and request.user not in preference.schedule.users.all()
+    ):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == "DELETE":
+        preference.active = False
+        preference.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    serializer = DayPreferenceSerializer(preference, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PATCH"])
+@permission_classes([permissions.IsAuthenticated])
+def schedule_api(request, pk):
+    try:
+        schedule = Schedule.objects.get(pk=pk)
+    except Schedule.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.user != schedule.owner and request.user not in schedule.users.all():
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        schedule.solve()
+    except ScheduleException as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-        user_id = self.request.query_params.get("user")
-        if user_id is not None:
-            qs = qs.filter(user_id=user_id)
-        return qs
-
-    def perform_create(self, serializer):
-        schedule = self.get_schedule()
-        self.check_user(schedule)
-        data = serializer.validated_data
-        try:
-            instance = DayPreference.objects.get(
-                user=data["user"], schedule=schedule, start=data["start"]
-            )
-        except DayPreference.DoesNotExist:
-            instance = None
-        serializer.instance = instance
-        serializer.save(active=True, schedule=schedule)
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-day_preferences_api = DayPreferencesAPIView.as_view()
-
-
-class DayPreferenceAPI(generics.UpdateAPIView):
-    serializer_class = DayPreferenceSerializer
-    queryset = DayPreference.objects.all()
-    permission_classes = [
-        permissions.IsAuthenticated,
-        DayPreferenceChangePermission,
-    ]
-
-    def delete(self, *args, **kwargs):
-        obj = self.get_object()
-        obj.active = False
-        obj.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-day_preference_api = DayPreferenceAPI.as_view()
-
-
-class ScheduleAPIView(generics.GenericAPIView):
-    queryset = Schedule.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-
-    def patch(self, *args, **kwargs):
-        schedule = self.get_object()
-        try:
-            schedule.solve()
-        except ScheduleException as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-schedule_api = ScheduleAPIView.as_view()
-
-
-class AssignmentAPIView(generics.ListAPIView):
-    serializer_class = AssignmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_schedule(self):
-        pk = self.kwargs.get("pk")
-        return get_object_or_404(Schedule, pk=pk)
-
-    def check_user(self, schedule):
-        if self.request.user not in schedule.users.all():
-            raise exceptions.PermissionDenied
-
-    def get_queryset(self):
-        schedule = self.get_schedule()
-        self.check_user(schedule)
-        qs = Assignment.objects.filter(schedule=schedule)
-        return qs
-
-
-assignments_api = AssignmentAPIView.as_view()
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def assignments_api(request, pk):
+    try:
+        schedule = Schedule.objects.get(pk=pk)
+    except Schedule.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    if request.user != schedule.owner and request.user not in schedule.users.all():
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    assignments = schedule.assignments.all()
+    serializer = AssignmentSerializer(assignments, many=all)
+    return Response(serializer.data)
 
 
 # Schedule views
