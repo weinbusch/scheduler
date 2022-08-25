@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from solver.models import Schedule, Assignment
+from solver.models import Schedule
 
 from .utils import fast_password_hashing
 
