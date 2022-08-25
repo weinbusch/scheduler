@@ -11,7 +11,12 @@ function calendar(el, options){
     function getSelectedUser(){
         let el = document.getElementById("calendar_users");
         if (el){
-            return el.querySelector("input:checked").value;
+            let checked = el.querySelector("input:checked");
+            if (checked != null){
+                return checked.value;
+            } else {
+                return null
+            }
         }
     }
     
@@ -25,21 +30,27 @@ function calendar(el, options){
     }
     
     function addEvent(url, start){
-        return fetch(url, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": options.csrf_token,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                user: getSelectedUser(),
-                start: start,
+        let user = getSelectedUser();
+        if (user){
+            return fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": options.csrf_token,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    user: getSelectedUser(),
+                    start: start,
+                })
             })
-        })
+        } else {
+            return Promise.reject("User cannot be empty.")
+        }
     }
     
     function makeCalendar(){
         let c = new FullCalendar.Calendar(el, {
+            initialDate: options.start,
             locale: "de",
             buttonText: {
                 "today": "Heute",
@@ -50,7 +61,10 @@ function calendar(el, options){
             },
             eventClassNames(info){
                 let u = info.event.extendedProps.user;
-                if (u == getSelectedUser()){
+                if (!options.selectUser){
+                    return "px-2 py-1"
+                }
+                else if (u == getSelectedUser()){
                     return "px-2 py-1 hover:ring"
                 } else {
                     return "text-slate-100"
@@ -58,7 +72,7 @@ function calendar(el, options){
             },
             eventClick(info){
                 info.jsEvent.preventDefault();
-                if (options.canDelete){
+                if (options.canDelete && getSelectedUser() == info.event.extendedProps.user){
                     inactivateEvent(info.event.url).then(r => {
                         if (r.ok) {
                             this.refetchEvents()
@@ -74,7 +88,7 @@ function calendar(el, options){
                         if (r.ok) {
                             this.refetchEvents()
                         } else {
-                            console.log("could not add event", info)
+                            console.log("could not add event");
                         }
                     })
                 }

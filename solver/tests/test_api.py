@@ -181,66 +181,61 @@ class DayPreferenceAPITest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.owner = User.objects.create_user(username="owner", password="1234")
-        cls.user = User.objects.create_user(username="foo", password="1234")
+        cls.member = User.objects.create_user(username="member", password="1234")
+        cls.other = User.objects.create_user(username="other", password="1234")
+        cls.no_member = User.objects.create_user(username="no_member", password="1234")
         cls.schedule = Schedule.objects.create(owner=cls.owner)
-        cls.schedule.users.add(cls.user)
+        cls.schedule.users.add(cls.member, cls.other)
 
     def setUp(self):
-        self.client.force_login(self.user)
+        pass
+        # self.client.force_login(self.owner)
 
     def url(self, instance):
         return reverse("api:day_preference", args=[instance.pk])
 
-    def create_day_preference(self, **kwargs):
+    def create_day_preference(self, user, **kwargs):
         data = {
-            "user": self.user,
+            "user": user,
             "schedule": self.schedule,
             "start": datetime.date(2022, 7, 30),
         }
         data.update(kwargs)
         return DayPreference.objects.create(**data)
 
-    def test_patch_day_preference_active_flag(self):
-        d = self.create_day_preference()
-        r = self.client.patch(
-            self.url(d),
-            data={"active": False},
-            content_type="application/json",
-        )
-        self.assertEqual(r.status_code, 200)
+    def test_member_can_delete_own_preference(self):
+        d = self.create_day_preference(self.member)
+        self.client.force_login(self.member)
+        r = self.client.delete(self.url(d))
+        self.assertEqual(r.status_code, 204)
+
+    def test_member_can_delete_others_preference(self):
+        d = self.create_day_preference(self.other)
+        self.client.force_login(self.member)
+        r = self.client.delete(self.url(d))
+        self.assertEqual(r.status_code, 204)
+
+    def test_owner_can_delete_others_preference(self):
+        d = self.create_day_preference(self.other)
+        self.client.force_login(self.owner)
+        r = self.client.delete(self.url(d))
+        self.assertEqual(r.status_code, 204)
+
+    def test_delete_sets_active_flag(self):
+        d = self.create_day_preference(self.member)
+        self.client.force_login(self.member)
+        self.client.delete(self.url(d))
         d.refresh_from_db()
         self.assertFalse(d.active)
 
-    def test_only_user_can_patch(self):
-        u = User.objects.create_user(username="bar", password="1234")
-        self.client.force_login(u)
-        d = self.create_day_preference()
-        r = self.client.patch(
-            self.url(d),
-            data={"active": False},
-            content_type="application/json",
-        )
+    def test_non_member_cannot_delete(self):
+        d = self.create_day_preference(self.member)
+        self.client.force_login(self.no_member)
+        r = self.client.delete(self.url(d))
         self.assertEqual(r.status_code, 403)
 
-    def test_delete_day_preference_sets_active_flag(self):
-        d = self.create_day_preference(active=True)
-        r = self.client.delete(self.url(d))
-        self.assertEqual(r.status_code, 204)
-        d.refresh_from_db()
-        self.assertFalse(d.active)
-
-    def test_member_of_schedule_can_also_delete(self):
-        u = User.objects.create_user(username="bar", password="1234")
-        self.schedule.users.add(u)
-        self.client.force_login(u)
-        d = self.create_day_preference()
-        r = self.client.delete(self.url(d))
-        self.assertEqual(r.status_code, 204)
-
-    def test_other_users_cannot_delete(self):
-        u = User.objects.create_user(username="bar", password="1234")
-        self.client.force_login(u)
-        d = self.create_day_preference()
+    def test_unauthenticated_client_cannot_delete(self):
+        d = self.create_day_preference(self.member)
         r = self.client.delete(self.url(d))
         self.assertEqual(r.status_code, 403)
 

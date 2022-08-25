@@ -119,14 +119,16 @@ class ViewTests(TestCase, AssertionsMixin):
         r = self.client.get(reverse("index"))
         self.assertEqual(r.context["schedules"].count(), 0)
 
-    def test_get_add_schedule(self):
-        self.assert_get_200(reverse("add_schedule"))
+    def test_add_schedule_view(self):
+        r = self.client.get(reverse("add_schedule"))
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, "solver/schedule_form.html")
 
     def test_unauthorized_add_schedule_redirects_to_login(self):
         self.client.logout()
-        self.assert_get_302(
-            reverse("add_schedule"),
-            to=reverse("auth:login") + "?next=" + reverse("add_schedule"),
+        r = self.client.get(reverse("add_schedule"))
+        self.assertRedirects(
+            r, reverse("auth:login") + "?next=" + reverse("add_schedule")
         )
 
     def test_post_to_add_schedule(self):
@@ -135,7 +137,8 @@ class ViewTests(TestCase, AssertionsMixin):
             "end": datetime.date.today(),
             "users": [self.user.pk],
         }
-        self.assert_post_302(reverse("add_schedule"), data)
+        r = self.client.post(reverse("add_schedule"), data)
+        self.assertEqual(r.status_code, 302)
 
     def test_user_is_set_as_schedule_owner(self):
         data = {
@@ -147,76 +150,98 @@ class ViewTests(TestCase, AssertionsMixin):
         schedule = Schedule.objects.first()
         self.assertEqual(self.user, schedule.owner)
 
-    def test_get_schedule_detail(self):
+    def test_schedule_settings(self):
         s = Schedule.objects.create(
             owner=self.user,
             start=datetime.date.today(),
             end=datetime.date.today(),
         )
-        self.assert_get_200(reverse("schedule", args=[s.pk]))
+        r = self.client.get(reverse("schedule_settings", args=[s.pk]))
+        self.assertTemplateUsed(r, "solver/schedule_settings.html")
 
-    def test_unauthorized_schedule_detail_redirects_to_login(self):
+    def test_save_schedule_settings(self):
         s = Schedule.objects.create(
             owner=self.user,
             start=datetime.date.today(),
             end=datetime.date.today(),
         )
-        url = reverse("schedule", args=[s.pk])
-        self.client.logout()
-        self.assert_get_302(url, to=reverse("auth:login") + "?next=" + url)
-
-    def test_only_owner_and_members_can_access_schedule_view(self):
-        s = Schedule.objects.create(owner=self.other)
-        r = self.client.get(s.get_absolute_url())
-        self.assertTemplateUsed(r, "solver/unauthorized.html")
-
-    def test_post_to_schedule_detail(self):
-        s = Schedule.objects.create(
-            owner=self.user,
-            start=datetime.date.today(),
-            end=datetime.date.today(),
+        data = dict(
+            start="2022-10-01",
+            end="2022-10-11",
+            users=[],
         )
-        url = reverse("schedule", args=[s.pk])
-        self.assert_post_302(
-            url,
-            {
-                "start": datetime.date.today(),
-                "end": datetime.date.today(),
-                "users": [],
-            },
-            to=url,
-        )
-
-    def test_view_assignments(self):
-        s = Schedule.objects.create(
-            owner=self.user,
-        )
-        s.users.add(self.user)
-        Assignment.objects.create(
-            schedule=s,
-            user=self.user,
-            start=datetime.date.today(),
-        )
-        url = reverse("assignments", args=[s.pk])
-        r = self.client.get(url)
-        self.assertEqual(r.status_code, 200)
-
-    def test_only_owner_and_members_can_access_assignments(self):
-        s = Schedule.objects.create(owner=self.other)
-        r = self.client.get(reverse("assignments", args=[s.pk]))
-        self.assertTemplateUsed(r, "solver/unauthorized.html")
-
-    def test_view_assignments_unauthorized(self):
-        self.client.logout()
-        s = Schedule.objects.create(
-            owner=self.user,
-        )
-        s.users.add(self.user)
-        Assignment.objects.create(
-            schedule=s,
-            user=self.user,
-            start=datetime.date.today(),
-        )
-        url = reverse("assignments", args=[s.pk])
-        r = self.client.get(url)
+        r = self.client.post(reverse("schedule_settings", args=[s.pk]), data)
         self.assertEqual(r.status_code, 302)
+        s.refresh_from_db()
+        self.assertEqual(s.start, datetime.date(2022, 10, 1))
+        self.assertEqual(s.end, datetime.date(2022, 10, 11))
+
+    def test_get_schedule_preferences(self):
+        s = Schedule.objects.create(
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
+        )
+        r = self.client.get(reverse("schedule_preferences", args=[s.pk]))
+        self.assertTemplateUsed(r, "solver/schedule_preferences.html")
+
+    def test_get_schedule_assignments(self):
+        s = Schedule.objects.create(
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
+        )
+        r = self.client.get(reverse("schedule_assignments", args=[s.pk]))
+        self.assertTemplateUsed(r, "solver/schedule_assignments.html")
+
+    def test_access_to_schedule_granted_to_members(self):
+        s = Schedule.objects.create(
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
+        )
+        s.users.add(self.other)
+        self.client.force_login(self.other)
+        for name in [
+            "schedule_settings",
+            "schedule_preferences",
+            "schedule_assignments",
+        ]:
+            with self.subTest(name=name):
+                url = reverse(name, args=[s.pk])
+                r = self.client.get(url)
+                self.assertEqual(r.status_code, 200)
+
+    def test_access_to_schedule_restricted_to_owner_and_members(self):
+        s = Schedule.objects.create(
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
+        )
+        self.client.force_login(self.other)
+        for name in [
+            "schedule_settings",
+            "schedule_preferences",
+            "schedule_assignments",
+        ]:
+            with self.subTest(name=name):
+                url = reverse(name, args=[s.pk])
+                r = self.client.get(url)
+                self.assertTemplateUsed(r, "solver/unauthorized.html")
+
+    def test_unauthorized_access_to_schedule_is_redirected(self):
+        s = Schedule.objects.create(
+            owner=self.user,
+            start=datetime.date.today(),
+            end=datetime.date.today(),
+        )
+        self.client.logout()
+        for name in [
+            "schedule_settings",
+            "schedule_preferences",
+            "schedule_assignments",
+        ]:
+            with self.subTest(name=name):
+                url = reverse(name, args=[s.pk])
+                r = self.client.get(url)
+                self.assertRedirects(r, reverse("auth:login") + "?next=" + url)

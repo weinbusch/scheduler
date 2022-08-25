@@ -30,12 +30,21 @@ api_patterns = [
 urlpatterns = [
     path("", views.index, name="index"),
     path("schedules/add", views.add_schedule, name="add_schedule"),
-    path("schedules/<int:pk>", views.update_schedule, name="schedule"),
+    path(
+        "schedules/<int:pk>/settings",
+        views.schedule_settings,
+        name="schedule_settings",
+    ),
+    path(
+        "schedules/<int:pk>/preferences",
+        views.schedule_preferences,
+        name="schedule_preferences",
+    ),
     path(
         "schedules/<int:pk>/assignments",
-        views.assignments,
-        name="assignments",
+        views.schedule_assignments,
+        name="schedule_assignments",
     ),
-    path("", include((auth_patterns, "solver"), namespace="auth")),
+    path("auth/", include((auth_patterns, "solver"), namespace="auth")),
     path("api/", include((api_patterns, "solver"), namespace="api")),
 ]

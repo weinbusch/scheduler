@@ -21,18 +21,6 @@ from solver.models import (
 from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
 
 
-@login_required
-def index(request):
-    schedules = request.user.my_schedules.all().union(
-        request.user.schedules.all(),
-    )
-    return render(
-        request,
-        "solver/index.html",
-        context={"schedules": schedules},
-    )
-
-
 # API views
 
 
@@ -43,6 +31,7 @@ def day_preferences_api(request, pk):
         schedule = Schedule.objects.get(pk=pk)
     except Schedule.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
+
     if request.user != schedule.owner and request.user not in schedule.users.all():
         return Response(status=status.HTTP_403_FORBIDDEN)
 
@@ -76,7 +65,7 @@ def day_preferences_api(request, pk):
     return Response(serializer.data)
 
 
-@api_view(["DELETE", "PATCH"])
+@api_view(["DELETE"])
 @permission_classes([permissions.IsAuthenticated])
 def day_preference_api(request, pk):
     try:
@@ -86,6 +75,7 @@ def day_preference_api(request, pk):
 
     if (
         request.user != preference.user
+        and request.user != preference.schedule.owner
         and request.user not in preference.schedule.users.all()
     ):
         return Response(status=status.HTTP_403_FORBIDDEN)
@@ -94,13 +84,6 @@ def day_preference_api(request, pk):
         preference.active = False
         preference.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    serializer = DayPreferenceSerializer(preference, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["PATCH"])
@@ -141,6 +124,18 @@ def assignments_api(request, pk):
 # Schedule views
 
 
+@login_required
+def index(request):
+    schedules = request.user.my_schedules.all().union(
+        request.user.schedules.all(),
+    )
+    return render(
+        request,
+        "solver/index.html",
+        context={"schedules": schedules},
+    )
+
+
 class ScheduleForm(ModelForm):
     class Meta:
         model = Schedule
@@ -171,7 +166,7 @@ def add_schedule(request):
 
 
 @login_required
-def update_schedule(request, pk):
+def schedule_settings(request, pk):
     schedule = get_object_or_404(Schedule, pk=pk)
     if request.user != schedule.owner and request.user not in schedule.users.all():
         return render(request, "solver/unauthorized.html")
@@ -183,20 +178,24 @@ def update_schedule(request, pk):
     else:
         form = ScheduleForm(instance=schedule)
     return render(
-        request, "solver/schedule_form.html", dict(form=form, object=schedule)
+        request, "solver/schedule_settings.html", dict(form=form, object=schedule)
     )
 
 
 @login_required
-def assignments(request, pk):
-    s = get_object_or_404(Schedule, pk=pk)
-    if request.user != s.owner and request.user not in s.users.all():
+def schedule_preferences(request, pk):
+    schedule = get_object_or_404(Schedule, pk=pk)
+    if request.user != schedule.owner and request.user not in schedule.users.all():
         return render(request, "solver/unauthorized.html")
-    return render(
-        request,
-        "solver/assignments.html",
-        context=dict(schedule=s),
-    )
+    return render(request, "solver/schedule_preferences.html", dict(object=schedule))
+
+
+@login_required
+def schedule_assignments(request, pk):
+    schedule = get_object_or_404(Schedule, pk=pk)
+    if request.user != schedule.owner and request.user not in schedule.users.all():
+        return render(request, "solver/unauthorized.html")
+    return render(request, "solver/schedule_assignments.html", dict(object=schedule))
 
 
 # Auth views

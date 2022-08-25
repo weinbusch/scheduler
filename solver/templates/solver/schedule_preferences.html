@@ -1,0 +1,70 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block main %}
+<main class="p-4 mx-auto max-w-screen-lg space-y-8">
+  <section class="flex flex-row justify-between items-baseline">
+    <h1 class="text-blue-500 text-xl font-semibold">
+      Zeitplan {{ object.pk }}
+    </h1>
+    <div class="flex flex-row space-x-4">
+      <a class="hover:text-blue-500"
+         href="{% url 'schedule_settings' object.pk %}">Einstellungen</a>
+      <a class="font-semibold text-blue-500"
+         href="{% url 'schedule_preferences' object.pk %}">Verfügbarkeiten</a>
+      <a class="hover:text-blue-500"
+         href="{% url 'schedule_assignments' object.pk %}">Verteilung</a>
+    </div>
+  </section>
+  <section class="space-y-6">
+    <div class="space-y-4">
+      <p class="text-sm">
+        Wähle einen Teilnehmer aus, um dessen Verfügbarkeit zu bearbeiten:
+      </p>
+      <div class="flex flex-row overflow-auto space-x-2" id="calendar_users">
+        {% for u in object.users.all %}
+        <label for="user_{{ u.pk }}">
+          <input class="peer hidden"
+                 type="radio"
+                 id="user_{{ u.pk }}"
+                 name="calendar_user"
+                 value="{{ u.pk }}"
+                 {% if u == user %}checked{% endif %}>
+          <div class="px-4 py-2 rounded-lg
+                      peer-checked:bg-blue-500 peer-checked:text-slate-100
+                      hover:bg-blue-500 hover:text-slate-100
+                      bg-slate-200 cursor-pointer" >
+            {{ u.username}}
+          </div>
+        </label>
+        {% empty %}
+        <p>Keine Teilnehmer!</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="space-y-4">
+      <p class="text-sm">
+        Klicke auf einen freien Tag, um diesen als verfügbar zu
+        kennzeichnen. Klicke auf einen verfügbaren Tag, um die Auswahl
+        zu widerrufen:
+      </p>
+      <div id="calendar"></div>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'solver/js/calendar.js' %}"></script>
+<script>
+  calendar(document.getElementById("calendar"), {
+      url: "{% url 'api:day_preferences' object.pk %}",
+      csrf_token: "{{ csrf_token }}",
+      canAdd: true,
+      canDelete: true,
+      selectUser: true,
+      start: "{{ object.start.isoformat }}",
+      end: "{{ object.end.isoformat }}",
+  })
+</script>
+{% endblock %}

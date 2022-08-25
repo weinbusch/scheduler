@@ -1,0 +1,48 @@
+{% extends "base/base.html" %}
+
+{% block body %}
+<main>
+  <div class="max-w-sm mx-auto space-y-8 mt-8">
+    <h1 class="text-xl text-center">{% block heading %}{% endblock %}</h1>
+    <form action="" method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="border rounded-lg bg-slate-50 p-4">
+        <div class="space-y-2">
+          {% for field in form %}
+          <div>
+	    <div>
+	      <label for="{{ field.id_for_label }}" class="text-gray-800 font-semibold text-sm leading-none">
+	        {{ field.label }}
+	      </label>
+	    </div>
+	    <div class="mt-1">
+              {{ field }}
+	    </div>
+	    {% for error in field.errors %}
+	    <div class="mt-1 text-red-600">
+	      {{ error }}
+	    </div>
+	    {% endfor %}
+          </div>
+          {% endfor %}
+          {% for error in form.errors.values %}
+          <div class="mt-1 text-red-600">
+	    {{ error }}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="mt-8 flex flex-row justify-between items-baseline">
+	  <input class="px-4 p-2 rounded bg-green-500 hover:bg-green-600 text-white"
+	         type="submit" value="{% block main_action %}{% endblock %}">
+	  <span class="mx-2 text-gray-800 italic">oder</span>
+	  <a class="px-4 p-2 rounded bg-purple-500 hover:bg-purple-600 text-white"
+	     href="{% block alt_action_url %}{% endblock %}">
+	    {% block alt_action %}{% endblock %}
+	  </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

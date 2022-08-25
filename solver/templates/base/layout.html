@@ -1,13 +1,16 @@
 {% extends "base/base.html" %}
 {% block body %}
 <header>
-  <div class="container mx-auto px-4 py-2 flex flex-row justify-between items-center">
-    <div>
-      Hallo, <a href="{% url 'index' %}"
-		class="text-blue-500 font-semibold hover:underline cursor-pointer">{{ user }}</a>
-    </div>
+  <div class="px-4 py-2 bg-slate-100 flex flex-row justify-between items-center">
+    <a href="{% url 'index' %}"
+       class="p-2 px-4 group">
+      Hallo,
+      <span class="font-semibold text-blue-500 group-hover:underline">{{ user }}
+    </a>
     <a href="{% url 'auth:logout' %}"
-       class="p-2 px-4 leading-tight cursor-pointer hover:text-blue-500 hover:underline border rounded">Abmelden</a>
+       class="p-2 px-4 bg-white hover:text-blue-500 hover:underline border rounded">
+      Abmelden
+    </a>
   </div>
 </header>
 {% block main %}{% endblock %}  

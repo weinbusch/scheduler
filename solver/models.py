@@ -88,7 +88,7 @@ class Schedule(models.Model):
         )
 
     def get_absolute_url(self):
-        return reverse("schedule", args=[self.pk])
+        return reverse("schedule_settings", args=[self.pk])
 
     @property
     def has_assignments(self):
