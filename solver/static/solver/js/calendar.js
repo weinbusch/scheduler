@@ -8,6 +8,22 @@ function patchSchedule(url, csrf_token){
 }
 
 function calendar(el, options){
+
+    options.start = options.start ? new Date(options.start) : null;
+    options.end = options.end ? new Date(options.end) : null;
+
+    function sameDate(x, y){
+        return x.toISOString().slice(0, 10) == y.toISOString().slice(0, 10)
+    }
+
+    function dateString(x){
+        return x.toISOString().slice(0, 10);
+    }
+
+    function canAddToDay(x){
+        return options.canAdd && dateString(x) >= dateString(options.start) && dateString(x) <= dateString(options.end) && x.getDay() > 0 && x.getDay() < 6;
+    }
+    
     function getSelectedUser(){
         let el = document.getElementById("calendar_users");
         if (el){
@@ -83,7 +99,7 @@ function calendar(el, options){
                 }
             },
             dateClick(info){
-                if (options.canAdd && info.date.getDay() > 0 && info.date.getDay() < 6) {
+                if (canAddToDay(info.date)) {
                     addEvent(options.url, info.dateStr).then(r => {
                         if (r.ok) {
                             this.refetchEvents()
@@ -102,7 +118,19 @@ function calendar(el, options){
                     
                 }
                 return data;
-            }
+            },
+            dayCellClassNames(info){
+                if (info.date.toISOString().slice(0, 10) > options.start.toISOString().slice(0, 10) && info.date.toISOString().slice(0, 10) < options.end.toISOString().slice(0, 10)){
+                    return "bg-sky-200/25";
+                }
+                else if (sameDate(info.date, options.start)){
+                    return "bg-green-400/25";
+                }
+                else if (sameDate(info.date, options.end)){
+                    return "bg-red-400/25";
+                }
+
+            },
         });
         return c;
     }
