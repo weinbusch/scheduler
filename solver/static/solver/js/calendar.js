@@ -67,6 +67,7 @@ function calendar(el, options){
                 "today": "Heute",
             },
             initialView: "dayGridMonth",
+            height: "auto",
             events: {
                 url: options.url,
             },

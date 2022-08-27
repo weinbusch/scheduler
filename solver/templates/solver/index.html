@@ -2,14 +2,16 @@
 
 
 {% block main %}
-<main class="p-4 mx-auto max-w-screen-lg space-y-8">
-  <header class="flex flex-row justify-between items-baseline">
+<main class="mx-auto max-w-screen-lg">
+  <header class="p-4 space-y-4 md:space-y-0 md:flex md:flex-row md:justify-between md:items-baseline">
     <h1 class="font-semibold text-xl text-blue-500">Übersicht</h1>
-    <a href="{% url 'add_schedule' %}"
-       class="inline-block px-4 py-2 border rounded-lg 
-	      bg-purple-500 hover:bg-purple-600 text-white">
-      Neuen Zeitplan hinzufügen
-    </a>
+    <div>
+      <a href="{% url 'add_schedule' %}"
+         class="inline-block px-4 py-2 border rounded-lg 
+	        bg-purple-500 hover:bg-purple-600 text-white">
+        Neuen Zeitplan hinzufügen
+      </a>
+    </div>
   </header>
   <div>
     {% for schedule in schedules %}
@@ -36,19 +38,19 @@
       </p>
     </a>
     {% empty %}
-  </div>
-  <div>
-    Hallo,
+    <div class="p-4">
+      Hallo,
 
-    <span class="text-blue-500 font-semibold">{{ user.username}}</span>!
+      <span class="text-blue-500 font-semibold">{{ user.username}}</span>!
 
-    Hier könnten Deine Zeitpläne stehen. Zur Zeit ist die Liste noch
-    leer, denn du hast noch keine Zeitpläne erstellt und nimmst auch
-    noch an keinen Zeitplänen teil. Das lässt sich aber recht schnell
-    ändern: Klicke einfach auf die Schaltfläche rechts oben und es geht
-    los.
+      Hier könnten Deine Zeitpläne stehen. Zur Zeit ist die Liste noch
+      leer, denn du hast noch keine Zeitpläne erstellt und nimmst auch
+      noch an keinen Zeitplänen teil. Das lässt sich aber recht schnell
+      ändern: Klicke einfach auf die Schaltfläche rechts oben und es geht
+      los.
+    </div>
+    {% endfor %}
   </div>
-  {% endfor %}
 </main>
 {% endblock %}
 

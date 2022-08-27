@@ -3,7 +3,7 @@
 
 {% block main %}
 <main class="p-4 mx-auto max-w-screen-lg space-y-8">
-  <section class="flex flex-row justify-between items-baseline">
+  <section>
     <h1 class="text-blue-500 text-xl font-semibold">
       Neuer Zeitplan
     </h1>
@@ -12,7 +12,7 @@
     <form action="" method="POST" class="space-y-8">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ next }}">
-      <div class="flex flex-row space-x-8">
+      <div class="space-y-8 md:space-y-0 md:flex md:flex-row md:space-x-8">
         <div class="flex-grow">
           <div>
 	    <label for="{{ form.start.id_for_label }}"
