@@ -4,9 +4,13 @@
 {% block main %}
 <main class="p-4 mx-auto max-w-screen-lg space-y-8">
   <section class="flex flex-row justify-between items-baseline">
-    <h1 class="text-blue-500 text-xl font-semibold">
-      Zeitplan {{ object.pk }}
-    </h1>
+    <div class="flex flex-row space-x-4 items-baseline">
+      <h1 class="text-blue-500 text-xl font-semibold">Zeitplan {{ object.pk }}</h1>
+      <div class="text-sm">
+        von
+        <span class="px-2 rounded bg-slate-100">{{ object.owner.username }}</span>
+      </div>
+    </div>
     <div class="flex flex-row space-x-4">
       <a class="font-semibold text-blue-500"
          href="{% url 'schedule_settings' object.pk %}">Einstellungen</a>
