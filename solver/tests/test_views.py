@@ -140,6 +140,18 @@ class ViewTests(TestCase, AssertionsMixin):
         r = self.client.post(reverse("add_schedule"), data)
         self.assertEqual(r.status_code, 302)
 
+    def test_create_schedule_with_users(self):
+        data = {
+            "start": "2022-01-01",
+            "end": "2022-12-31",
+            "users": [self.user.pk],
+        }
+        self.client.post(reverse("add_schedule"), data)
+        s = Schedule.objects.get(
+            start=datetime.date(2022, 1, 1), end=datetime.date(2022, 12, 31)
+        )
+        self.assertEqual(s.users.first(), self.user)
+
     def test_user_is_set_as_schedule_owner(self):
         data = {
             "start": datetime.date.today(),

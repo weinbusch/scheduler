@@ -159,6 +159,7 @@ def add_schedule(request):
             obj = form.save(commit=False)
             obj.owner = request.user
             obj.save()
+            form.save_m2m()
             return redirect(obj.get_absolute_url())
     else:
         form = ScheduleForm()
