@@ -25,7 +25,7 @@
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ next }}">
       <div class="flex flex-row space-x-8">
-        <div class="flex-grow">
+        <div class="w-1/2 space-y-2">
           <div>
 	    <label for="{{ form.start.id_for_label }}"
 	           class="font-semibold text-sm">
@@ -54,8 +54,11 @@
             </div>
             {% endfor %}
           </div>
+          <div class="text-sm">
+            Legt den Beginn und das Ende (inklusiv) des Zeitplans fest. Wochenenden sind ausgenommen.
+          </div>
         </div>
-        <div class="flex-grow">
+        <div class="w-1/2">
           <p class="font-semibold text-sm">Teilnehmer</p>
           <p class="mt-1 text-sm">
             Füge Teilnehmer zu diesem Zeitplan hinzu oder entferne
@@ -95,21 +98,15 @@
     </form>
   </section>
   {% if not object.users.empty %}
-  <section class="flex flex-row items-baseline space-x-4">
-    <div class="space-x-2">
-      <span class="text-sm">Als Nächstes:</span>
-      <a href="{% url 'schedule_preferences' object.pk %}"
-         class="px-4 p-2 rounded-lg border text-purple-500 hover:underline">
-        Verfügbarkeiten bearbeiten
-      </a>
-    </div>
-    <div class="space-x-2">
-      <span class="text-sm">oder:</span>
-      <a href="{% url 'schedule_assignments' object.pk %}"
-         class="px-4 p-2 rounded-lg border text-purple-500 hover:underline">
-        Verteilung ansehen
-      </a>
-    </div>
+  <section class="border-t pt-8 flex flex-row items-baseline space-x-4 overflow-x-auto">
+    <a href="{% url 'schedule_preferences' object.pk %}"
+       class="px-4 p-2 rounded-lg border text-purple-500 hover:underline whitespace-nowrap">
+      Verfügbarkeiten bearbeiten
+    </a>
+    <a href="{% url 'schedule_assignments' object.pk %}"
+       class="px-4 p-2 rounded-lg border text-purple-500 hover:underline whitespace-nowrap">
+      Verteilung ansehen
+    </a>
   </section>
   {% endif %}
 </main>
