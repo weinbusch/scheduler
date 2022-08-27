@@ -11,7 +11,7 @@
         <span class="px-2 rounded bg-slate-100">{{ object.owner.username }}</span>
       </div>
     </div>
-    <div class="flex flex-row space-x-4">
+    <div class="flex flex-row space-x-4 overflow-x-auto">
       <a class="hover:text-blue-500"
          href="{% url 'schedule_settings' object.pk %}">Einstellungen</a>
       <a class="hover:text-blue-500"
