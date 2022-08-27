@@ -95,7 +95,11 @@
   function showCalendar(){
       renderTemplate("assignments");
       let el = document.getElementById("calendar");
-      let c = calendar(el, { url: "{% url 'api:assignments' object.pk %}" });
+      let c = calendar(el, {
+          url: "{% url 'api:assignments' object.pk %}",
+          start: "{{ object.start.isoformat }}",
+          end: "{{ object.end.isoformat }}",
+      });
       let button = document.getElementById("solve");
       button.addEventListener("click", solveSchedule);
   }

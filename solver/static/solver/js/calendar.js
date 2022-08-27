@@ -9,19 +9,13 @@ function patchSchedule(url, csrf_token){
 
 function calendar(el, options){
 
-    options.start = options.start ? new Date(options.start) : null;
-    options.end = options.end ? new Date(options.end) : null;
-
-    function sameDate(x, y){
-        return x.toISOString().slice(0, 10) == y.toISOString().slice(0, 10)
+    function dateString(date){
+        return date.toISOString().slice(0, 10);
     }
 
-    function dateString(x){
-        return x.toISOString().slice(0, 10);
-    }
-
-    function canAddToDay(x){
-        return options.canAdd && dateString(x) >= dateString(options.start) && dateString(x) <= dateString(options.end) && x.getDay() > 0 && x.getDay() < 6;
+    function canAddToDate(dateStr){
+        let d = new Date(dateStr);
+        return (!options.start || dateStr >= options.start) && (!options.end || dateStr <= options.end) && d.getDay() > 0 && d.getDay() < 6;
     }
     
     function getSelectedUser(){
@@ -66,6 +60,7 @@ function calendar(el, options){
     
     function makeCalendar(){
         let c = new FullCalendar.Calendar(el, {
+            timeZone: "UTC",
             initialDate: options.start,
             locale: "de",
             buttonText: {
@@ -88,7 +83,9 @@ function calendar(el, options){
             },
             eventClick(info){
                 info.jsEvent.preventDefault();
-                if (options.canDelete && getSelectedUser() == info.event.extendedProps.user){
+                let selected_user = getSelectedUser(),
+                    event_user = info.event.extendedProps.user;
+                if (options.canDelete && selected_user == event_user){
                     inactivateEvent(info.event.url).then(r => {
                         if (r.ok) {
                             this.refetchEvents()
@@ -99,8 +96,10 @@ function calendar(el, options){
                 }
             },
             dateClick(info){
-                if (canAddToDay(info.date)) {
-                    addEvent(options.url, info.dateStr).then(r => {
+                // https://fullcalendar.io/docs/dateClick
+                let dateStr = info.dateStr;
+                if (options.canAdd && canAddToDate(dateStr)) {
+                    addEvent(options.url, dateStr).then(r => {
                         if (r.ok) {
                             this.refetchEvents()
                         } else {
@@ -120,16 +119,11 @@ function calendar(el, options){
                 return data;
             },
             dayCellClassNames(info){
-                if (info.date.toISOString().slice(0, 10) > options.start.toISOString().slice(0, 10) && info.date.toISOString().slice(0, 10) < options.end.toISOString().slice(0, 10)){
+                // https://fullcalendar.io/docs/day-cell-render-hooks
+                let dateStr = dateString(info.date);
+                if (canAddToDate(dateStr)) {
                     return "bg-sky-200/25";
                 }
-                else if (sameDate(info.date, options.start)){
-                    return "bg-green-400/25";
-                }
-                else if (sameDate(info.date, options.end)){
-                    return "bg-red-400/25";
-                }
-
             },
         });
         return c;
