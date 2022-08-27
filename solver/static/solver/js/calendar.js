@@ -54,7 +54,7 @@ function calendar(el, options){
                 })
             })
         } else {
-            return Promise.reject("User cannot be empty.")
+            return Promise.reject("User is empty.")
         }
     }
     
@@ -105,7 +105,7 @@ function calendar(el, options){
                         } else {
                             console.log("could not add event");
                         }
-                    })
+                    }).catch(obj => console.log(obj))
                 }
             },
             eventDataTransform(data){
