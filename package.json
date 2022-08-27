@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "tailwind": "tailwindcss -i solver/static/solver/css/input.css -o solver/static/solver/css/styles.css --minify --watch"
+        "tailwind": "tailwindcss -i solver/static/solver/css/input.css -o solver/static/solver/css/styles.css --watch"
     },
     "author": "",
     "license": "ISC",
