@@ -1,0 +1,103 @@
+import pytest
+import datetime
+
+from django.contrib.auth import get_user_model
+
+from solver import domain
+from solver import models
+from solver.repository import ScheduleRepository
+
+
+@pytest.fixture(autouse=True)
+def fast_password_hashing(settings):
+    # https://pytest-django.readthedocs.io/en/latest/configuring_django.html#overriding-individual-settings
+    # https://docs.djangoproject.com/en/4.0/topics/testing/overview/#password-hashing
+    settings.PASSWORD_HASHERS = [
+        "django.contrib.auth.hashers.MD5PasswordHasher",
+    ]
+
+
+def create_user(username):
+    User = get_user_model()
+    return User.objects.create_user(username, password="123")
+
+
+def create_schedule(owner):
+    return models.Schedule.objects.create(owner=owner)
+
+
+@pytest.mark.django_db
+def test_get_schedule_list():
+    owner = create_user("owner")
+    create_schedule(owner)
+    schedules = ScheduleRepository().list()
+    assert isinstance(schedules[0], domain.Schedule)
+
+
+@pytest.mark.django_db
+def test_filter_list_for_owner():
+    owner = create_user("owner")
+    other = create_user("other")
+    create_schedule(owner)
+    create_schedule(other)
+    schedules = ScheduleRepository().list(owner.id)
+    assert len(schedules) == 1
+    assert schedules[0].owner.id == owner.id
+
+
+@pytest.mark.django_db
+def test_filter_list_for_other_user():
+    owner = create_user("owner")
+    other = create_user("other")
+    schedule = create_schedule(owner)
+    schedule.users.add(other)
+    schedules = ScheduleRepository().list(other.id)
+    assert len(schedules) == 1
+
+
+@pytest.mark.django_db
+def test_get_schedule():
+    u1 = create_user("u1")
+    s1 = create_schedule(owner=u1)
+    u2 = create_user("u2")
+    create_schedule(owner=u2)
+    s = ScheduleRepository().get(s1.pk)
+    assert isinstance(s, domain.Schedule)
+
+
+@pytest.mark.django_db
+def test_add_get_schedule_roundtrip():
+    u = create_user("owner")
+    s = domain.Schedule(
+        owner=domain.User(u.pk, "owner"),
+        start=datetime.date(2022, 1, 1),
+        end=datetime.date(2022, 1, 8),
+    )
+    s.add_participant("foo")
+    s.add_preference("foo", datetime.date(2022, 1, 1))
+    s.add_assignment("foo", datetime.date(2022, 1, 1))
+    repo = ScheduleRepository()
+    t = repo.add(s)
+    t = repo.get(t.id)
+    assert s.owner == t.owner
+    assert s.days == t.days
+    assert s.preferences == t.preferences
+    assert s.assignments == t.assignments
+
+
+@pytest.mark.django_db
+def test_modify_schedule():
+    repo = ScheduleRepository()
+    user = create_user("user")
+    s = domain.Schedule(
+        owner=domain.User(user.pk, "owner"),
+        start=datetime.date(2022, 1, 1),
+        end=datetime.date(2022, 1, 7),
+    )
+    t = repo.add(s)
+    t.remove_day(datetime.date(2022, 1, 6))
+    t.add_day(datetime.date(2022, 1, 9))
+    repo.add(t)
+    u = repo.get(t.id)
+    assert datetime.date(2022, 1, 6) not in u.days
+    assert datetime.date(2022, 1, 9) in u.days

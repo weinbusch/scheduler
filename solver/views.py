@@ -19,7 +19,10 @@ from solver.models import (
     ScheduleException,
 )
 from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
+from solver.repository import ScheduleRepository
 
+
+repo = ScheduleRepository()
 
 # API views
 
@@ -126,9 +129,7 @@ def assignments_api(request, pk):
 
 @login_required
 def index(request):
-    schedules = request.user.my_schedules.all().union(
-        request.user.schedules.all(),
-    )
+    schedules = repo.list(request.user.id)
     return render(
         request,
         "solver/index.html",

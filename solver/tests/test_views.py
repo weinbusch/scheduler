@@ -117,7 +117,7 @@ class ViewTests(TestCase, AssertionsMixin):
     def test_index_view_does_not_list_other_schedules(self):
         Schedule.objects.create(owner=self.other)
         r = self.client.get(reverse("index"))
-        self.assertEqual(r.context["schedules"].count(), 0)
+        self.assertEqual(len(r.context["schedules"]), 0)
 
     def test_add_schedule_view(self):
         r = self.client.get(reverse("add_schedule"))
