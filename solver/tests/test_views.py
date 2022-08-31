@@ -33,59 +33,6 @@ class AssertionsMixin:
 
 
 @fast_password_hashing
-class AuthTest(TestCase, AssertionsMixin):
-    def test_get_register_view(self):
-        self.assert_get_200(reverse("auth:register"))
-
-    def test_post_to_register_view(self):
-        data = {
-            "username": "foo",
-            "password1": "A12iofa_sdf!",
-            "password2": "A12iofa_sdf!",
-        }
-        self.assert_post_302(reverse("auth:register"), data, reverse("auth:login"))
-
-    def test_post_creates_user(self):
-        data = {
-            "username": "foo",
-            "password1": "A12iofa_sdf!",
-            "password2": "A12iofa_sdf!",
-        }
-        self.client.post(reverse("auth:register"), data)
-        self.assertEqual(User.objects.filter(username="foo").count(), 1)
-
-    def test_post_to_register_view_invalid_data(self):
-        data = {
-            "username": "foo",
-            "password1": "A12iofa_sdf!",
-            "password2": "A12iofa",
-        }
-        self.assert_post_200(reverse("auth:register"), data)
-
-    def test_get_login_view(self):
-        self.assert_get_200(reverse("auth:login"))
-
-    def test_post_to_login_view(self):
-        User.objects.create_user(username="foo", password="A12iofa_sdf")
-        data = {
-            "username": "foo",
-            "password": "A12iofa_sdf",
-        }
-        self.assert_post_302(reverse("auth:login"), data, reverse("index"))
-
-    def test_post_to_login_view_invalid_data(self):
-        User.objects.create_user(username="foo", password="A12iofa_sdf")
-        data = {
-            "username": "foo",
-            "password": "A12iofa",
-        }
-        self.assert_post_200(reverse("auth:login"), data)
-
-    def test_get_logout_view_redirects_to_login_page(self):
-        self.assert_get_302(reverse("auth:logout"), reverse("auth:login"))
-
-
-@fast_password_hashing
 class ViewTests(TestCase, AssertionsMixin):
     @classmethod
     def setUpTestData(cls):
