@@ -132,13 +132,6 @@ LOGIN_URL = "auth:login"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#login-redirect-url
 LOGIN_REDIRECT_URL = "index"
 
-# REST Framework
-REST_FRAMEWORK = {
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-    ]
-}
-
 # Logging
 # https://docs.djangoproject.com/en/4.1/topics/logging/#configuring-logging
 LOGGING = {
