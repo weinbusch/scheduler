@@ -1,134 +1,153 @@
+import json
+
+from django.http import JsonResponse, HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth.views import logout_then_login
-from django.forms import ModelForm, DateInput, CheckboxSelectMultiple
-from django.shortcuts import render, reverse, redirect, get_object_or_404
+from django.shortcuts import render, reverse, redirect
 
-from rest_framework import permissions
-from rest_framework import status
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-)
-from rest_framework.response import Response
-
-from solver.models import (
-    DayPreference,
-    Schedule,
-    ScheduleException,
-)
-from solver.serializers import DayPreferenceSerializer, AssignmentSerializer
+from solver.models import user_to_domain
 from solver.repository import ScheduleRepository
-
+from solver.domain import Schedule, ScheduleException
+from solver.forms import DateForm, PreferenceForm, ScheduleCreateForm
 
 repo = ScheduleRepository()
+
+
+def has_access_to_schedule(user, schedule):
+    return user.id == schedule.owner.id
+
 
 # API views
 
 
-@api_view(["GET", "POST"])
-@permission_classes([permissions.IsAuthenticated])
-def day_preferences_api(request, pk):
-    try:
-        schedule = Schedule.objects.get(pk=pk)
-    except Schedule.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.user != schedule.owner and request.user not in schedule.users.all():
-        return Response(status=status.HTTP_403_FORBIDDEN)
-
-    if request.method == "POST":
-        serializer = DayPreferenceSerializer(data=request.data)
-        if serializer.is_valid():
-            data = serializer.validated_data
-            try:
-                instance = DayPreference.objects.get(
-                    user=data["user"],
-                    schedule=schedule,
-                    start=data["start"],
-                )
-            except DayPreference.DoesNotExist:
-                instance = None
-            serializer.instance = instance
-            serializer.save(active=True, schedule=schedule)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    preferences = DayPreference.objects.filter(
-        schedule=schedule,
-        active=True,
-        user__in=schedule.users.all(),
-    )
-    user_id = request.query_params.get("user")
-    if user_id is not None:
-        preferences = preferences.filter(user_id=user_id)
-    serializer = DayPreferenceSerializer(preferences, many=all)
-    return Response(serializer.data)
+def api_not_authorized():
+    return JsonResponse({"error": "not authorized"}, status=403)
 
 
-@api_view(["DELETE"])
-@permission_classes([permissions.IsAuthenticated])
-def day_preference_api(request, pk):
-    try:
-        preference = DayPreference.objects.get(pk=pk)
-    except DayPreference.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if (
-        request.user != preference.user
-        and request.user != preference.schedule.owner
-        and request.user not in preference.schedule.users.all()
-    ):
-        return Response(status=status.HTTP_403_FORBIDDEN)
-
-    if request.method == "DELETE":
-        preference.active = False
-        preference.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+def api_not_found():
+    return JsonResponse({"error": "not found"}, status=404)
 
 
-@api_view(["PATCH"])
-@permission_classes([permissions.IsAuthenticated])
-def schedule_api(request, pk):
-    try:
-        schedule = Schedule.objects.get(pk=pk)
-    except Schedule.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.user != schedule.owner and request.user not in schedule.users.all():
-        return Response(status=status.HTTP_403_FORBIDDEN)
-
-    try:
-        schedule.solve()
-    except ScheduleException as e:
-        return Response(
-            {"error": str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-    return Response(status=status.HTTP_204_NO_CONTENT)
+def api_method_not_allowed():
+    return JsonResponse({"error": "method not allowed"}, status=405)
 
 
-@api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
-def assignments_api(request, pk):
-    try:
-        schedule = Schedule.objects.get(pk=pk)
-    except Schedule.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    if request.user != schedule.owner and request.user not in schedule.users.all():
-        return Response(status=status.HTTP_403_FORBIDDEN)
-    assignments = schedule.assignments.all()
-    serializer = AssignmentSerializer(assignments, many=all)
-    return Response(serializer.data)
+def api_no_content():
+    return JsonResponse({}, status=204)
+
+
+def api_server_error(error):
+    return JsonResponse({"error": str(error)}, status=500)
+
+
+def api_bad_request(errors):
+    return JsonResponse({"error": errors}, status=400)
+
+
+def api_login_required(view):
+    def wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return api_not_authorized()
+        return view(request, *args, **kwargs)
+
+    return wrapped_view
+
+
+def api_get_schedule(view):
+    def wrapped_view(request, pk, *args, **kwargs):
+        schedule = repo.get(pk)
+        if schedule is None:
+            return api_not_found()
+        if not has_access_to_schedule(request.user, schedule):
+            return api_not_authorized()
+        return view(request, schedule, *args, **kwargs)
+
+    return wrapped_view
+
+
+def get_json_data(request):
+    return json.loads(request.body)
+
+
+@api_get_schedule
+def schedule_api(request, schedule):
+    if request.method == "PATCH":
+        try:
+            schedule.make_assignments()
+        except ScheduleException as e:
+            return api_server_error(e)
+        repo.add(schedule)
+        return api_no_content()
+    return api_method_not_allowed()
+
+
+@api_login_required
+@api_get_schedule
+def schedule_days_api(request, schedule):
+    if request.method == "GET":
+        data = [{"start": d} for d in sorted(schedule.days)]
+        return JsonResponse(data, safe=False)
+    if request.method == "PATCH":
+        data = get_json_data(request)
+        form = DateForm(data)
+        if form.is_valid():
+            schedule.add_day(**form.cleaned_data)
+            repo.add(schedule)
+            return api_no_content()
+        return api_bad_request(form.errors)
+    return api_method_not_allowed()
+
+
+@api_login_required
+@api_get_schedule
+def schedule_preferences_api(request, schedule):
+    if request.method == "GET":
+        data = [
+            {"participant": p, "start": d}
+            for p, dates in sorted(schedule.preferences.items())
+            for d in sorted(dates)
+        ]
+        return JsonResponse(data, safe=False)
+    if request.method in ["PATCH", "DELETE"]:
+        data = get_json_data(request)
+        form = PreferenceForm(data)
+        if form.is_valid():
+            if request.method == "DELETE":
+                schedule.remove_preference(**form.cleaned_data)
+            else:
+                schedule.add_preference(**form.cleaned_data)
+            repo.add(schedule)
+            return api_no_content()
+        return api_bad_request(form.errors)
+    return api_method_not_allowed()
+
+
+@api_login_required
+@api_get_schedule
+def schedule_assignments_api(request, schedule):
+    data = [{"participant": p, "start": d} for p, d in sorted(schedule.assignments)]
+    return JsonResponse(data, safe=False)
 
 
 # Schedule views
 
 
+def schedule_view(view):
+    def wrapped_view(request, pk):
+        schedule = repo.get(pk)
+        if schedule is None:
+            return HttpResponseNotFound()
+        if not has_access_to_schedule(request.user, schedule):
+            return render(request, "solver/unauthorized.html")
+        return view(request, schedule)
+
+    return wrapped_view
+
+
 @login_required
-def index(request):
+def schedule_list(request):
     schedules = repo.list(request.user.id)
     return render(
         request,
@@ -137,67 +156,35 @@ def index(request):
     )
 
 
-class ScheduleForm(ModelForm):
-    class Meta:
-        model = Schedule
-        fields = ["start", "end", "users"]
-        widgets = {
-            "start": DateInput(
-                attrs={"class": "p-2 border w-full leading-tight"},
-            ),
-            "end": DateInput(
-                attrs={"class": "p-2 border w-full leading-tight"},
-            ),
-            "users": CheckboxSelectMultiple,
-        }
-
-
 @login_required
 def add_schedule(request):
     if request.method == "POST":
-        form = ScheduleForm(request.POST)
+        form = ScheduleCreateForm(request.POST)
         if form.is_valid():
-            obj = form.save(commit=False)
-            obj.owner = request.user
-            obj.save()
-            form.save_m2m()
-            return redirect(obj.get_absolute_url())
+            s = Schedule(owner=user_to_domain(request.user), **form.cleaned_data)
+            s = repo.add(s)
+            return redirect(reverse("schedule_settings", args=[s.id]))
     else:
-        form = ScheduleForm()
+        form = ScheduleCreateForm()
     return render(request, "solver/schedule_form.html", dict(form=form))
 
 
 @login_required
-def schedule_settings(request, pk):
-    schedule = get_object_or_404(Schedule, pk=pk)
-    if request.user != schedule.owner and request.user not in schedule.users.all():
-        return render(request, "solver/unauthorized.html")
-    if request.method == "POST":
-        form = ScheduleForm(request.POST, instance=schedule)
-        if form.is_valid():
-            obj = form.save()
-            return redirect(obj.get_absolute_url())
-    else:
-        form = ScheduleForm(instance=schedule)
-    return render(
-        request, "solver/schedule_settings.html", dict(form=form, object=schedule)
-    )
+@schedule_view
+def schedule_settings(request, schedule):
+    return render(request, "solver/schedule_settings.html", dict(schedule=schedule))
 
 
 @login_required
-def schedule_preferences(request, pk):
-    schedule = get_object_or_404(Schedule, pk=pk)
-    if request.user != schedule.owner and request.user not in schedule.users.all():
-        return render(request, "solver/unauthorized.html")
-    return render(request, "solver/schedule_preferences.html", dict(object=schedule))
+@schedule_view
+def schedule_preferences(request, schedule):
+    return render(request, "solver/schedule_preferences.html", dict(schedule=schedule))
 
 
 @login_required
-def schedule_assignments(request, pk):
-    schedule = get_object_or_404(Schedule, pk=pk)
-    if request.user != schedule.owner and request.user not in schedule.users.all():
-        return render(request, "solver/unauthorized.html")
-    return render(request, "solver/schedule_assignments.html", dict(object=schedule))
+@schedule_view
+def schedule_assignments(request, schedule):
+    return render(request, "solver/schedule_assignments.html", dict(schedule=schedule))
 
 
 # Auth views

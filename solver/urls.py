@@ -12,23 +12,23 @@ api_patterns = [
     path("schedules/<int:pk>", views.schedule_api, name="schedule"),
     path(
         "schedules/<int:pk>/days",
-        views.day_preferences_api,
-        name="day_preferences",
+        views.schedule_days_api,
+        name="schedule_days",
+    ),
+    path(
+        "schedules/<int:pk>/preferences",
+        views.schedule_preferences_api,
+        name="schedule_preferences",
     ),
     path(
         "schedules/<int:pk>/assignments",
-        views.assignments_api,
-        name="assignments",
-    ),
-    path(
-        "days/<int:pk>",
-        views.day_preference_api,
-        name="day_preference",
+        views.schedule_assignments_api,
+        name="schedule_assignments",
     ),
 ]
 
 urlpatterns = [
-    path("", views.index, name="index"),
+    path("", views.schedule_list, name="index"),
     path("schedules/add", views.add_schedule, name="add_schedule"),
     path(
         "schedules/<int:pk>/settings",

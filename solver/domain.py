@@ -1,5 +1,6 @@
 import datetime
 from collections import namedtuple
+from dataclasses import dataclass, field
 
 from solver.solver import get_schedule
 
@@ -15,7 +16,21 @@ class UnknownParticipant(Exception):
     pass
 
 
+class AssignmentError(Exception):
+    pass
+
+
+class ScheduleException(Exception):
+    pass
+
+
 User = namedtuple("User", "id username")
+
+
+@dataclass
+class Participant:
+    preferences: set = field(default_factory=set)
+    assignments: set = field(default_factory=set)
 
 
 class Schedule:
@@ -25,8 +40,7 @@ class Schedule:
         self.id = id
         self.owner = owner
         self.days = set()
-        self.preferences = dict()
-        self.assignments = set()
+        self._participants = dict()
 
         if start and end:
             self.days = {
@@ -37,7 +51,19 @@ class Schedule:
 
     @property
     def participants(self):
-        return set(self.preferences.keys())
+        return set(self._participants.keys())
+
+    @property
+    def preferences(self):
+        return {key: val.preferences.copy() for key, val in self._participants.items()}
+
+    @property
+    def assignments(self):
+        return set(
+            (name, date)
+            for name, participant in self._participants.items()
+            for date in participant.assignments.copy()
+        )
 
     def add_day(self, date):
         self.days.add(date)
@@ -46,29 +72,40 @@ class Schedule:
         self.days.discard(date)
 
     def add_participant(self, name):
-        if name not in self.preferences:
-            self.preferences[name] = set()
+        if name not in self._participants:
+            self._participants[name] = Participant()
 
     def remove_participant(self, name):
-        self.preferences.pop(name, None)
+        self._participants.pop(name, None)
 
     def add_preference(self, name, date):
-        if name not in self.preferences:
-            raise UnknownParticipant
-        self.preferences[name].add(date)
+        if name not in self._participants:
+            self._participants[name] = Participant()
+        self._participants[name].preferences.add(date)
 
     def remove_preference(self, name, date):
-        self.preferences[name].discard(date)
+        if name in self._participants:
+            self._participants[name].preferences.discard(date)
 
     def add_assignment(self, name, date):
-        self.assignments.add((name, date))
+        if (
+            name not in self._participants
+            or date not in self._participants[name].preferences
+        ):
+            raise AssignmentError
+        self._participants[name].assignments.add(date)
 
     def clear_assignments(self):
-        self.assignments.clear()
+        for participant in self._participants.values():
+            participant.assignments.clear()
 
     def make_assignments(self):
-        res = get_schedule(list(self.days), self.preferences)
-        self.clear_assignments()
+        try:
+            res = get_schedule(list(self.days), self.preferences)
+        except Exception:
+            raise ScheduleException
+        finally:
+            self.clear_assignments()
         for d, p in res:
             self.add_assignment(p, d)
 

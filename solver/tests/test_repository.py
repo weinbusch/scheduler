@@ -66,6 +66,12 @@ def test_get_schedule():
 
 
 @pytest.mark.django_db
+def test_schedule_does_not_exist():
+    s = ScheduleRepository().get(99)
+    assert s is None
+
+
+@pytest.mark.django_db
 def test_add_get_schedule_roundtrip():
     u = create_user("owner")
     s = domain.Schedule(
@@ -73,16 +79,18 @@ def test_add_get_schedule_roundtrip():
         start=datetime.date(2022, 1, 1),
         end=datetime.date(2022, 1, 8),
     )
-    s.add_participant("foo")
     s.add_preference("foo", datetime.date(2022, 1, 1))
-    s.add_assignment("foo", datetime.date(2022, 1, 1))
+    s.add_preference("foo", datetime.date(2022, 1, 2))
+    s.add_assignment("foo", datetime.date(2022, 1, 2))
     repo = ScheduleRepository()
-    t = repo.add(s)
-    t = repo.get(t.id)
-    assert s.owner == t.owner
-    assert s.days == t.days
-    assert s.preferences == t.preferences
-    assert s.assignments == t.assignments
+    s = repo.add(s)
+    t = repo.get(s.id)
+    assert t.owner.id == u.pk
+    assert t.days == {datetime.date(2022, 1, d) for d in range(1, 8)}
+    assert t.preferences == {
+        "foo": {datetime.date(2022, 1, 1), datetime.date(2022, 1, 2)}
+    }
+    assert t.assignments == {("foo", datetime.date(2022, 1, 2))}
 
 
 @pytest.mark.django_db

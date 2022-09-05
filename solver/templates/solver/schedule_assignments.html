@@ -5,7 +5,7 @@
 <main class="p-4 mx-auto max-w-screen-lg space-y-8">
   <section class="space-y-4 md:space-y-0 md:flex md:flex-row md:justify-between md:items-baseline">
     <div class="flex flex-row space-x-4 items-baseline">
-      <h1 class="text-blue-500 text-xl font-semibold">Zeitplan {{ object.pk }}</h1>
+      <h1 class="text-blue-500 text-xl font-semibold">Zeitplan {{ schedule.id }}</h1>
       <div class="text-sm">
         von
         <span class="px-2 rounded bg-slate-100">{{ object.owner.username }}</span>
@@ -13,11 +13,11 @@
     </div>
     <div class="flex flex-row space-x-4 overflow-x-auto">
       <a class="hover:text-blue-500"
-         href="{% url 'schedule_settings' object.pk %}">Einstellungen</a>
+         href="{% url 'schedule_settings' schedule.id %}">Einstellungen</a>
       <a class="hover:text-blue-500"
-         href="{% url 'schedule_preferences' object.pk %}">Verfügbarkeiten</a>
+         href="{% url 'schedule_preferences' schedule.id %}">Verfügbarkeiten</a>
       <a class="font-semibold text-blue-500"
-         href="{% url 'schedule_assignments' object.pk %}">Verteilung</a>
+         href="{% url 'schedule_assignments' schedule.id %}">Verteilung</a>
     </div>
   </section>
   <section id="app"></section>
@@ -71,9 +71,9 @@
     <p>Was nun?</p>
     <p>
       Gehe zurück zu den
-      <a href="{% url 'schedule_settings' object.pk %}"
+      <a href="{% url 'schedule_settings' schedule.id %}"
          class="text-purple-600 hover:underline"> Einstellungen</a>
-      oder zu den <a href="{% url 'schedule_preferences' object.pk %}"
+      oder zu den <a href="{% url 'schedule_preferences' schedule.id %}"
                      class="text-purple-600 hover:underline">
         Verfügbarkeiten</a>, um das Start- und Enddatum zu ändern,
       Teilnehmer hinzuzufügen, die verfügbaren Tage zu bearbeiten,
@@ -100,7 +100,7 @@
       renderTemplate("assignments");
       let el = document.getElementById("calendar");
       let c = calendar(el, {
-          url: "{% url 'api:assignments' object.pk %}",
+          url: "{% url 'api:schedule_assignments' schedule.id %}",
           start: "{{ object.start.isoformat }}",
           end: "{{ object.end.isoformat }}",
       });
@@ -108,7 +108,7 @@
       button.addEventListener("click", solveSchedule);
   }
   function solveSchedule(){
-      patchSchedule("{% url 'api:schedule' object.pk %}", "{{ csrf_token }}")
+      patchSchedule("{% url 'api:schedule' schedule.id %}", "{{ csrf_token }}")
           .then(r => {
               if (r.ok) {
                   showCalendar();

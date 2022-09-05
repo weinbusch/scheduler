@@ -4,6 +4,23 @@ import datetime
 import collections
 
 from solver.solver import get_schedule
+from solver.domain import Schedule
+
+
+def test_make_assignments():
+    """Test a simple case with two families and four days"""
+    s = Schedule(start=datetime.date(2022, 1, 1), end=datetime.date(2022, 1, 5))
+    s.add_preference("foo", datetime.date(2022, 1, 1))
+    s.add_preference("foo", datetime.date(2022, 1, 3))
+    s.add_preference("bar", datetime.date(2022, 1, 2))
+    s.add_preference("bar", datetime.date(2022, 1, 4))
+    s.make_assignments()
+    assert s.assignments == {
+        ("foo", datetime.date(2022, 1, 1)),
+        ("bar", datetime.date(2022, 1, 2)),
+        ("foo", datetime.date(2022, 1, 3)),
+        ("bar", datetime.date(2022, 1, 4)),
+    }
 
 
 class SchedulerTest(unittest.TestCase):

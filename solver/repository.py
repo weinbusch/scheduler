@@ -11,7 +11,10 @@ class ScheduleRepository:
         return [o.to_domain() for o in qs]
 
     def get(self, pk):
-        return self._queryset().get(pk=pk).to_domain()
+        try:
+            return self._queryset().get(pk=pk).to_domain()
+        except Schedule.DoesNotExist:
+            return None
 
     def _queryset(self):
         return Schedule.objects.all()

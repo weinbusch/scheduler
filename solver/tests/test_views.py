@@ -42,10 +42,12 @@ def authenticated_client(client, django_user):
     return client
 
 
-def test_get_schedule_list(authenticated_client):
+def test_get_schedule_list(authenticated_client, django_user):
+    for d in range(10):
+        repo.add(Schedule(owner=user_to_domain(django_user)))
     r = authenticated_client.get(reverse("index"))
     assert r.status_code == 200
-    assert r.context["schedules"] == []
+    assert len(r.context["schedules"]) == 10
     assert_template_used(r, "solver/index.html")
 
 
@@ -69,13 +71,14 @@ def test_new_schedule_view_post_creates_schedule(authenticated_client, django_us
     data = {
         "start": datetime.date(2022, 1, 1),
         "end": datetime.date(2022, 1, 7),
-        "exclude_weekends": True,
+        "exclude_weekends": False,
     }
     r = authenticated_client.post(reverse("add_schedule"), data)
     assert r.status_code == 302
     [schedule] = repo.list()
     assert schedule.id is not None
     assert schedule.owner.id == django_user.id
+    assert schedule.days == {datetime.date(2022, 1, x) for x in range(1, 7)}
 
 
 @pytest.mark.parametrize(
@@ -86,12 +89,24 @@ def test_new_schedule_view_post_creates_schedule(authenticated_client, django_us
         ("schedule_assignments", "solver/schedule_assignments.html"),
     ],
 )
-def test_schedule_views(url_name, template_name, authenticated_client, django_user):
+def test_schedule_detail_views(
+    url_name, template_name, authenticated_client, django_user
+):
     s = Schedule(owner=user_to_domain(django_user))
     repo.add(s)
     r = authenticated_client.get(reverse(url_name, args=[s.id]))
     assert r.status_code == 200
     assert_template_used(r, template_name)
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    ["schedule_settings", "schedule_preferences", "schedule_assignments"],
+)
+def test_schedule_views_not_found(url_name, client, django_user):
+    client.force_login(django_user)
+    r = client.get(reverse(url_name, args=[1]))
+    assert r.status_code == 404
 
 
 @pytest.mark.parametrize(
