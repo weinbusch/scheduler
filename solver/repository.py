@@ -1,13 +1,19 @@
-from django.db.models import Q
+from django.contrib.auth import get_user_model
 
 from solver.models import Schedule
+
+User = get_user_model()
 
 
 class ScheduleRepository:
     def list(self, user_id=None):
         qs = self._queryset()
         if user_id is not None:
-            qs = qs.filter(Q(users__id=user_id) | Q(owner_id=user_id))
+            qs = qs.filter(owner_id=user_id)
+            try:
+                qs = qs.union(User.objects.get(id=user_id).schedules.all())
+            except User.DoesNotExist:
+                pass
         return [o.to_domain() for o in qs]
 
     def get(self, pk):

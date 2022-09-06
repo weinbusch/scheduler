@@ -55,11 +55,21 @@ def test_list_includes_schedule_where_owner_is_user():
     other = create_user("other")
     s1 = create_schedule(owner)
     s1.users.add(owner)
+    s1.users.add(other)
     create_schedule(other)
     s2 = create_schedule(other)
     s2.users.add(owner)
+    s2.users.add(other)
     schedules = ScheduleRepository().list(owner.id)
     assert len(schedules) == 2
+
+
+@pytest.mark.django_db
+def test_list_for_unknown_user():
+    owner = create_user("owner")
+    create_schedule(owner)
+    schedules = ScheduleRepository().list(owner.id + 1)
+    assert schedules == []
 
 
 @pytest.mark.django_db
