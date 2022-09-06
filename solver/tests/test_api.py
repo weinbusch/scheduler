@@ -41,7 +41,8 @@ def schedule(repo, owner):
     return s
 
 
-def test_day_list(client, schedule, repo, owner):
+def test_day_list(client, repo, owner):
+    schedule = Schedule(owner=user_to_domain(owner))
     dates = [datetime.date(2022, 1, d) for d in range(1, 7)]
     for date in dates:
         schedule.add_day(date)
