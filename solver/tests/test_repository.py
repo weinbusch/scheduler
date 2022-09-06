@@ -29,8 +29,11 @@ def create_schedule(owner):
 @pytest.mark.django_db
 def test_get_schedule_list():
     owner = create_user("owner")
+    other = create_user("other")
     create_schedule(owner)
+    create_schedule(other)
     schedules = ScheduleRepository().list()
+    assert len(schedules) == 2
     assert isinstance(schedules[0], domain.Schedule)
 
 
@@ -39,20 +42,24 @@ def test_filter_list_for_owner():
     owner = create_user("owner")
     other = create_user("other")
     create_schedule(owner)
+    create_schedule(owner)
     create_schedule(other)
     schedules = ScheduleRepository().list(owner.id)
-    assert len(schedules) == 1
-    assert schedules[0].owner.id == owner.id
+    assert len(schedules) == 2
+    assert all([s.owner.id == owner.id for s in schedules])
 
 
 @pytest.mark.django_db
-def test_filter_list_for_other_user():
+def test_list_includes_schedule_where_owner_is_user():
     owner = create_user("owner")
     other = create_user("other")
-    schedule = create_schedule(owner)
-    schedule.users.add(other)
-    schedules = ScheduleRepository().list(other.id)
-    assert len(schedules) == 1
+    s1 = create_schedule(owner)
+    s1.users.add(owner)
+    create_schedule(other)
+    s2 = create_schedule(other)
+    s2.users.add(owner)
+    schedules = ScheduleRepository().list(owner.id)
+    assert len(schedules) == 2
 
 
 @pytest.mark.django_db
