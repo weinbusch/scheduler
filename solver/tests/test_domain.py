@@ -26,6 +26,16 @@ def test_init_schedule_exclude_weekends():
     assert s.days == expected
 
 
+def test_begin_and_end():
+    s = Schedule()
+    assert s.start is None
+    assert s.end is None
+    s.add_day(datetime.date(2022, 1, 1))
+    s.add_day(datetime.date(2022, 1, 31))
+    assert s.start == datetime.date(2022, 1, 1)
+    assert s.end == datetime.date(2022, 1, 31)
+
+
 def test_add_day():
     s = Schedule()
     s.add_day(datetime.date(2022, 1, 1))

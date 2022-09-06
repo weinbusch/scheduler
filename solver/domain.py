@@ -58,6 +58,14 @@ class Schedule:
         return {key: val.preferences.copy() for key, val in self._participants.items()}
 
     @property
+    def start(self):
+        return min(self.days, default=None)
+
+    @property
+    def end(self):
+        return max(self.days, default=None)
+
+    @property
     def assignments(self):
         return set(
             (name, date)
