@@ -15,10 +15,10 @@
   </header>
   <div>
     {% for schedule in schedules %}
-    <a href="{{ schedule.get_absolute_url }}"
+    <a href="{% url 'schedule_settings' schedule.id %}"
        class="block hover:bg-slate-50 p-4 rounded group">
       <div class="flex flex-row space-x-4 items-baseline">
-        <h2 class="font-semibold group-hover:text-blue-500 ">Zeitplan {{ schedule.pk }}</h2>
+        <h2 class="font-semibold group-hover:text-blue-500 ">Zeitplan {{ schedule.id }}</h2>
         <div class="text-sm">
           von
           <span class="px-2 rounded bg-sky-100">{{ schedule.owner.username }}</span>
@@ -28,10 +28,10 @@
         Vom {{ schedule.start }} bis zum {{ schedule.end }}
       </p>
       <p class="mt-1 text-sm">
-        {% for user in schedule.users.all %}
+        {% for name in schedule.participants %}
         {% if forloop.first %}Mit{% endif %}
         {% if forloop.last and not forloop.first %}und{% endif %}
-        {{ user.username }}{% if forloop.revcounter0 > 1 %},{% endif %}
+        {{ name }}{% if forloop.revcounter0 > 1 %},{% endif %}
         {% empty %}
         Noch keine Teilnehmer
         {% endfor %}
