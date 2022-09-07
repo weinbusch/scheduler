@@ -1,6 +1,10 @@
 from django import forms
 
 
+class DateInput(forms.DateInput):
+    template_name = "solver/widgets/date.html"
+
+
 class DateForm(forms.Form):
     date = forms.DateField()
 
@@ -11,6 +15,6 @@ class PreferenceForm(forms.Form):
 
 
 class ScheduleCreateForm(forms.Form):
-    start = forms.DateField()
-    end = forms.DateField()
+    start = forms.DateField(widget=DateInput)
+    end = forms.DateField(widget=DateInput)
     exclude_weekends = forms.BooleanField(required=False)
