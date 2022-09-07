@@ -89,11 +89,14 @@ def schedule_days_api(request, schedule):
     if request.method == "GET":
         data = [{"start": d} for d in sorted(schedule.days)]
         return JsonResponse(data, safe=False)
-    if request.method == "PATCH":
+    if request.method in ["PATCH", "DELETE"]:
         data = get_json_data(request)
         form = DateForm(data)
         if form.is_valid():
-            schedule.add_day(**form.cleaned_data)
+            if request.method == "DELETE":
+                schedule.remove_day(**form.cleaned_data)
+            else:
+                schedule.add_day(**form.cleaned_data)
             repo.add(schedule)
             return api_no_content()
         return api_bad_request(form.errors)

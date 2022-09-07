@@ -74,6 +74,20 @@ def test_add_day_invalid_date(repo, schedule, client, owner):
     assert r.status_code == 400
 
 
+def test_remove_day(repo, schedule, client, owner):
+    schedule.add_day(datetime.date(2022, 1, 1))
+    repo.add(schedule)
+    client.force_login(owner)
+    r = client.delete(
+        reverse("api:schedule_days", args=[schedule.id]),
+        data={"date": "2022-01-01"},
+        content_type="application/json",
+    )
+    assert r.status_code == 204
+    s = repo.get(schedule.id)
+    assert datetime.date(2022, 1, 1) not in s.days
+
+
 def test_day_list_unauthenticated(schedule, client):
     r = client.get(reverse("api:schedule_days", args=[schedule.id]))
     assert r.status_code == 403
