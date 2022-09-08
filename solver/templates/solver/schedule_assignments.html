@@ -8,7 +8,7 @@
       <h1 class="text-blue-500 text-xl font-semibold">Zeitplan {{ schedule.id }}</h1>
       <div class="text-sm">
         von
-        <span class="px-2 rounded bg-slate-100">{{ object.owner.username }}</span>
+        <span class="px-2 rounded bg-slate-100">{{ schedule.owner.username }}</span>
       </div>
     </div>
     <div class="flex flex-row space-x-4 overflow-x-auto">
@@ -28,11 +28,11 @@
 <template id="assignments">
   <div class="space-y-8">
     <div class="space-y-4 md:space-y-0 md:flex md:flex-row md:space-x-8 md:justify-between md:items-center">
-      <p class="text-sm max-w-screen-md">
+      <p class="max-w-screen-md">
         Hier siehst Du die aktuelle Verteilung der Teilnehmer auf die
         Tage des Zeitplans. Falls Du in der Zwischenzeit Einstellungen
         des Zeitplans geändert hast, z.B. wenn Du Teilnehmer hinzugefügt
-        oder entfernt, das Start- und Enddatum verändert oder
+        oder entfernt, die Tage des Zeitplans verändert oder
         Verfügbarkeiten bearbeitet hast, solltest Du die Verteilung
         erneut berechnen lassen. 
       </p>
@@ -75,15 +75,23 @@
          class="text-purple-600 hover:underline"> Einstellungen</a>
       oder zu den <a href="{% url 'schedule_preferences' schedule.id %}"
                      class="text-purple-600 hover:underline">
-        Verfügbarkeiten</a>, um das Start- und Enddatum zu ändern,
+        Verfügbarkeiten</a>, um den Zeitplan zu ändern,
       Teilnehmer hinzuzufügen, die verfügbaren Tage zu bearbeiten,
       oder Teilnehmer, die gar nicht verfügbar sind, zu entfernen.
     </p>
   </div>
 </template>
 
+<script src="{% static 'solver/js/api.js' %}"></script>
 <script src="{% static 'solver/js/calendar.js' %}"></script>
 <script>
+  let api = new API(
+      "{% url 'api:schedule_days' schedule.id %}",
+      "{% url 'api:schedule_preferences' schedule.id %}",
+      "{% url 'api:schedule_assignments' schedule.id %}",
+      "{{ csrf_token }}",
+  );
+  
   function renderTemplate(name){
       let template = document.getElementById(name),
           clone = template.content.cloneNode(true),
@@ -91,24 +99,41 @@
       deleteChildren(app);
       app.appendChild(clone);
   }
+
   function deleteChildren(el){
       while (el.firstChild){
           el.removeChild(el.firstChild);
       }
   }
+
   function showCalendar(){
       renderTemplate("assignments");
-      let el = document.getElementById("calendar");
-      let c = calendar(el, {
-          url: "{% url 'api:schedule_assignments' schedule.id %}",
-          start: "{{ object.start.isoformat }}",
-          end: "{{ object.end.isoformat }}",
+      let calendar = Calendar("#calendar", {
+          initialDate: {% if schedule.start %}"{{ schedule.start.isoformat }}"{% else %}undefined{% endif %},
+          eventSources: [
+              {
+                  id: "assignments",
+                  url: "{% url 'api:schedule_assignments' schedule.id %}",
+                  eventDataTransform: function(eventData){
+                      eventData.title = eventData.participant;
+                      eventData.classNames = "p-2"
+                      return eventData;
+                  },
+              },
+              {
+                  id: "days",
+                  url: "{% url 'api:schedule_days' schedule.id %}",
+                  display: "background",
+              },
+          ],
       });
+      calendar.render();
       let button = document.getElementById("solve");
       button.addEventListener("click", solveSchedule);
   }
+
   function solveSchedule(){
-      patchSchedule("{% url 'api:schedule' schedule.id %}", "{{ csrf_token }}")
+      api.patchSchedule("{% url 'api:schedule' schedule.id %}")
           .then(r => {
               if (r.ok) {
                   showCalendar();
@@ -119,12 +144,14 @@
               }
           })
   }
+  
   function showError(error){
       renderTemplate("error");
       let el = document.getElementById("info");
       el.innerText = error;
   }
-  {% if object.has_assignments %}
+
+  {% if schedule.has_assignments %}
   showCalendar();
   {% else %}
   solveSchedule();

@@ -1,4 +1,13 @@
 function API(days_url, preferences_url, assignments_url, csrf_token){
+    this.patchSchedule = function(url){
+        return fetch(url, {
+            method: "PATCH",
+            headers: {
+                "X-CSRFToken": csrf_token,
+            },            
+        })
+    }
+    
     this.addDay = function(dateStr){
         return fetch(days_url, {
             method: "PATCH",
@@ -36,7 +45,7 @@ function API(days_url, preferences_url, assignments_url, csrf_token){
         })    
     }
 
-    this.deletePreference = function(name, dateStr){
+    this.removePreference = function(name, dateStr){
         return fetch(preferences_url, {
             method: "DELETE",
             headers: {

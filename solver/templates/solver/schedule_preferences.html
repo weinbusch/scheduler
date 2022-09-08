@@ -8,7 +8,7 @@
       <h1 class="text-blue-500 text-xl font-semibold">Zeitplan {{ schedule.id }}</h1>
       <div class="text-sm">
         von
-        <span class="px-2 rounded bg-slate-100">{{ object.owner.username }}</span>
+        <span class="px-2 rounded bg-slate-100">{{ schedule.owner.username }}</span>
       </div>
     </div>
     <div class="flex flex-row space-x-4 overflow-x-auto">
@@ -22,23 +22,23 @@
   </section>
   <section class="space-y-6">
     <div class="space-y-4">
-      <p class="text-sm">
+      <p>
         Wähle einen Teilnehmer aus, um dessen Verfügbarkeit zu bearbeiten:
       </p>
-      <div class="flex flex-row overflow-auto space-x-2" id="calendar_users">
-        {% for u in object.users.all %}
-        <label for="user_{{ u.pk }}">
+      <div class="flex flex-row overflow-auto space-x-2" id="participants">
+        {% for p in schedule.participants %}
+        <label for="participant_{{ forloop.counter }}">
           <input class="peer hidden"
                  type="radio"
-                 id="user_{{ u.pk }}"
-                 name="calendar_user"
-                 value="{{ u.pk }}"
-                 {% if u == user %}checked{% endif %}>
+                 id="participant_{{ forloop.counter }}"
+                 name="participants"
+                 value="{{ p }}"
+                 {% if forloop.first %}checked{% endif %}>
           <div class="px-4 py-2 rounded-lg
                       peer-checked:bg-blue-500 peer-checked:text-slate-100
                       hover:bg-blue-500 hover:text-slate-100
                       bg-slate-200 cursor-pointer" >
-            {{ u.username}}
+            {{ p }}
           </div>
         </label>
         {% empty %}
@@ -47,7 +47,7 @@
       </div>
     </div>
     <div class="space-y-4">
-      <p class="text-sm">
+      <p>
         Klicke auf einen freien Tag, um diesen als verfügbar zu
         kennzeichnen. Klicke auf einen verfügbaren Tag, um die Auswahl
         zu widerrufen:
@@ -59,16 +59,71 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'solver/js/api.js' %}"></script>
 <script src="{% static 'solver/js/calendar.js' %}"></script>
 <script>
-  calendar(document.getElementById("calendar"), {
-      url: "{% url 'api:schedule_preferences' schedule.id %}",
-      csrf_token: "{{ csrf_token }}",
-      canAdd: true,
-      canDelete: true,
-      selectUser: true,
-      start: "{{ object.start.isoformat }}",
-      end: "{{ object.end.isoformat }}",
-  })
+  let api = new API(
+      "{% url 'api:schedule_days' schedule.id %}",
+      "{% url 'api:schedule_preferences' schedule.id %}",
+      "{% url 'api:schedule_assignments' schedule.id %}",
+      "{{ csrf_token }}",
+  );
+  function getSelectedParticipant(){
+      let el = document.getElementById("participants");
+      let checked = el.querySelector("input:checked");
+      return checked.value;
+  }
+  let calendar = Calendar("#calendar", {
+      initialDate: {% if schedule.start %}"{{ schedule.start.isoformat }}"{% else %}undefined{% endif %},
+      eventSources: [
+          {
+              id: "preferences",
+              url: "{% url 'api:schedule_preferences' schedule.id %}",
+              eventDataTransform: function(eventData){
+                  eventData.title = eventData.participant;
+                  if (eventData.participant == getSelectedParticipant()){
+                      eventData.classNames = ["p-1", "cursor-pointer", "hover:ring"];
+                  } else {
+                      eventData.display = "none"
+                  }
+                  return eventData;
+              },
+          },
+          {
+              id: "days",
+              url: "{% url 'api:schedule_days' schedule.id %}",
+              display: "background",
+          }
+      ],
+      eventClick: function(info){
+          let participant = info.event.extendedProps.participant,
+              dateStr = info.event.startStr;
+          if (participant && participant == getSelectedParticipant()){
+              api.removePreference(participant, dateStr).then((r) => {if (r.ok){
+                  this.refetchEvents()
+              }})
+          }
+      },
+      dateClick: function(info){
+          let participant = getSelectedParticipant(),
+              dateStr = info.dateStr;
+          let events = this.getEvents();
+          let isAvailable = events.filter(e => e.startStr == dateStr)
+                  .filter(e => e.source.id == "days")
+              .length == 1;
+          let isEmpty = events.filter(e => e.startStr == dateStr)
+              .filter(e => e.extendedProps.participant == participant)
+              .length == 0;
+          if (isAvailable && isEmpty){
+              api.addPreference(participant, dateStr).then(r => {
+                  if (r.ok){
+                      this.refetchEvents()
+                  }
+              })
+          }
+      }
+  });
+  document.getElementById("participants").addEventListener("change", ()=>calendar.refetchEvents());
+  calendar.render();
 </script>
 {% endblock %}

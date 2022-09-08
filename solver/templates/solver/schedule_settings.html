@@ -1,5 +1,5 @@
 {% extends 'base/layout.html' %}
-
+{% load static %}
 
 {% block main %}
 <main class="p-4 mx-auto max-w-screen-lg space-y-8">
@@ -20,94 +20,50 @@
          href="{% url 'schedule_assignments' schedule.id %}">Verteilung</a>
     </div>
   </section>
-  <section>
-    <form action="" method="POST" class="space-y-4">
-      {% csrf_token %}
-      <input type="hidden" name="next" value="{{ next }}">
-      <div class="space-y-4 md:space-y-0 md:flex md:flex-row md:space-x-8">
-        <div class="md:w-1/2 space-y-2">
-          <div>
-	    <label for="{{ form.start.id_for_label }}"
-	           class="font-semibold text-sm">
-	      Beginn
-	    </label>
-	    <div class="mt-1">
-	      {{ form.start }}
-	    </div>
-	    {% for error in form.start.errors %}
-	    <div class="mt-1 text-red-600">
-	      {{ error }}
-	    </div>
-	    {% endfor %}
-          </div>
-          <div>
-            <label for="{{ form.end.id_for_label }}"
-	           class="font-semibold text-sm">
-              Ende
-            </label>
-            <div class="mt-1">
-              {{ form.end }}
-            </div>
-            {% for error in form.end.errors %}
-            <div class="mt-1 text-red-600">
-              {{ error }}
-            </div>
-            {% endfor %}
-          </div>
-          <div class="text-sm">
-            Legt den Beginn und das Ende (inklusiv) des Zeitplans fest. Wochenenden sind ausgenommen.
-          </div>
-        </div>
-        <div class="md:w-1/2">
-          <p class="font-semibold text-sm">Teilnehmer</p>
-          <p class="mt-1 text-sm">
-            Füge Teilnehmer zu diesem Zeitplan hinzu oder entferne
-            sie.
-          </p>
-          <div class="mt-2 border-b border-r border-l max-h-64 overflow-y-auto">
-            {% for choice in form.users %}
-            <div class="p-2 border-t flex flex-row items-baseline bg-white">
-              {{ choice.tag }}
-              <label class="ml-2 flex-grow" for="{{ choice.id_for_label }}">
-                {{ choice.choice_label }}
-              </label>	
-            </div>
-            {% endfor %}
-          </div>
-          {% for error in form.users.errors %}
-          <div class="mt-1 text-red-600">
-            {{ error }}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      <p class="text-sm">
-        Änderungen hier wirken sich erst aus, wenn Du sie durch
-
-        <span class="bg-slate-100 px-2 py-1 rounded font-mono">Speichern</span>
-
-        bestätigst.
-      </p>
-      <div>
-        <button type="submit"
-	        class="px-4 p-2 rounded-lg 
-		       bg-purple-500 hover:bg-purple-600 text-white">
-          Speichern
-        </button>
-      </div>
-    </form>
+  <section class="space-y-4">
+    <div>
+      Lege hier die Tage des Zeitplans fest. Klicke auf einen freien
+      Tag, um diesen zum Zeitplan hinzuzufügen. Klicke auf einen
+      markierten Tag, um diesen vom Zeitplan zu entfernen.
+    </div>
+    <div id="calendar"></div>
   </section>
-  {% if not object.users.empty %}
-  <section class="border-t pt-4 space-y-4 md:space-y-0 flex flex-col md:flex-row md:items-baseline md:space-x-4">
-    <a href="{% url 'schedule_preferences' schedule.id %}"
-       class="px-4 p-2 rounded-lg border text-purple-500 hover:underline whitespace-nowrap">
-      Verfügbarkeiten bearbeiten
-    </a>
-    <a href="{% url 'schedule_assignments' schedule.id %}"
-       class="px-4 p-2 rounded-lg border text-purple-500 hover:underline whitespace-nowrap">
-      Verteilung ansehen
-    </a>
-  </section>
-  {% endif %}
 </main>
 {% endblock %}
+
+{% block scripts %}
+<script src="{% static 'solver/js/api.js' %}"></script>
+<script src="{% static 'solver/js/calendar.js' %}"></script>
+<script>
+  let api = new API(
+      "{% url 'api:schedule_days' schedule.id %}",
+      "{% url 'api:schedule_preferences' schedule.id %}",
+      "{% url 'api:schedule_assignments' schedule.id %}",
+      "{{ csrf_token }}",
+  );
+  let calendar = Calendar("#calendar", {
+      initialDate: {% if schedule.start %}"{{ schedule.start.isoformat }}"{% else %}undefined{% endif %},
+      eventSources: [{
+          url: "{% url 'api:schedule_days' schedule.id %}",
+          display: "background",
+      }],
+      eventClick: function(info){
+          let dateStr = info.event.startStr;
+          api.removeDay(dateStr).then(
+              r => {if (r.ok){ this.refetchEvents() }}
+          )
+      },
+      dateClick: function(info){
+          let dateStr = info.dateStr;
+          if (this.getEvents().filter(e => e.startStr == dateStr).length){
+              return;
+          }
+          api.addDay(dateStr).then(
+              r => {if (r.ok) { this.refetchEvents() }}
+          )
+      },
+  });
+  calendar.render();
+</script>
+{% endblock %}
+
