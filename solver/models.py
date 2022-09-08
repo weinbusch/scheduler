@@ -53,9 +53,10 @@ class Schedule(models.Model):
         )
         # persist participants
         Participant.objects.filter(schedule_id=obj.id).delete()
-        participants = Participant.objects.bulk_create(
-            [Participant(schedule_id=obj.id, name=name) for name in s.participants]
-        )
+        participants = [
+            Participant.objects.create(schedule_id=obj.id, name=name)
+            for name in s.participants
+        ]
         # persist preferred and assigned dates
         ids = {p.name: p.id for p in participants}
         PreferredDate.objects.filter(participant__schedule_id=obj.id).delete()
