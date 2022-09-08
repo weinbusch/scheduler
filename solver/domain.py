@@ -110,8 +110,8 @@ class Schedule:
     def make_assignments(self):
         try:
             res = get_schedule(list(self.days), self.preferences)
-        except Exception:
-            raise ScheduleException
+        except Exception as e:
+            raise ScheduleException(e)
         finally:
             self.clear_assignments()
         for d, p in res:
