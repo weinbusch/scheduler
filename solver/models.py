@@ -1,8 +1,5 @@
-import datetime
-
 from django.conf import settings
 from django.db import models
-from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 from solver import domain
@@ -17,62 +14,14 @@ def user_from_domain(user):
     return User.objects.get(id=user.id)
 
 
-def get_available_dates(user, schedule, start, end):
-    return [
-        d.start
-        for d in user.day_preferences.filter(
-            schedule=schedule,
-            start__gte=start,
-            start__lte=end,
-            active=True,
-        )
-    ]
-
-
-class DayPreference(models.Model):
-
-    user = models.ForeignKey(
-        to=settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="day_preferences",
-    )
-
-    schedule = models.ForeignKey(
-        to="Schedule",
-        on_delete=models.CASCADE,
-        related_name="day_preferences",
-    )
-
-    start = models.DateField()
-
-    active = models.BooleanField(default=True)
-
-    def get_absolute_url(self):
-        return reverse("api:day_preference", args=[self.id])
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user_id", "start", "schedule"],
-                name="unique_day_preference",
-            )
-        ]
-
-
-class ScheduleException(Exception):
-    pass
-
-
 class Schedule(models.Model):
-    start = models.DateField(default=datetime.date.today)
-    end = models.DateField(default=datetime.date.today)
-    users = models.ManyToManyField(
-        to=settings.AUTH_USER_MODEL, related_name="schedules", blank=True
-    )
     owner = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         related_name="my_schedules",
         on_delete=models.PROTECT,
+    )
+    users = models.ManyToManyField(
+        to=settings.AUTH_USER_MODEL, related_name="schedules", blank=True
     )
 
     def to_domain(self):
@@ -165,25 +114,5 @@ class AssignedDate(models.Model):
             models.UniqueConstraint(
                 fields=["participant_id", "start"],
                 name="unique_assigned_date",
-            )
-        ]
-
-
-class Assignment(models.Model):
-    schedule = models.ForeignKey(
-        Schedule, on_delete=models.CASCADE, related_name="assignments"
-    )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="assignments",
-    )
-    start = models.DateField()
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["start", "schedule"],
-                name="unique_assignment",
             )
         ]
