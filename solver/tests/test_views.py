@@ -106,6 +106,17 @@ def test_schedule_detail_views(
     assert_template_used(r, template_name)
 
 
+def test_add_participant(authenticated_client, django_user):
+    s = Schedule(owner=user_to_domain(django_user))
+    repo.add(s)
+    r = authenticated_client.post(
+        reverse("schedule_preferences", args=[s.id]), data={"name": "foo"}
+    )
+    assert r.status_code == 302
+    s = repo.get(s.id)
+    assert "foo" in s.participants
+
+
 @pytest.mark.parametrize(
     "url_name",
     ["schedule_settings", "schedule_preferences", "schedule_assignments"],

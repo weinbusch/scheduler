@@ -20,8 +20,8 @@
          href="{% url 'schedule_assignments' schedule.id %}">Verteilung</a>
     </div>
   </section>
-  <section class="space-y-6">
-    <div class="space-y-4">
+  <section class="space-y-8 md:space-y-0 md:flex md:flex-row md:space-x-8 md:items-end">
+    <div class="flex-grow space-y-2">
       <p>
         Wähle einen Teilnehmer aus, um dessen Verfügbarkeit zu bearbeiten:
       </p>
@@ -46,6 +46,27 @@
         {% endfor %}
       </div>
     </div>
+    <form action="" method="POST">
+      {% csrf_token %}
+      <div class="space-y-2">
+        <p>
+          Teilnehmer hinzufügen:
+        </p>
+        <div class="flex flex-row space-x-2">
+          <div>
+            {{ form.name }}
+          </div>
+          <div>
+            <button type="submit"
+	            class="px-4 p-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white whitespace-nowrap">
+              Speichern
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+  <section>
     <div class="space-y-4">
       <p>
         Klicke auf einen freien Tag, um diesen als verfügbar zu
@@ -84,7 +105,7 @@
                   if (eventData.participant == getSelectedParticipant()){
                       eventData.classNames = ["p-1", "cursor-pointer", "hover:ring"];
                   } else {
-                      eventData.display = "none"
+                      eventData.classNames = "opacity-50"
                   }
                   return eventData;
               },
@@ -109,7 +130,7 @@
               dateStr = info.dateStr;
           let events = this.getEvents();
           let isAvailable = events.filter(e => e.startStr == dateStr)
-                  .filter(e => e.source.id == "days")
+              .filter(e => e.source.id == "days")
               .length == 1;
           let isEmpty = events.filter(e => e.startStr == dateStr)
               .filter(e => e.extendedProps.participant == participant)

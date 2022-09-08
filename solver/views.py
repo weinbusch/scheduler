@@ -10,7 +10,7 @@ from django.shortcuts import render, reverse, redirect
 from solver.models import user_to_domain
 from solver.repository import ScheduleRepository
 from solver.domain import Schedule, ScheduleException
-from solver.forms import DateForm, PreferenceForm, ScheduleCreateForm
+from solver.forms import DateForm, PreferenceForm, ScheduleCreateForm, ParticipantForm
 
 repo = ScheduleRepository()
 
@@ -181,7 +181,17 @@ def schedule_settings(request, schedule):
 @login_required
 @schedule_view
 def schedule_preferences(request, schedule):
-    return render(request, "solver/schedule_preferences.html", dict(schedule=schedule))
+    if request.method == "POST":
+        form = ParticipantForm(request.POST, participants=schedule.participants)
+        if form.is_valid():
+            schedule.add_participant(**form.cleaned_data)
+            repo.add(schedule)
+            return redirect(reverse("schedule_preferences", args=[schedule.id]))
+    else:
+        form = ParticipantForm(participants=schedule.participants)
+    return render(
+        request, "solver/schedule_preferences.html", dict(schedule=schedule, form=form)
+    )
 
 
 @login_required
