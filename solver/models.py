@@ -46,32 +46,69 @@ class Schedule(models.Model):
         owner = user_from_domain(s.owner)
         obj.owner = owner
         obj.save()
-        # persist days
-        Day.objects.filter(schedule_id=obj.id).delete()
-        Day.objects.bulk_create(
-            [Day(schedule_id=obj.id, start=date) for date in s.days]
-        )
-        # persist participants
-        Participant.objects.filter(schedule_id=obj.id).delete()
-        participants = [
-            Participant.objects.create(schedule_id=obj.id, name=name)
-            for name in s.participants
-        ]
-        # persist preferred and assigned dates
-        ids = {p.name: p.id for p in participants}
-        PreferredDate.objects.filter(participant__schedule_id=obj.id).delete()
-        PreferredDate.objects.bulk_create(
-            PreferredDate(participant_id=ids[name], start=date)
-            for name, dates in s.preferences.items()
-            for date in dates
-        )
-        AssignedDate.objects.filter(participant__schedule_id=obj.id).delete()
-        AssignedDate.objects.bulk_create(
-            AssignedDate(participant_id=ids[name], start=date)
-            for name, date in s.assignments
-        )
         # update id on domain object
         s.id = obj.id
+        # persist days
+        saved_days = {d.start for d in obj.day_set.all()}
+        if orphan_days := (saved_days - s.days):
+            Day.objects.filter(schedule_id=obj.id).filter(
+                start__in=orphan_days
+            ).delete()
+        if new_days := (s.days - saved_days):
+            Day.objects.bulk_create(
+                [Day(schedule_id=obj.id, start=date) for date in new_days]
+            )
+        # persist participants
+        saved_participants = list(obj.participant_set.all())
+        saved_participant_names = [p.name for p in saved_participants]
+        if orphan_participants := {
+            p for p in saved_participants if p.name not in s.participants
+        }:
+            Participant.objects.filter(
+                schedule_id=obj.id, id__in=[p.id for p in orphan_participants]
+            ).delete()
+        for name in s.participants:
+            if name not in saved_participant_names:
+                participant = Participant.objects.create(schedule=obj, name=name)
+                PreferredDate.objects.bulk_create(
+                    PreferredDate(participant_id=participant.id, start=date)
+                    for date in s.preferences[name]
+                )
+                AssignedDate.objects.bulk_create(
+                    AssignedDate(participant_id=participant.id, start=date)
+                    for n, date in s.assignments
+                    if n == name
+                )
+            else:
+                participant = next(p for p in saved_participants if p.name == name)
+                # update preferred dates
+                preferred_dates = s.preferences[name]
+                saved_preferred_dates = {
+                    d.start for d in participant.preferreddate_set.all()
+                }
+                if orphan_preferred_dates := saved_preferred_dates - preferred_dates:
+                    PreferredDate.objects.filter(
+                        participant=participant, start__in=orphan_preferred_dates
+                    ).delete()
+                if new_preferred_dates := preferred_dates - saved_preferred_dates:
+                    PreferredDate.objects.bulk_create(
+                        PreferredDate(participant=participant, start=d)
+                        for d in new_preferred_dates
+                    )
+                # update assigned dates
+                assigned_dates = {d for n, d in s.assignments if n == name}
+                saved_assigned_dates = {
+                    d.start for d in participant.assigneddate_set.all()
+                }
+                if orphan_assigned_dates := saved_assigned_dates - assigned_dates:
+                    AssignedDate.objects.filter(
+                        participant=participant, start__in=orphan_assigned_dates
+                    ).delete()
+                if new_assigned_dates := assigned_dates - saved_assigned_dates:
+                    AssignedDate.objects.bulk_create(
+                        AssignedDate(participant=participant, start=d)
+                        for d in new_assigned_dates
+                    )
         return s
 
 

@@ -73,26 +73,27 @@ def test_persist_updated_schedule():
     )
     [s.add_preference("foo", datetime.date(2022, 1, x)) for x in range(1, 5)]
     [s.add_assignment("foo", datetime.date(2022, 1, x)) for x in range(1, 4)]
+    # persist schedule
     s = models.Schedule.update_from_domain(s)
+    # remove preference
     s.remove_preference("foo", datetime.date(2022, 1, 1))
+    s = models.Schedule.update_from_domain(s)
+    assert (
+        models.PreferredDate.objects.filter(
+            participant__name="foo", start=datetime.date(2022, 1, 1)
+        ).exists()
+        is False
+    )
+    assert models.PreferredDate.objects.filter(participant__name="foo").count() == 3
+    # add preference
+    s.add_preference("foo", datetime.date(2022, 1, 9))
+    s = models.Schedule.update_from_domain(s)
+    assert models.PreferredDate.objects.filter(participant__name="foo").count() == 4
+    # add new participant with preference
+    s.add_preference("bar", datetime.date(2022, 1, 1))
+    s = models.Schedule.update_from_domain(s)
+    assert models.PreferredDate.objects.filter(participant__name="bar").count() == 1
+    # clear assignments
     s.clear_assignments()
     s = models.Schedule.update_from_domain(s)
-    assert s.id == 1
-    assert models.Schedule.objects.filter(owner=owner).count() == 1
-    assert models.Day.objects.filter(schedule__owner=owner).count() == 7
-    assert (
-        models.Participant.objects.filter(schedule__owner=owner, name="foo").count()
-        == 1
-    )
-    assert (
-        models.PreferredDate.objects.filter(participant__schedule__owner=owner).count()
-        == 3
-    )
-    assert (
-        models.PreferredDate.objects.filter(start=datetime.date(2022, 1, 1)).count()
-        == 0
-    )
-    assert (
-        models.AssignedDate.objects.filter(participant__schedule__owner=owner).count()
-        == 0
-    )
+    assert models.AssignedDate.objects.count() == 0
