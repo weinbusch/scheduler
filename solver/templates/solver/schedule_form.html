@@ -2,16 +2,13 @@
 
 
 {% block main %}
-<main class="p-4 mx-auto max-w-screen-lg space-y-8">
-  <section>
-    <h1 class="text-blue-500 text-xl font-semibold">
-      Neuer Zeitplan
-    </h1>
-  </section>
-  <section>
+<main class="p-4 mx-auto max-w-xl">
     <form action="" method="POST">
       {% csrf_token %}
-      <div class="space-y-8 max-w-md">
+      <div class="space-y-8">
+        <h1 class="text-blue-500 text-xl font-semibold">
+          Neuer Zeitplan
+        </h1>
         <div>
 	  <label for="{{ form.start.id_for_label }}"
 	         class="font-semibold text-sm">
@@ -67,6 +64,5 @@
         </div>
       </div>
     </form>
-  </section>
 </main>
 {% endblock %}
