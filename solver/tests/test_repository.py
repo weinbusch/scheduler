@@ -126,3 +126,19 @@ def test_modify_schedule():
     u = repo.get(t.id)
     assert datetime.date(2022, 1, 6) not in u.days
     assert datetime.date(2022, 1, 9) in u.days
+
+
+@pytest.mark.django_db
+def test_delete_schedule():
+    repo = ScheduleRepository()
+    user = create_user("user")
+    s = domain.Schedule(
+        owner=domain.User(user.pk, "owner"),
+        start=datetime.date(2022, 1, 1),
+        end=datetime.date(2022, 1, 7),
+    )
+    s.add_preference("foo", datetime.date(2022, 1, 1))
+    s.add_assignment("foo", datetime.date(2022, 1, 1))
+    s = repo.add(s)
+    repo.delete(s)
+    assert repo.get(s.id) is None

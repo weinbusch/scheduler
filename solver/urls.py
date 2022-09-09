@@ -46,6 +46,11 @@ urlpatterns = [
         name="schedule_assignments",
     ),
     path(
+        "schedules/<int:pk>/delete",
+        views.delete_schedule,
+        name="delete_schedule",
+    ),
+    path(
         "schedules/<int:pk>/participants/delete",
         views.delete_participant,
         name="delete_participant",

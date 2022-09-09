@@ -1,0 +1,30 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block main %}
+<main class="p-4 mx-auto max-w-screen-lg space-y-8">
+  <section class="space-y-4 md:space-y-0 md:flex md:flex-row md:justify-between md:items-baseline">
+    <div class="flex flex-row space-x-4 items-baseline">
+      <h1 class="text-blue-500 text-xl font-semibold">Zeitplan {{ schedule.id }}</h1>
+      <div class="text-sm">
+        von
+        <span class="px-2 rounded bg-slate-100">{{ schedule.owner.username }}</span>
+      </div>
+    </div>
+    {% include "solver/navigation.html" %}
+  </section>
+  <section class="mx-auto max-w-screen-md space-y-4">
+    <div>
+      Warte mal, Stop! Bist Du Dir sicher, dass Du diesen Zeitplan löschen möchtest?
+    </div>
+    <form action="" method="POST">
+      {% csrf_token %}
+      <div class="flex flex-row justify-between">
+        <input class="px-4 py-2 bg-red-700 hover:bg-red-800 rounded-lg text-slate-100 cursor-pointer" type="submit" value="Ja, bitte löschen">
+        <a href="{% url 'schedule_settings' schedule.id %}" class="px-4 py-2 border rounded-lg hover:underline hover:text-blue-500">Nein, doch lieber nicht</a>
+      </div>
+    </form>
+  </section>
+</main>
+{% endblock %}
+

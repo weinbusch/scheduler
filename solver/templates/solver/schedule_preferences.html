@@ -26,43 +26,42 @@
         </button>
       </div>
     </form>
-    {% if schedule.participants %}
-    <div class="space-y-2">
-      <p>
-        Wähle einen Teilnehmer aus, um dessen Verfügbarkeit zu bearbeiten:
-      </p>
-      <form action="{% url 'delete_participant' schedule.id %}" method="POST">
-        {% csrf_token %}
-        <div class="flex flex-row flex-wrap -m-1" id="participants">
-          {% for p in schedule.participants %}
-          <div class="m-1 flex flex-row">
-            <input class="peer hidden" type="radio" id="participant_{{ forloop.counter }}" name="participants" value="{{ p }}" {% if forloop.first %}checked{% endif %}>
-            <label for="participant_{{ forloop.counter }}"
-                   class="px-4 py-2 rounded-l-lg peer-checked:bg-blue-500 peer-checked:text-slate-100 hover:bg-blue-500 hover:text-slate-100 bg-slate-200 cursor-pointer">
-              {{ p }}
-            </label>
-            <button type="submit" name="participant" value="{{ p }}" class="px-3 py-2 rounded-r-lg bg-slate-300 hover:text-red-500" title="Teilnehmer löschen">
-              &#10005;
-            </button>
-          </div>
-          {% endfor %}
-        </div>
-      </form>
-    </div>
-    {% endif %}
   </section>
-  {% if schedule.participants %}
   <section>
     <div class="space-y-4">
-      <p>
-        Klicke auf einen freien Tag, um diesen als verfügbar zu
-        kennzeichnen. Klicke auf einen verfügbaren Tag, um die Auswahl
-        zu widerrufen:
-      </p>
+      {% if schedule.participants %}
+      <div class="space-y-2">
+        <p>
+          Wähle einen Teilnehmer aus, um dessen Verfügbarkeit zu bearbeiten:
+        </p>
+        <form action="{% url 'delete_participant' schedule.id %}" method="POST">
+          {% csrf_token %}
+          <div class="flex flex-row flex-wrap -m-1" id="participants">
+            {% for p in schedule.participants %}
+            <div class="m-1 flex flex-row">
+              <input class="peer hidden" type="radio" id="participant_{{ forloop.counter }}" name="participants" value="{{ p }}" {% if forloop.first %}checked{% endif %}>
+              <label for="participant_{{ forloop.counter }}"
+                     class="px-4 py-2 rounded-l-lg peer-checked:bg-blue-500 peer-checked:text-slate-100 hover:bg-blue-500 hover:text-slate-100 bg-slate-200 cursor-pointer">
+                {{ p }}
+              </label>
+              <button type="submit" name="participant" value="{{ p }}" class="px-3 py-2 rounded-r-lg bg-slate-300 hover:text-red-500" title="Teilnehmer löschen">
+                &#10005;
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+        </form>
+        <div>
+          Klicke auf einen freien Tag, um diesen als verfügbar zu
+          kennzeichnen. Klicke auf einen verfügbaren Tag, um die Auswahl
+          zu widerrufen:
+        </div>
+
+      </div>
+      {% endif %}
       <div id="calendar"></div>
     </div>
   </section>
-  {% endif %}
 </main>
 {% endblock %}
 

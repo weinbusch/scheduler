@@ -205,6 +205,22 @@ def schedule_settings(request, schedule):
 
 @login_required
 @schedule_view
+def delete_schedule(request, schedule):
+    if request.method == "POST":
+        repo.delete(schedule)
+        return redirect(reverse("index"))
+    return render(
+        request,
+        "solver/delete_schedule.html",
+        dict(
+            schedule=schedule,
+            navigation=ScheduleNavigation(schedule, ""),
+        ),
+    )
+
+
+@login_required
+@schedule_view
 def schedule_preferences(request, schedule):
     if request.method == "POST":
         form = ParticipantForm(request.POST, participants=schedule.participants)

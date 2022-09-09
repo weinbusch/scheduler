@@ -27,3 +27,6 @@ class ScheduleRepository:
 
     def add(self, s):
         return Schedule.update_from_domain(s)
+
+    def delete(self, s):
+        return Schedule.objects.filter(id=s.id).delete()

@@ -118,6 +118,17 @@ def test_schedule_detail_views(
     assert_template_used(r, template_name)
 
 
+def test_delete_schedule(authenticated_client, django_user):
+    s = Schedule(owner=user_to_domain(django_user))
+    s = repo.add(s)
+    r = authenticated_client.get(reverse("delete_schedule", args=[s.id]))
+    assert r.status_code == 200
+    assert_template_used(r, "solver/delete_schedule.html")
+    r = authenticated_client.post(reverse("delete_schedule", args=[s.id]))
+    assert r.status_code == 302
+    assert repo.list() == []
+
+
 def test_add_participant(authenticated_client, django_user):
     s = Schedule(owner=user_to_domain(django_user))
     repo.add(s)
