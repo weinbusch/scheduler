@@ -1,6 +1,6 @@
 import json
 
-from django.http import JsonResponse, HttpResponseNotFound
+from django.http import JsonResponse, HttpResponseNotFound, HttpResponseNotAllowed
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.views import LoginView as BaseLoginView
@@ -198,6 +198,17 @@ def schedule_preferences(request, schedule):
 @schedule_view
 def schedule_assignments(request, schedule):
     return render(request, "solver/schedule_assignments.html", dict(schedule=schedule))
+
+
+@login_required
+@schedule_view
+def delete_participant(request, schedule):
+    if request.method == "POST":
+        name = request.POST.get("participant", None)
+        schedule.remove_participant(name)
+        repo.add(schedule)
+        return redirect(reverse("schedule_settings", args=[schedule.id]))
+    return HttpResponseNotAllowed(["POST"])
 
 
 # Auth views

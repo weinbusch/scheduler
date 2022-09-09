@@ -117,6 +117,18 @@ def test_add_participant(authenticated_client, django_user):
     assert "foo" in s.participants
 
 
+def test_delete_participant(authenticated_client, django_user):
+    s = Schedule(owner=user_to_domain(django_user))
+    s.add_participant("foo")
+    s.add_participant("bar")
+    s = repo.add(s)
+    url = reverse("delete_participant", args=[s.id])
+    r = authenticated_client.post(url, data={"participant": "foo"})
+    assert r.status_code == 302
+    s = repo.get(s.id)
+    assert "foo" not in s.participants
+
+
 @pytest.mark.parametrize(
     "url_name",
     ["schedule_settings", "schedule_preferences", "schedule_assignments"],

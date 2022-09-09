@@ -45,6 +45,11 @@ urlpatterns = [
         views.schedule_assignments,
         name="schedule_assignments",
     ),
+    path(
+        "schedules/<int:pk>/participants/delete",
+        views.delete_participant,
+        name="delete_participant",
+    ),
     path("auth/", include((auth_patterns, "solver"), namespace="auth")),
     path("api/", include((api_patterns, "solver"), namespace="api")),
 ]
