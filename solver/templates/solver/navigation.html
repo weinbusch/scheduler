@@ -1,0 +1,12 @@
+<div class="flex flex-row space-x-4 overflow-x-auto">
+  {% for label, url, active in navigation %}
+  {% if active %}
+  <span class="font-semibold text-blue-500">
+    {{ label }}
+  </span>
+  {% else %}
+  <a class="hover:text-blue-500"
+     href="{{ url }}">{{ label }}</a>
+  {% endif %}
+  {% endfor %}
+</div>

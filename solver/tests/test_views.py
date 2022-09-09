@@ -8,6 +8,7 @@ from django.urls import reverse
 from solver.models import user_to_domain
 from solver.repository import ScheduleRepository
 from solver.domain import Schedule
+from solver.views import ScheduleNavigation
 
 User = get_user_model()
 
@@ -86,6 +87,17 @@ def test_new_schedule_view_post_creates_schedule(authenticated_client, django_us
     assert schedule.id is not None
     assert schedule.owner.id == django_user.id
     assert schedule.days == {datetime.date(2022, 1, x) for x in range(1, 7)}
+
+
+def test_navigation_object(django_user):
+    s = Schedule(owner=user_to_domain(django_user))
+    s = repo.add(s)
+    navigation = ScheduleNavigation(s, "schedule_settings")
+    assert [x for x in navigation] == [
+        ("Einstellungen", reverse("schedule_settings", args=[s.id]), True),
+        ("Teilnehmer", reverse("schedule_preferences", args=[s.id]), False),
+        ("Verteilung", reverse("schedule_assignments", args=[s.id]), False),
+    ]
 
 
 @pytest.mark.parametrize(

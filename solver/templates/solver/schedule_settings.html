@@ -11,14 +11,7 @@
         <span class="px-2 rounded bg-slate-100">{{ schedule.owner.username }}</span>
       </div>
     </div>
-    <div class="flex flex-row space-x-4 overflow-x-auto">
-      <a class="font-semibold text-blue-500"
-         href="{% url 'schedule_settings' schedule.id %}">Einstellungen</a>
-      <a class="hover:text-blue-500"
-         href="{% url 'schedule_preferences' schedule.id %}">Verfügbarkeiten</a>
-      <a class="hover:text-blue-500"
-         href="{% url 'schedule_assignments' schedule.id %}">Verteilung</a>
-    </div>
+    {% include "solver/navigation.html" %}
   </section>
   <section class="space-y-4">
     <div>

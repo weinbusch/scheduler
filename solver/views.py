@@ -137,6 +137,24 @@ def schedule_assignments_api(request, schedule):
 # Schedule views
 
 
+class ScheduleNavigation:
+
+    navigation_items = [
+        ("Einstellungen", "schedule_settings"),
+        ("Teilnehmer", "schedule_preferences"),
+        ("Verteilung", "schedule_assignments"),
+    ]
+
+    def __init__(self, schedule, url_name):
+        self._items = [
+            (label, reverse(name, args=[schedule.id]), name == url_name)
+            for label, name in self.navigation_items
+        ]
+
+    def __iter__(self):
+        return self._items.__iter__()
+
+
 def schedule_view(view):
     def wrapped_view(request, pk):
         schedule = repo.get(pk)
@@ -175,7 +193,14 @@ def add_schedule(request):
 @login_required
 @schedule_view
 def schedule_settings(request, schedule):
-    return render(request, "solver/schedule_settings.html", dict(schedule=schedule))
+    return render(
+        request,
+        "solver/schedule_settings.html",
+        dict(
+            schedule=schedule,
+            navigation=ScheduleNavigation(schedule, "schedule_settings"),
+        ),
+    )
 
 
 @login_required
@@ -190,14 +215,27 @@ def schedule_preferences(request, schedule):
     else:
         form = ParticipantForm(participants=schedule.participants)
     return render(
-        request, "solver/schedule_preferences.html", dict(schedule=schedule, form=form)
+        request,
+        "solver/schedule_preferences.html",
+        dict(
+            schedule=schedule,
+            form=form,
+            navigation=ScheduleNavigation(schedule, "schedule_preferences"),
+        ),
     )
 
 
 @login_required
 @schedule_view
 def schedule_assignments(request, schedule):
-    return render(request, "solver/schedule_assignments.html", dict(schedule=schedule))
+    return render(
+        request,
+        "solver/schedule_assignments.html",
+        dict(
+            schedule=schedule,
+            navigation=ScheduleNavigation(schedule, "schedule_assignments"),
+        ),
+    )
 
 
 @login_required
@@ -207,7 +245,7 @@ def delete_participant(request, schedule):
         name = request.POST.get("participant", None)
         schedule.remove_participant(name)
         repo.add(schedule)
-        return redirect(reverse("schedule_settings", args=[schedule.id]))
+        return redirect(reverse("schedule_preferences", args=[schedule.id]))
     return HttpResponseNotAllowed(["POST"])
 
 
