@@ -20,9 +20,6 @@ class Schedule(models.Model):
         related_name="my_schedules",
         on_delete=models.PROTECT,
     )
-    users = models.ManyToManyField(
-        to=settings.AUTH_USER_MODEL, related_name="schedules", blank=True
-    )
 
     def to_domain(self):
         owner = user_to_domain(self.owner)

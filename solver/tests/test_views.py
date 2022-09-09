@@ -45,13 +45,8 @@ def authenticated_client(client, django_user):
 
 
 def test_get_schedule_list(authenticated_client, django_user):
-    dates = [datetime.date(2022, 1, x) for x in range(1, 10)]
-    participants = ["foo", "bar", "baz", "bak", "wum", "mit"]
     for d in range(10):
         schedule = Schedule(owner=user_to_domain(django_user))
-        for p in random.choices(participants, k=4):
-            for d in random.choices(dates, k=5):
-                schedule.add_preference(p, d)
         repo.add(schedule)
     r = authenticated_client.get(reverse("index"))
     assert r.status_code == 200
