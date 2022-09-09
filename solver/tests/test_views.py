@@ -78,7 +78,7 @@ def test_new_schedule_view_post_creates_schedule(authenticated_client, django_us
     }
     r = authenticated_client.post(reverse("add_schedule"), data)
     assert r.status_code == 302
-    [schedule] = repo.list()
+    [schedule] = repo.list_all()
     assert schedule.id is not None
     assert schedule.owner.id == django_user.id
     assert schedule.days == {datetime.date(2022, 1, x) for x in range(1, 7)}
@@ -121,7 +121,7 @@ def test_delete_schedule(authenticated_client, django_user):
     assert_template_used(r, "solver/delete_schedule.html")
     r = authenticated_client.post(reverse("delete_schedule", args=[s.id]))
     assert r.status_code == 302
-    assert repo.list() == []
+    assert repo.list_all() == []
 
 
 def test_add_participant(authenticated_client, django_user):

@@ -27,12 +27,12 @@ def create_schedule(owner):
 
 
 @pytest.mark.django_db
-def test_get_schedule_list():
+def test_get_schedule_list_all():
     owner = create_user("owner")
     other = create_user("other")
     create_schedule(owner)
     create_schedule(other)
-    schedules = ScheduleRepository().list()
+    schedules = ScheduleRepository().list_all()
     assert len(schedules) == 2
     assert isinstance(schedules[0], domain.Schedule)
 

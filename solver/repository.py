@@ -6,11 +6,12 @@ User = get_user_model()
 
 
 class ScheduleRepository:
-    def list(self, user_id=None):
-        qs = self._queryset()
-        if user_id is not None:
-            qs = qs.filter(owner_id=user_id)
+    def list(self, user_id):
+        qs = self._queryset().filter(owner_id=user_id)
         return [o.to_domain() for o in qs]
+
+    def list_all(self):
+        return [o.to_domain() for o in self._queryset()]
 
     def get(self, pk):
         try:
