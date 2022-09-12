@@ -79,9 +79,12 @@ class Schedule:
     def remove_day(self, date):
         self.days.discard(date)
 
-    def add_participant(self, name):
+    def add_participant(self, name, weekdays=None):
         if name not in self._participants:
             self._participants[name] = Participant()
+        weekdays = weekdays or []
+        for date in (d for d in self.days if d.weekday() in weekdays):
+            self.add_preference(name, date)
 
     def remove_participant(self, name):
         self._participants.pop(name, None)

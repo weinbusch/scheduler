@@ -79,6 +79,12 @@ def test_add_preference_implicitly_adds_participant():
     assert "foo" in s.participants
 
 
+def test_add_participant_with_weekdays():
+    s = Schedule(start=datetime.date(2022, 1, 1), end=datetime.date(2022, 1, 31))
+    s.add_participant("foo", weekdays=[0, 3, 5])
+    assert s.preferences["foo"] == {d for d in s.days if d.weekday() in [0, 3, 5]}
+
+
 def test_add_preferences():
     s = Schedule()
     dates = [datetime.date(2022, 1, d) for d in range(1, 8)]
