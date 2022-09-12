@@ -16,7 +16,7 @@ repo = ScheduleRepository()
 
 
 def has_access_to_schedule(user, schedule):
-    return user.id == schedule.owner.id
+    return user.is_superuser or user.id == schedule.owner.id
 
 
 # API views
@@ -169,7 +169,10 @@ def schedule_view(view):
 
 @login_required
 def schedule_list(request):
-    schedules = repo.list(request.user.id)
+    if request.user.is_superuser:
+        schedules = repo.list_all()
+    else:
+        schedules = repo.list(request.user.id)
     return render(
         request,
         "solver/index.html",
