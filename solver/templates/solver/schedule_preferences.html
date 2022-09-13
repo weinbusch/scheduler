@@ -2,8 +2,9 @@
 {% load static %}
 
 {% block main %}
-<main class="p-4 mx-auto max-w-screen-lg space-y-8">
-  <section class="space-y-4 md:space-y-0 md:flex md:flex-row md:justify-between md:items-baseline">
+<main class="p-4 mx-auto max-w-screen-xl space-y-8">
+  
+  <header class="space-y-4 md:space-y-0 md:flex md:flex-row md:justify-between md:items-baseline">
     <div class="flex flex-row space-x-4 items-baseline">
       <h1 class="text-blue-500 text-xl font-semibold">Zeitplan {{ schedule.id }}</h1>
       <div class="text-sm">
@@ -12,56 +13,73 @@
       </div>
     </div>
     {% include "solver/navigation.html" %}
-  </section>
-  <section class="space-y-2">
-    <form action="" method="POST">
-      {% csrf_token %}
-      <div class="flex flex-row">
-        <div>
-          {{ form.name }}
-        </div>
-        <button type="submit"
-	        class="ml-2 px-4 p-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white whitespace-nowrap">
-          Speichern
-        </button>
-      </div>
-    </form>
-  </section>
-  <section>
-    <div class="space-y-4">
+  </header>
+
+  <div class="flex flex row space-x-8">
+
+    <section class="space-y-4">
+
       {% if schedule.participants %}
-      <div class="space-y-2">
-        <p>
-          Wähle einen Teilnehmer aus, um dessen Verfügbarkeit zu bearbeiten:
-        </p>
-        <form action="{% url 'delete_participant' schedule.id %}" method="POST">
-          {% csrf_token %}
-          <div class="flex flex-row flex-wrap -m-1" id="participants">
-            {% for p in schedule.participants %}
-            <div class="m-1 flex flex-row">
-              <input class="peer hidden" type="radio" id="participant_{{ forloop.counter }}" name="participants" value="{{ p }}" {% if forloop.first %}checked{% endif %}>
-              <label for="participant_{{ forloop.counter }}"
-                     class="px-4 py-1 rounded-l-lg peer-checked:bg-blue-500 peer-checked:text-slate-100 hover:bg-blue-500 hover:text-slate-100 bg-slate-200 cursor-pointer">
-                {{ p }}
-              </label>
-              <button type="submit" name="participant" value="{{ p }}" class="px-3 py-1 rounded-r-lg bg-slate-300 hover:text-red-500" title="Teilnehmer löschen">
-                &#10005;
-              </button>
+      <form class="w-64 pb-4 border-b" action="{% url 'delete_participant' schedule.id %}" method="POST">
+        {% csrf_token %}
+        <div class="space-y-4" id="participants">
+          <div>
+            Wähle einen Teilnehmer aus, um dessen Verfügbarkeit zu bearbeiten:
+          </div>
+          {% for p in schedule.participants %}
+          <div class="flex flex-row">
+            <input class="peer hidden" type="radio" id="participant_{{ forloop.counter }}" name="participants" value="{{ p }}" {% if forloop.first %}checked{% endif %}>
+            <label for="participant_{{ forloop.counter }}"
+                   class="px-4 py-1 rounded-l-lg peer-checked:bg-blue-500 peer-checked:text-slate-100 hover:bg-blue-500 hover:text-slate-100 bg-slate-200 cursor-pointer truncate"
+                   title="{{ p }}">
+              {{ p }}
+            </label>
+            <button type="submit" name="participant" value="{{ p }}" class="px-3 py-1 rounded-r-lg bg-slate-300 hover:text-red-500" title="Teilnehmer löschen">
+              &#10005;
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </form>
+      {% endif %}
+
+      <form class="w-64" action="" method="POST">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div>
+            {{ form.name }}
+          </div>
+          <div class="space-y-1 px-2">
+            {% for choice in form.weekdays %}
+            <div>
+              {{ choice }}
             </div>
             {% endfor %}
           </div>
-        </form>
-        <div>
-          Klicke auf einen freien Tag, um diesen als verfügbar zu
-          kennzeichnen. Klicke auf einen verfügbaren Tag, um die Auswahl
-          zu widerrufen:
+          <div>
+            <button type="submit"
+	            class="px-4 p-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white whitespace-nowrap">
+              Speichern
+            </button>
+          </div>
         </div>
+      </form>
 
+    </section>
+    
+    <section class="space-y-2">
+      <div>
+        {% if schedule.participants %}
+        Klicke auf einen freien Tag, um diesen als verfügbar zu
+        kennzeichnen. Klicke auf einen verfügbaren Tag, um die Auswahl
+        zu widerrufen:
+        {% else %}
+        Lege zunächst einige Teilnehmer an, um deren verfügbare Tage zu bearbeiten.
+        {% endif %}
       </div>
-      {% endif %}
       <div id="calendar"></div>
-    </div>
-  </section>
+    </section>
+  </div>
 </main>
 {% endblock %}
 

@@ -125,14 +125,20 @@ def test_delete_schedule(authenticated_client, django_user):
 
 
 def test_add_participant(authenticated_client, django_user):
-    s = Schedule(owner=user_to_domain(django_user))
+    s = Schedule(
+        owner=user_to_domain(django_user),
+        start=datetime.date(2022, 1, 1),
+        end=datetime.date(2022, 1, 8),
+    )
     repo.add(s)
     r = authenticated_client.post(
-        reverse("schedule_preferences", args=[s.id]), data={"name": "foo"}
+        reverse("schedule_preferences", args=[s.id]),
+        data={"name": "foo", "weekdays": [0, 5]},
     )
     assert r.status_code == 302
     s = repo.get(s.id)
     assert "foo" in s.participants
+    assert len(s.preferences["foo"]) == 2
 
 
 def test_delete_participant(authenticated_client, django_user):

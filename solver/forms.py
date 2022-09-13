@@ -13,6 +13,19 @@ class TextInput(forms.TextInput):
 
 class ParticipantForm(forms.Form):
     name = forms.CharField(widget=TextInput(attrs={"placeholder": "Neuer Teilnehmer"}))
+    weekdays = forms.MultipleChoiceField(
+        choices=[
+            (0, "montags"),
+            (1, "dienstags"),
+            (2, "mittwochs"),
+            (3, "donnerstags"),
+            (4, "freitags"),
+            (5, "samstags"),
+            (6, "sonntags"),
+        ],
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
 
     def __init__(self, *args, **kwargs):
         self.participants = kwargs.pop("participants", set())
@@ -26,6 +39,12 @@ class ParticipantForm(forms.Form):
                 code="invalid",
                 params={"value": value},
             )
+        return value
+
+    def clean_weekdays(self):
+        """normalize weekday to int"""
+        value = self.cleaned_data["weekdays"]
+        value = [int(x) for x in value]
         return value
 
 
