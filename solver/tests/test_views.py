@@ -1,6 +1,5 @@
 import pytest
 import datetime
-import random
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
