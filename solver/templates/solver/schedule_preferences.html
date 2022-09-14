@@ -48,6 +48,9 @@
         <div class="space-y-4">
           <div>
             {{ form.name }}
+            {% for error in form.name.errors %}
+            <div class="px-2 text-red-500">{{ error }}</div>
+            {% endfor %}
           </div>
           <div class="space-y-1 px-2">
             {% for choice in form.weekdays %}
