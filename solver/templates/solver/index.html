@@ -15,17 +15,22 @@
     {% for schedule in schedules %}
     <a href="{% url 'schedule_settings' schedule.id %}"
        class="block hover:bg-slate-50 p-4 rounded group">
-      <div class="flex flex-row space-x-4 items-baseline">
+      <header class="flex flex-row space-x-4 items-baseline">
         <h2 class="font-semibold group-hover:text-blue-500 ">Zeitplan {{ schedule.id }}</h2>
         <div class="text-sm">
           von
           <span class="px-2 rounded bg-sky-100">{{ schedule.owner.username }}</span>
         </div>
-      </div>
-      <p class="mt-2 text-sm">
+        {% if schedule.has_assignments %}
+        <span class="bg-purple-500 text-white rounded-full leading-none h-6 w-6 flex flex-row justify-center items-center">
+          &#10003;
+        </span>
+        {% endif %}
+      </header>
+      <div class="mt-2 text-sm">
         Vom {{ schedule.start }} bis zum {{ schedule.end }}
-      </p>
-      <p class="mt-1 text-sm">
+      </div>
+      <div class="mt-1 text-sm">
         {% for name in schedule.participants %}
         {% if forloop.first %}Mit{% endif %}
         {% if forloop.last and not forloop.first %}und{% endif %}
@@ -33,7 +38,7 @@
         {% empty %}
         Noch keine Teilnehmer
         {% endfor %}
-      </p>
+      </div>
     </a>
     {% empty %}
     <div class="p-4">
