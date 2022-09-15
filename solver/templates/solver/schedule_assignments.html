@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block main %}
-<main class="p-4 mx-auto max-w-screen-lg space-y-8">
+<main class="p-4 mx-auto max-w-screen-xl space-y-8">
   <header class="space-y-4 md:space-y-0 md:flex md:flex-row md:justify-between md:items-baseline">
     <div class="flex flex-row space-x-4 items-baseline">
       <h1 class="text-blue-500 text-xl font-semibold">Zeitplan {{ schedule.id }}</h1>
@@ -13,28 +13,33 @@
     </div>
     {% include "solver/navigation.html" %}
   </header>
-  <section id="app"></section>
+  <div class="flex flex-row space-x-8">
+    <section>
+      <div class="w-64 space-y-4">
+        <div>
+          Hier siehst Du die aktuelle Verteilung der Teilnehmer auf
+          die Tage des Zeitplans. Falls Du in der Zwischenzeit
+          Einstellungen des Zeitplans geändert hast, z.B. wenn Du
+          Teilnehmer hinzugefügt oder entfernt, die Tage des Zeitplans
+          verändert oder Verfügbarkeiten bearbeitet hast, solltest Du
+          die Verteilung erneut berechnen lassen.
+        </div>
+        <div>
+          <button id="solve" class="bg-purple-500 hover:bg-purple-600 p-2 rounded-lg text-white whitespace-nowrap">
+            Neu berechnen
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="app"></section>
+  </div>
 </main>
 {% endblock %}
 
 {% block scripts %}
 <template id="assignments">
-  <div class="space-y-8">
-    <div class="space-y-4 md:space-y-0 md:flex md:flex-row md:space-x-8 md:justify-between md:items-center">
-      <p class="max-w-screen-md">
-        Hier siehst Du die aktuelle Verteilung der Teilnehmer auf die
-        Tage des Zeitplans. Falls Du in der Zwischenzeit Einstellungen
-        des Zeitplans geändert hast, z.B. wenn Du Teilnehmer hinzugefügt
-        oder entfernt, die Tage des Zeitplans verändert oder
-        Verfügbarkeiten bearbeitet hast, solltest Du die Verteilung
-        erneut berechnen lassen. 
-      </p>
-      <button id="solve" class="bg-purple-500 hover:bg-purple-600 p-2 rounded-lg text-white whitespace-nowrap">
-        Neu berechnen
-      </button>
-    </div>
-    <div id="calendar"></div>
-  </div>
+  <div id="calendar"></div>
 </template>
 
 <template id="error">
