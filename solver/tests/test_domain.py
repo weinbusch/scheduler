@@ -161,13 +161,15 @@ def test_clear_assignments():
 def test_assignment_cannot_be_added_if_no_preference_exists():
     s = Schedule()
     s.add_participant("foo")
-    with pytest.raises(AssignmentError):
+    with pytest.raises(
+        AssignmentError, match="is not in list of preferred dates for foo"
+    ):
         s.add_assignment("foo", datetime.date(2022, 1, 1))
 
 
 def test_assignment_cannot_be_added_if_no_participant_exists():
     s = Schedule()
-    with pytest.raises(AssignmentError):
+    with pytest.raises(AssignmentError, match="Participant foo is unknown"):
         s.add_assignment("foo", datetime.date(2022, 1, 1))
 
 
