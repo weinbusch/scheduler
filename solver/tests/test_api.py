@@ -188,6 +188,29 @@ def test_schedule_404(client, owner, url_name):
     assert r.status_code == 404
 
 
+def test_get_schedule(client, owner, repo, schedule):
+    dates = [datetime.date(2022, 1, d) for d in range(1, 7)]
+    for date in dates:
+        schedule.add_day(date)
+        schedule.add_preference("foo", date)
+        schedule.add_assignment("foo", date)
+    repo.add(schedule)
+
+    client.force_login(owner)
+    r = client.get(reverse("api:schedule", args=[schedule.id]))
+
+    assert r.status_code == 200
+    assert json.loads(r.content) == {
+        "days": [{"start": date.isoformat()} for date in dates],
+        "preferences": [
+            {"start": date.isoformat(), "participant": "foo"} for date in dates
+        ],
+        "assignments": [
+            {"start": date.isoformat(), "participant": "foo"} for date in dates
+        ],
+    }
+
+
 def test_patch_schedule_calls_make_assignments_returns_204(schedule, client, owner):
     client.force_login(owner)
     with patch.object(Schedule, "make_assignments") as f:
@@ -207,7 +230,7 @@ def test_patch_persists_schedule(schedule, client, owner, repo):
     assert s.assignments == {("foo", datetime.date(2022, 1, 1))}
 
 
-@pytest.mark.parametrize("method", ["get", "post", "put", "delete"])
+@pytest.mark.parametrize("method", ["post", "put", "delete"])
 def test_schedule_method_not_allowed(schedule, client, owner, method):
     client.force_login(owner)
     url = reverse("api:schedule", args=[schedule.id])

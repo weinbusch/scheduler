@@ -73,6 +73,19 @@ def get_json_data(request):
 
 @api_get_schedule
 def schedule_api(request, schedule):
+    if request.method == "GET":
+        data = {
+            "days": [{"start": d} for d in sorted(schedule.days)],
+            "preferences": [
+                {"participant": p, "start": d}
+                for p, dates in sorted(schedule.preferences.items())
+                for d in sorted(dates)
+            ],
+            "assignments": [
+                {"participant": p, "start": d} for p, d in sorted(schedule.assignments)
+            ],
+        }
+        return JsonResponse(data)
     if request.method == "PATCH":
         try:
             schedule.make_assignments()
