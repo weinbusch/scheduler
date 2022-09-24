@@ -16,7 +16,51 @@ function Calendar(selector, options){
 }
 
 function ParticipantCalendar(selector, options){
-    let getSelectedParticipant = options.getSelectedParticipant;
+    let participantSelector = document.querySelector(options.participantSelector);
+    
+    getSelectedParticipant = function(){
+        let el = participantSelector;
+        let checked = el ? el.querySelector("input:checked") : null;
+        return checked ? checked.value : null;
+    };
+    
+    let api = options.api;
+
+    options.eventSources = [
+        {
+            events: function(info, success, failure){
+                api.getSchedule().then(json => {
+                    let days = json.days,
+                        preferences = json.preferences,
+                        assignments = json.assignments;
+                    let events = [];
+                    days.forEach(day => events.push({
+                        groupId: "days",
+                        start: day.start,
+                        display: "background",
+                    }))
+                    preferences.forEach(day => events.push({
+                        groupId: "preferences",
+                        start: day.start,
+                        participant: day.participant,
+                    }))
+                    return success(events);
+                })
+        
+            },
+            eventDataTransform: function(eventData){
+                eventData.title = eventData.participant || "";
+                if (eventData.participant == getSelectedParticipant()){
+                    eventData.classNames = ["p-1", "cursor-pointer", "hover:ring"];
+                } else {
+                    eventData.classNames = "opacity-50"
+                }
+                return eventData;
+            },
+        },
+    ],
+
+
     options.eventClick = function(info){
         let participant = info.event.extendedProps.participant,
             dateStr = info.event.startStr;
@@ -26,12 +70,13 @@ function ParticipantCalendar(selector, options){
             }})
         }
     };
+
     options.dateClick = function(info){
         let participant = getSelectedParticipant(),
             dateStr = info.dateStr,
             events = this.getEvents(),
             isAvailable = events.filter(e => 
-                e.startStr == dateStr && e.source.id == "days"
+                e.startStr == dateStr && e.groupId == "days"
             ).length == 1,
             isEmpty = events.filter(e => {
                 e.startStr == dateStr && e.extendedProps.participant == participant
@@ -44,5 +89,12 @@ function ParticipantCalendar(selector, options){
             })
         }
     };
-    return Calendar(selector, options);
+
+    let calendar = Calendar(selector, options);
+
+    if (participantSelector){
+        participantSelector.addEventListener("change", ()=>calendar.refetchEvents());
+    }
+
+    return calendar;
 }

@@ -91,44 +91,14 @@
 <script src="{% static 'solver/js/calendar.js' %}"></script>
 <script>
   let api = new API(
-      "{% url 'api:schedule_days' schedule.id %}",
-      "{% url 'api:schedule_preferences' schedule.id %}",
-      "{% url 'api:schedule_assignments' schedule.id %}",
       "{{ csrf_token }}",
-  );
-  let participantSelector = document.getElementById("participants");
-  function getSelectedParticipant(){
-      let el = participantSelector;
-      let checked = el ? el.querySelector("input:checked") : null;
-      return checked ? checked.value : null;
-  }
+      "{% url 'api:schedule' schedule.id %}",
+  ); 
   let calendar = ParticipantCalendar("#calendar", {
-      initialDate: {% if schedule.start %}"{{ schedule.start.isoformat }}"{% else %}undefined{% endif %},
-      eventSources: [
-          {
-              id: "preferences",
-              url: "{% url 'api:schedule_preferences' schedule.id %}",
-              eventDataTransform: function(eventData){
-                  eventData.title = eventData.participant;
-                  if (eventData.participant == getSelectedParticipant()){
-                      eventData.classNames = ["p-1", "cursor-pointer", "hover:ring"];
-                  } else {
-                      eventData.classNames = "opacity-50"
-                  }
-                  return eventData;
-              },
-          },
-          {
-              id: "days",
-              url: "{% url 'api:schedule_days' schedule.id %}",
-              display: "background",
-          }
-      ],
-      getSelectedParticipant: getSelectedParticipant,
+      api: api,
+      initialDate: "{{ schedule.start.isoformat }}" || undefined,
+      participantSelector: "#participants",
   });
-  if (participantSelector){
-      participantSelector.addEventListener("change", ()=>calendar.refetchEvents());
-  }
   calendar.render();
 </script>
 {% endblock %}

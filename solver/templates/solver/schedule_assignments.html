@@ -84,10 +84,8 @@
 <script src="{% static 'solver/js/calendar.js' %}"></script>
 <script>
   let api = new API(
-      "{% url 'api:schedule_days' schedule.id %}",
-      "{% url 'api:schedule_preferences' schedule.id %}",
-      "{% url 'api:schedule_assignments' schedule.id %}",
       "{{ csrf_token }}",
+      "{% url 'api:schedule' schedule.id %}",
   );
   
   function renderTemplate(name){
@@ -107,7 +105,7 @@
   function showCalendar(){
       renderTemplate("assignments");
       let calendar = Calendar("#calendar", {
-          initialDate: {% if schedule.start %}"{{ schedule.start.isoformat }}"{% else %}undefined{% endif %},
+          initialDate: "{{ schedule.start.isoformat }}" || undefined,
           eventSources: [
               {
                   id: "assignments",

@@ -1,4 +1,14 @@
-function API(days_url, preferences_url, assignments_url, csrf_token){
+function API(csrf_token, schedule_url){
+    let days_url = schedule_url + "/days",
+        preferences_url = schedule_url + "/preferences",
+        assignments_url = schedule_url + "/assignments";
+
+    this.getSchedule = function(){
+        return fetch(schedule_url, {
+            method: "GET",
+        }).then(r => {if (r.ok) {return r.json()}})
+    }
+    
     this.patchSchedule = function(url){
         return fetch(url, {
             method: "PATCH",
