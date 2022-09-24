@@ -99,11 +99,12 @@ class Schedule:
             self._participants[name].preferences.discard(date)
 
     def add_assignment(self, name, date):
-        if (
-            name not in self._participants
-            or date not in self._participants[name].preferences
-        ):
-            raise AssignmentError
+        if name not in self._participants:
+            raise AssignmentError(f"Participant {name} is unknown.")
+        if date not in self._participants[name].preferences:
+            raise AssignmentError(
+                f"{date} is not in list of preferred dates for {name}"
+            )
         self._participants[name].assignments.add(date)
 
     def clear_assignments(self):
