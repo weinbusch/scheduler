@@ -104,24 +104,9 @@
 
   function showCalendar(){
       renderTemplate("assignments");
-      let calendar = Calendar("#calendar", {
+      let calendar = AssignmentCalendar("#calendar", {
           initialDate: "{{ schedule.start.isoformat }}" || undefined,
-          eventSources: [
-              {
-                  id: "assignments",
-                  url: "{% url 'api:schedule_assignments' schedule.id %}",
-                  eventDataTransform: function(eventData){
-                      eventData.title = eventData.participant;
-                      eventData.classNames = "p-2"
-                      return eventData;
-                  },
-              },
-              {
-                  id: "days",
-                  url: "{% url 'api:schedule_days' schedule.id %}",
-                  display: "background",
-              },
-          ],
+          api: api,
       });
       calendar.render();
       let button = document.getElementById("solve");

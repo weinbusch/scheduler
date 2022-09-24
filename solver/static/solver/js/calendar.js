@@ -15,6 +15,34 @@ function Calendar(selector, options){
     })
 }
 
+function AssignmentCalendar(selector, options){
+    let api = options.api;
+
+    options.eventSources = [{
+        events: function(info, success, failure){
+            api.getSchedule().then(json => {
+                let events = [];
+                json.assignments.forEach(day => {
+                    events.push({
+                        start: day.start,
+                        title: day.participant,
+                        classNames: "p-2",
+                    })
+                });
+                json.days.forEach(day => {
+                    events.push({
+                        start: day.start,
+                        display: "background",
+                    })
+                })
+                return success(events);
+            })
+        }
+    }]
+    
+    return Calendar(selector, options);
+}
+
 function ParticipantCalendar(selector, options){
     let participantSelector = document.querySelector(options.participantSelector);
     
