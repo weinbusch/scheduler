@@ -102,7 +102,7 @@
       let checked = el ? el.querySelector("input:checked") : null;
       return checked ? checked.value : null;
   }
-  let calendar = Calendar("#calendar", {
+  let calendar = ParticipantCalendar("#calendar", {
       initialDate: {% if schedule.start %}"{{ schedule.start.isoformat }}"{% else %}undefined{% endif %},
       eventSources: [
           {
@@ -124,33 +124,7 @@
               display: "background",
           }
       ],
-      eventClick: function(info){
-          let participant = info.event.extendedProps.participant,
-              dateStr = info.event.startStr;
-          if (participant && participant == getSelectedParticipant()){
-              api.removePreference(participant, dateStr).then((r) => {if (r.ok){
-                  this.refetchEvents()
-              }})
-          }
-      },
-      dateClick: function(info){
-          let participant = getSelectedParticipant(),
-              dateStr = info.dateStr;
-          let events = this.getEvents();
-          let isAvailable = events.filter(e => e.startStr == dateStr)
-              .filter(e => e.source.id == "days")
-              .length == 1;
-          let isEmpty = events.filter(e => e.startStr == dateStr)
-              .filter(e => e.extendedProps.participant == participant)
-              .length == 0;
-          if (isAvailable && isEmpty){
-              api.addPreference(participant, dateStr).then(r => {
-                  if (r.ok){
-                      this.refetchEvents()
-                  }
-              })
-          }
-      }
+      getSelectedParticipant: getSelectedParticipant,
   });
   if (participantSelector){
       participantSelector.addEventListener("change", ()=>calendar.refetchEvents());
