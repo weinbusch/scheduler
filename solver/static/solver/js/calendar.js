@@ -43,6 +43,44 @@ function AssignmentCalendar(selector, options){
     return Calendar(selector, options);
 }
 
+function DayCalendar(selector, options){
+    let api = options.api;
+
+    options.eventSources = [{
+        events: function(info, success, failure){
+            api.getSchedule().then(json => {
+                let events = [];
+                json.days.forEach(day => {
+                    events.push({
+                        start: day.start,
+                        display: "background",
+                    })
+                })
+                return success(events);
+            })
+        }
+    }]
+
+    options.eventClick = function(info){
+        let dateStr = info.event.startStr;
+        api.removeDay(dateStr).then(
+            r => {if (r.ok){ this.refetchEvents() }}
+        )
+    }
+
+    options.dateClick = function(info){
+        let dateStr = info.dateStr;
+        if (this.getEvents().filter(e => e.startStr == dateStr).length){
+            return;
+        }
+        api.addDay(dateStr).then(
+            r => {if (r.ok) { this.refetchEvents() }}
+        )
+    }
+
+    return Calendar(selector, options);
+}
+
 function ParticipantCalendar(selector, options){
     let participantSelector = document.querySelector(options.participantSelector);
     
@@ -74,7 +112,7 @@ function ParticipantCalendar(selector, options){
                     }))
                     return success(events);
                 })
-        
+                
             },
             eventDataTransform: function(eventData){
                 eventData.title = eventData.participant || "";

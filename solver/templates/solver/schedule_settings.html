@@ -49,27 +49,9 @@
       "{% url 'api:schedule' schedule.id %}",
   );
   
-  let calendar = Calendar("#calendar", {
+  let calendar = DayCalendar("#calendar", {
       initialDate: "{{ schedule.start.isoformat }}" || undefined,
-      eventSources: [{
-          url: "{% url 'api:schedule_days' schedule.id %}",
-          display: "background",
-      }],
-      eventClick: function(info){
-          let dateStr = info.event.startStr;
-          api.removeDay(dateStr).then(
-              r => {if (r.ok){ this.refetchEvents() }}
-          )
-      },
-      dateClick: function(info){
-          let dateStr = info.dateStr;
-          if (this.getEvents().filter(e => e.startStr == dateStr).length){
-              return;
-          }
-          api.addDay(dateStr).then(
-              r => {if (r.ok) { this.refetchEvents() }}
-          )
-      },
+      api: api,
   });
   calendar.render();
 </script>
