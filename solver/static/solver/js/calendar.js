@@ -10,8 +10,8 @@ function Calendar(selector, options){
         },
         initialDate: options.initialDate,
         eventSources: options.eventSources,
-        eventClick: options.eventClick ? _.debounce(options.eventClick, 200) : undefined,
-        dateClick: options.dateClick ? _.debounce(options.dateClick, 200) : undefined,
+        eventClick: options.eventClick ? _.debounce(options.eventClick, 500, { leading: true }) : undefined,
+        dateClick: options.dateClick ? _.debounce(options.dateClick, 500, { leading: true }) : undefined,
     })
 }
 
