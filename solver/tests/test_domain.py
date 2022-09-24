@@ -126,6 +126,15 @@ def test_remove_preference():
     }
 
 
+def test_remove_preference_also_removes_assignment():
+    s = Schedule()
+    s.add_participant("foo")
+    s.add_preference("foo", datetime.date(2022, 1, 1))
+    s.add_assignment("foo", datetime.date(2022, 1, 1))
+    s.remove_preference("foo", datetime.date(2022, 1, 1))
+    assert s.assignments == set()
+
+
 def test_remove_preference_that_does_not_exist_does_not_raise_any_error():
     s = Schedule()
     s.add_preference("foo", datetime.date(2022, 1, 1))

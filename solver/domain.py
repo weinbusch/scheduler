@@ -97,6 +97,7 @@ class Schedule:
     def remove_preference(self, name, date):
         if name in self._participants:
             self._participants[name].preferences.discard(date)
+            self._participants[name].assignments.discard(date)
 
     def add_assignment(self, name, date):
         if name not in self._participants:

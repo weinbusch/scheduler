@@ -127,3 +127,22 @@ def test_delete_schedule():
     s = repo.add(s)
     repo.delete(s)
     assert repo.get(s.id) is None
+
+
+@pytest.mark.django_db
+def test_assignment_error_if_preferred_date_is_deleted():
+    repo = ScheduleRepository()
+    owner = create_user("owner")
+    s = domain.Schedule(
+        owner=domain.User(owner.pk, "owner"),
+        start=datetime.date(2022, 1, 1),
+        end=datetime.date(2022, 1, 2),
+    )
+    s.add_preference("foo", datetime.date(2022, 1, 1))
+    s.add_assignment("foo", datetime.date(2022, 1, 1))
+    repo.add(s)
+    t = repo.get(1)
+    t.remove_preference("foo", datetime.date(2022, 1, 1))
+    repo.add(t)
+    u = repo.get(1)  # should not raise
+    assert u.assignments == set()
