@@ -20,10 +20,11 @@ class Schedule(models.Model):
         related_name="my_schedules",
         on_delete=models.PROTECT,
     )
+    window = models.IntegerField(null=True)
 
     def to_domain(self):
         owner = user_to_domain(self.owner)
-        s = domain.Schedule(owner=owner, id=self.id)
+        s = domain.Schedule(owner=owner, id=self.id, window=self.window)
         [s.add_day(d.start) for d in self.day_set.all()]
         participants = self.participant_set.all()
         for participant in participants:
@@ -42,6 +43,7 @@ class Schedule(models.Model):
             obj = cls()
         owner = user_from_domain(s.owner)
         obj.owner = owner
+        obj.window = s.window
         obj.save()
         # update id on domain object
         s.id = obj.id

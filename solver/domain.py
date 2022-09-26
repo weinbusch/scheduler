@@ -35,12 +35,19 @@ class Participant:
 
 class Schedule:
     def __init__(
-        self, id=None, owner=None, start=None, end=None, exclude_weekends=False
+        self,
+        id=None,
+        owner=None,
+        start=None,
+        end=None,
+        exclude_weekends=False,
+        window=None,
     ):
         self.id = id
         self.owner = owner
         self.days = set()
         self._participants = dict()
+        self.window = window
 
         if start and end:
             self.days = {
@@ -114,7 +121,7 @@ class Schedule:
 
     def make_assignments(self):
         try:
-            res = get_schedule(list(self.days), self.preferences)
+            res = get_schedule(list(self.days), self.preferences, window=self.window)
         except Exception as e:
             raise ScheduleException(e)
         finally:

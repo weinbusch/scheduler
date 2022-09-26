@@ -1,8 +1,9 @@
+import datetime
 import math
 import scipy
 
 
-def get_schedule(days, available_dates):
+def get_schedule(days, available_dates, window=None):
     """get_schedule(days, available_dates)
 
     Parameters:

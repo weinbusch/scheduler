@@ -211,6 +211,7 @@ def test_schedule_solve_calls_solver_with_correct_arguments():
         f.assert_called_with(
             list(set(datetime.date(2022, 1, day) for day in range(1, 8))),
             preferences,
+            window=None,
         )
 
 
