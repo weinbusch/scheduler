@@ -1,106 +1,46 @@
-import math
-import unittest
+import pytest
 import datetime
-import collections
+from collections import Counter
 
 from solver.solver import get_schedule
-from solver.domain import Schedule
 
 
-def test_make_assignments():
-    """Test a simple case with two families and four days"""
-    s = Schedule(start=datetime.date(2022, 1, 1), end=datetime.date(2022, 1, 5))
-    s.add_preference("foo", datetime.date(2022, 1, 1))
-    s.add_preference("foo", datetime.date(2022, 1, 3))
-    s.add_preference("bar", datetime.date(2022, 1, 2))
-    s.add_preference("bar", datetime.date(2022, 1, 4))
-    s.make_assignments()
-    assert s.assignments == {
-        ("foo", datetime.date(2022, 1, 1)),
-        ("bar", datetime.date(2022, 1, 2)),
-        ("foo", datetime.date(2022, 1, 3)),
-        ("bar", datetime.date(2022, 1, 4)),
+def test_equal_number_of_assignments():
+    days = [datetime.date(2022, 1, d) for d in range(1, 31)]
+    preferences = {name: days for name in "abc"}
+    assignments = get_schedule(days, preferences)
+    counter = Counter(name for day, name in assignments)
+    assert counter == {name: 10 for name in preferences}
+
+
+def test_unequal_number_of_assignments():
+    days = [datetime.date(2022, 1, d) for d in range(1, 31)]
+    preferences = {name: days for name in "abcd"}
+    assignments = get_schedule(days, preferences)
+    counter = Counter(name for day, name in assignments)
+    assert counter == {name: 8 if name < "c" else 7 for name in preferences}
+
+
+def test_respect_preferences():
+    days = [datetime.date(2022, 1, d) for d in range(1, 31)]
+    preferences = {
+        "a": [day for day in days if day.day % 2 == 0],
+        "b": [day for day in days if day.day % 2 == 1],
     }
+    assignments = get_schedule(days, preferences)
+    assert [day for day, name in assignments if name == "a"] == preferences["a"]
+    assert [day for day, name in assignments if name == "b"] == preferences["b"]
 
 
-class SchedulerTest(unittest.TestCase):
-    def test_each_day_is_assigned_one_family(self):
-        """Test a simple case with two families and four days"""
-        days = [
-            datetime.date.today(),
-            datetime.date.today() + datetime.timedelta(days=1),
-            datetime.date.today() + datetime.timedelta(days=2),
-            datetime.date.today() + datetime.timedelta(days=3),
-        ]
-        families = ["foo", "bar"]
-        available_dates = {f: days for f in families}
-        schedule = get_schedule(days, available_dates)
-        self.assertTrue(all([f in families for _, f in schedule]))
+def test_consecutive_assignments():
+    days = [datetime.date(2022, 1, d) for d in range(1, 31)]
+    preferences = {name: days for name in "ab"}
+    assignments = get_schedule(days, preferences)
+    assert assignments == [(day, "a" if day.day < 16 else "b") for day in days]
 
-    def test_equal_number_of_assignements(self):
-        """Test each family is assigned an equal number of days"""
-        n = 100
-        families = ["foo", "bar", "baz", "bak"]
-        days = [
-            datetime.date.today() + datetime.timedelta(days=x)
-            for x in range(len(families) * n)
-        ]
-        available_dates = {f: days for f in families}
-        schedule = get_schedule(days, available_dates)
-        counts = collections.Counter([f for _, f in schedule])
-        self.assertTrue(all([counts[f] == n for f in families]))
 
-    def test_uneven_number_of_days(self):
-        """Test with 2 families and 3 days"""
-        days = [datetime.date.today() + datetime.timedelta(days=x) for x in range(3)]
-        families = ["foo", "bar"]
-        available_dates = {f: days for f in families}
-        schedule = get_schedule(days, available_dates)
-        counts = collections.Counter([f for _, f in schedule])
-        self.assertTrue(
-            (counts["foo"] == 2 and counts["bar"] == 1)
-            or (counts["foo"] == 1 and counts["bar"] == 2)
-        )
-
-    def test_no_family_more_than_two_less_than_maximum(self):
-        """If the number of days is not dividable by the number of families,
-        no family should have less than floor(days/families) number of
-        assignments
-
-        """
-        for n in range(9, 12):
-            with self.subTest(n=n):
-                families = ["foo", "bar", "baz"]
-                days = [
-                    datetime.date.today() + datetime.timedelta(days=x) for x in range(n)
-                ]
-                available_dates = {f: days for f in families}
-                schedule = get_schedule(days, available_dates)
-                counts = collections.Counter([f for _, f in schedule])
-                self.assertTrue(
-                    all([counts[f] >= math.floor(n / len(families)) for f in families])
-                )
-
-    def test_with_constraints(self):
-        """First family is only available on the first and last day"""
-        days = [
-            datetime.date.today(),
-            datetime.date.today() + datetime.timedelta(days=1),
-            datetime.date.today() + datetime.timedelta(days=2),
-            datetime.date.today() + datetime.timedelta(days=3),
-        ]
-        available_dates = {"foo": [days[0], days[3]], "bar": days}
-        schedule = get_schedule(days, available_dates)
-        self.assertListEqual([f for _, f in schedule], ["foo", "bar", "bar", "foo"])
-
-    def test_infeasible_constraints(self):
-        """First family is only available on a single day"""
-        days = [
-            datetime.date.today(),
-            datetime.date.today() + datetime.timedelta(days=1),
-            datetime.date.today() + datetime.timedelta(days=2),
-            datetime.date.today() + datetime.timedelta(days=3),
-        ]
-        available_dates = {"foo": [days[0]], "bar": days}
-        with self.assertRaises(Exception):
-            get_schedule(days, available_dates)
+def test_infeasible_constraints():
+    days = [datetime.date(2022, 1, d) for d in range(1, 31)]
+    preferences = {name: days[1:-1] for name in "ab"}
+    with pytest.raises(Exception):
+        get_schedule(days, preferences, window=2)
