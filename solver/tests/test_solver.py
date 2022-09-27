@@ -46,3 +46,11 @@ def test_solution_contains_consecutive_assignments():
     assert any(
         len(list(g)) > 1 for k, g in groupby(name for day, name in assignments)
     ), "No consecutive elements"
+
+
+def test_no_consecutive_assignments():
+    preferences = {name: days for name in "ab"}
+    assignments = get_schedule(days, preferences, window=2)
+    assert all(
+        len(list(g)) == 1 for k, g in groupby(name for day, name in assignments)
+    ), "Found consecutive elements"

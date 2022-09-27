@@ -22,7 +22,7 @@ def get_schedule(days, preferences, window=0):
         one_resource_per_day(binary_vector, days),
         equal_assignments(binary_vector, resources, days),
         respect_preferences(binary_vector, preferences),
-        # consecutive_assignments(binary_vector, resources, days, window),
+        consecutive_assignments(binary_vector, resources, days, window),
     ]
 
     # solution
