@@ -132,7 +132,7 @@
   }
 
   function solveSchedule(){
-      api.patchSchedule("{% url 'api:schedule' schedule.id %}")
+      api.patchSchedule()
           .then(r => {
               if (r.ok) {
                   showCalendar();

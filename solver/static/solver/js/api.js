@@ -6,11 +6,11 @@ function API(csrf_token, schedule_url){
     this.getSchedule = function(){
         return fetch(schedule_url, {
             method: "GET",
-        }).then(r => {if (r.ok) {return r.json()}})
+        }).then(r => r.json())
     }
     
-    this.patchSchedule = function(url){
-        return fetch(url, {
+    this.patchSchedule = function(){
+        return fetch(schedule_url, {
             method: "PATCH",
             headers: {
                 "X-CSRFToken": csrf_token,
@@ -68,4 +68,3 @@ function API(csrf_token, schedule_url){
         })    
     }
 }
-
