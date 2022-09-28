@@ -121,7 +121,7 @@ class Schedule:
 
     def make_assignments(self):
         try:
-            res = get_schedule(list(self.days), self.preferences, window=self.window)
+            res = get_schedule(self.days, self.preferences, window=self.window)
         except Exception as e:
             raise ScheduleException(e)
         finally:

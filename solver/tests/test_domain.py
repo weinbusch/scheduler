@@ -198,7 +198,11 @@ def test_call_solver():
 
 
 def test_schedule_solve_calls_solver_with_correct_arguments():
-    s = Schedule(start=datetime.date(2022, 1, 1), end=datetime.date(2022, 1, 8))
+    s = Schedule(
+        start=datetime.date(2022, 1, 1),
+        end=datetime.date(2022, 1, 8),
+        window=3,
+    )
     preferences = {
         "foo": {datetime.date(2022, 1, x) for x in [1, 3, 5]},
         "bar": {datetime.date(2022, 1, y) for y in [2, 5, 6]},
@@ -209,9 +213,9 @@ def test_schedule_solve_calls_solver_with_correct_arguments():
     with patch("solver.domain.get_schedule", autospec=True) as f:
         s.make_assignments()
         f.assert_called_with(
-            list(set(datetime.date(2022, 1, day) for day in range(1, 8))),
+            {datetime.date(2022, 1, day) for day in range(1, 8)},
             preferences,
-            window=None,
+            window=3,
         )
 
 
