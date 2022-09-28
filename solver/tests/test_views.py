@@ -112,6 +112,30 @@ def test_schedule_detail_views(
     assert_template_used(r, template_name)
 
 
+def test_edit_schedule_assignment_settings(authenticated_client, django_user):
+    s = Schedule(owner=user_to_domain(django_user), window=1)
+    s = repo.add(s)
+    assert s.window == 1
+    data = {"window": 3}
+    r = authenticated_client.post(
+        reverse("schedule_assignments", args=[s.id]), data=data
+    )
+    assert r.status_code == 302
+    t = repo.get(s.id)
+    assert t.window == 3
+
+
+def test_edit_schedule_settings_clears_assignments(authenticated_client, django_user):
+    s = Schedule(owner=user_to_domain(django_user), window=1)
+    s.add_preference("foo", datetime.date(2022, 1, 1))
+    s.add_assignment("foo", datetime.date(2022, 1, 1))
+    s = repo.add(s)
+    data = {"window": 3}
+    authenticated_client.post(reverse("schedule_assignments", args=[s.id]), data=data)
+    s = repo.get(s.id)
+    assert s.assignments == set()
+
+
 def test_delete_schedule(authenticated_client, django_user):
     s = Schedule(owner=user_to_domain(django_user))
     s = repo.add(s)

@@ -10,7 +10,13 @@ from django.shortcuts import render, reverse, redirect
 from solver.models import user_to_domain
 from solver.repository import ScheduleRepository
 from solver.domain import Schedule, ScheduleException
-from solver.forms import DateForm, PreferenceForm, ScheduleCreateForm, ParticipantForm
+from solver.forms import (
+    DateForm,
+    PreferenceForm,
+    ScheduleCreateForm,
+    ParticipantForm,
+    ScheduleSettingsForm,
+)
 
 repo = ScheduleRepository()
 
@@ -91,7 +97,8 @@ def schedule_api(request, schedule):
             schedule.make_assignments()
         except ScheduleException as e:
             return api_server_error(e)
-        repo.add(schedule)
+        finally:
+            repo.add(schedule)
         return api_no_content()
     return api_method_not_allowed()
 
@@ -260,12 +267,22 @@ def schedule_preferences(request, schedule):
 @login_required
 @schedule_view
 def schedule_assignments(request, schedule):
+    if request.method == "POST":
+        form = ScheduleSettingsForm(request.POST)
+        if form.is_valid():
+            schedule.window = form.cleaned_data["window"]
+            schedule.clear_assignments()
+            repo.add(schedule)
+            return redirect(reverse("schedule_assignments", args=[schedule.id]))
+    else:
+        form = ScheduleSettingsForm(initial={"window": schedule.window})
     return render(
         request,
         "solver/schedule_assignments.html",
         dict(
             schedule=schedule,
             navigation=ScheduleNavigation(schedule, "schedule_assignments"),
+            form=form,
         ),
     )
 

@@ -61,3 +61,16 @@ class ScheduleCreateForm(forms.Form):
     start = forms.DateField(widget=DateInput)
     end = forms.DateField(widget=DateInput)
     exclude_weekends = forms.BooleanField(required=False)
+
+
+class ScheduleSettingsForm(forms.Form):
+    window = forms.IntegerField(
+        widget=TextInput,
+        label="Aufeinanderfolgende Tage",
+        help_text=(
+            "Um zu festzulegen, dass ein Teilnehmer nicht an aufeinanderfolgenden Tagen"
+            " für einen Dienst eingeteilt wird, "
+            "trage hier die Anzahl an aufeinanderfolgenden Tagen ein, "
+            "an denen ein Teilnehmer maximal einen Dienst haben darf."
+        ),
+    )
