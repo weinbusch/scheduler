@@ -38,36 +38,82 @@ class Schedule(models.Model):
     @classmethod
     def update_from_domain(cls, s):
         try:
-            obj = cls.objects.get(id=s.id)
+            obj = (
+                cls.objects.select_related("owner")
+                .prefetch_related("day_set")
+                .prefetch_related("participant_set")
+                .prefetch_related("participant_set__preferreddate_set")
+                .prefetch_related("participant_set__assigneddate_set")
+                .get(id=s.id)
+            )
         except cls.DoesNotExist:
             obj = cls()
-        owner = user_from_domain(s.owner)
-        obj.owner = owner
+
+        # persist Schedule
+        obj.owner = user_from_domain(s.owner)
         obj.window = s.window
         obj.save()
+
         # update id on domain object
         s.id = obj.id
-        # persist days
+
+        # persist Days
         saved_days = {d.start for d in obj.day_set.all()}
-        if orphan_days := (saved_days - s.days):
+
+        if deleted_days := (saved_days - s.days):
             Day.objects.filter(schedule_id=obj.id).filter(
-                start__in=orphan_days
+                start__in=deleted_days
             ).delete()
+
         if new_days := (s.days - saved_days):
             Day.objects.bulk_create(
                 [Day(schedule_id=obj.id, start=date) for date in new_days]
             )
-        # persist participants
-        saved_participants = list(obj.participant_set.all())
-        saved_participant_names = [p.name for p in saved_participants]
-        if orphan_participants := {
-            p for p in saved_participants if p.name not in s.participants
+
+        # persist Participants
+        saved_participants = {p.name: p for p in obj.participant_set.all()}
+
+        if deleted_participants := {
+            p for name, p in saved_participants.items() if name not in s.participants
         }:
             Participant.objects.filter(
-                schedule_id=obj.id, id__in=[p.id for p in orphan_participants]
+                schedule_id=obj.id, id__in=[p.id for p in deleted_participants]
             ).delete()
+
         for name in s.participants:
-            if name not in saved_participant_names:
+            participant = saved_participants.get(name, None)
+
+            if participant:
+                preferred_dates = s.preferences[name]
+                saved_preferred_dates = {
+                    d.start for d in participant.preferreddate_set.all()
+                }
+
+                if deleted_preferred_dates := saved_preferred_dates - preferred_dates:
+                    PreferredDate.objects.filter(
+                        participant=participant, start__in=deleted_preferred_dates
+                    ).delete()
+
+                if new_preferred_dates := preferred_dates - saved_preferred_dates:
+                    PreferredDate.objects.bulk_create(
+                        PreferredDate(participant=participant, start=d)
+                        for d in new_preferred_dates
+                    )
+
+                assigned_dates = {d for n, d in s.assignments if n == name}
+                saved_assigned_dates = {
+                    d.start for d in participant.assigneddate_set.all()
+                }
+                if deleted_assigned_dates := saved_assigned_dates - assigned_dates:
+                    AssignedDate.objects.filter(
+                        participant=participant, start__in=deleted_assigned_dates
+                    ).delete()
+                if new_assigned_dates := assigned_dates - saved_assigned_dates:
+                    AssignedDate.objects.bulk_create(
+                        AssignedDate(participant=participant, start=d)
+                        for d in new_assigned_dates
+                    )
+            else:
                 participant = Participant.objects.create(schedule=obj, name=name)
                 PreferredDate.objects.bulk_create(
                     PreferredDate(participant_id=participant.id, start=date)
@@ -78,36 +124,6 @@ class Schedule(models.Model):
                     for n, date in s.assignments
                     if n == name
                 )
-            else:
-                participant = next(p for p in saved_participants if p.name == name)
-                # update preferred dates
-                preferred_dates = s.preferences[name]
-                saved_preferred_dates = {
-                    d.start for d in participant.preferreddate_set.all()
-                }
-                if orphan_preferred_dates := saved_preferred_dates - preferred_dates:
-                    PreferredDate.objects.filter(
-                        participant=participant, start__in=orphan_preferred_dates
-                    ).delete()
-                if new_preferred_dates := preferred_dates - saved_preferred_dates:
-                    PreferredDate.objects.bulk_create(
-                        PreferredDate(participant=participant, start=d)
-                        for d in new_preferred_dates
-                    )
-                # update assigned dates
-                assigned_dates = {d for n, d in s.assignments if n == name}
-                saved_assigned_dates = {
-                    d.start for d in participant.assigneddate_set.all()
-                }
-                if orphan_assigned_dates := saved_assigned_dates - assigned_dates:
-                    AssignedDate.objects.filter(
-                        participant=participant, start__in=orphan_assigned_dates
-                    ).delete()
-                if new_assigned_dates := assigned_dates - saved_assigned_dates:
-                    AssignedDate.objects.bulk_create(
-                        AssignedDate(participant=participant, start=d)
-                        for d in new_assigned_dates
-                    )
         return s
 
 
