@@ -20,7 +20,13 @@ class ScheduleRepository:
             return None
 
     def _queryset(self):
-        return Schedule.objects.all()
+        return (
+            Schedule.objects.all()
+            .select_related("owner")
+            .prefetch_related("participant_set")
+            .prefetch_related("participant_set__preferreddate_set")
+            .prefetch_related("participant_set__assigneddate_set")
+        )
 
     def add(self, s):
         return Schedule.update_from_domain(s)
