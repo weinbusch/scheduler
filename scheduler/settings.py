@@ -147,5 +147,9 @@ LOGGING = {
             "handlers": ["console"],
             "level": "DEBUG",
         },
+        "solver.repository": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
     },
 }
