@@ -2,8 +2,10 @@ import datetime
 import scipy.optimize
 
 
-def get_schedule(days, preferences, window=0):
+def get_schedule(days, preferences, window=None):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.milp.html#scipy.optimize.milp
+
+    window = window or 1
 
     resources = set(preferences.keys())
     labels = [(d, r) for r in resources for d in days]
