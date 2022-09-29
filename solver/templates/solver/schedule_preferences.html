@@ -20,30 +20,34 @@
     <section class="space-y-4">
 
       {% if schedule.participants %}
-      <form class="w-64 pb-4 border-b" action="{% url 'delete_participant' schedule.id %}" method="POST">
+      <form class="w-64" action="{% url 'delete_participant' schedule.id %}" method="POST">
         {% csrf_token %}
-        <div class="space-y-4" id="participants">
+        <div>
           <div>
             Wähle einen Teilnehmer aus, um dessen Verfügbarkeit zu bearbeiten:
           </div>
-          {% for p in schedule.participants %}
-          <div class="flex flex-row">
-            <input class="peer hidden" type="radio" id="participant_{{ forloop.counter }}" name="participants" value="{{ p }}" {% if forloop.first %}checked{% endif %}>
-            <label for="participant_{{ forloop.counter }}"
-                   class="px-4 py-1 rounded-l-lg peer-checked:bg-blue-500 peer-checked:text-slate-100 hover:bg-blue-500 hover:text-slate-100 bg-slate-200 cursor-pointer truncate"
-                   title="{{ p }}">
-              {{ p }}
-            </label>
-            <button type="submit" name="participant" value="{{ p }}" class="px-3 py-1 rounded-r-lg bg-slate-300 hover:text-red-500" title="Teilnehmer löschen">
-              &#10005;
-            </button>
+          <div class="flex flex-col border-l border-r border-b mt-4" id="participants">
+            {% for p in schedule.participants %}
+            <div class="flex flex-row border-t">
+              <input class="peer hidden" type="radio" id="participant_{{ forloop.counter }}" name="participants" value="{{ p }}" {% if forloop.first %}checked{% endif %}>
+              <label for="participant_{{ forloop.counter }}"
+                     class="flex-grow px-4 py-2 peer-checked:bg-blue-500 peer-checked:text-slate-100 hover:bg-blue-500 hover:text-slate-100 cursor-pointer truncate"
+                     title="{{ p }}">
+                {{ p }}
+              </label>
+              <button type="submit" name="participant" value="{{ p }}"
+                      class="px-3 py-2 border-l hover:text-red-500"
+                      title="Teilnehmer löschen">
+                &#10005;
+              </button>
+            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
       </form>
       {% endif %}
 
-      <form class="w-64" action="" method="POST">
+      <form class="w-64 p-4 border" action="" method="POST">
         {% csrf_token %}
         <div class="space-y-4">
           <div>
@@ -52,12 +56,17 @@
             <div class="px-2 text-red-500">{{ error }}</div>
             {% endfor %}
           </div>
-          <div class="space-y-1 px-2">
-            {% for choice in form.weekdays %}
-            <div>
-              {{ choice }}
+          <div>
+            <div class="text-sm">
+              Wochentage, an denen Teilnehmer immer verfügbar ist:
             </div>
-            {% endfor %}
+            <div class="mt-2 flex flex-row flex-wrap -m-1">
+              {% for choice in form.weekdays %}
+              <div class="whitespace-nowrap m-1 px-2 py-1 bg-gray-100 rounded">
+                {{ choice }}
+              </div>
+              {% endfor %}
+            </div>
           </div>
           <div>
             <button type="submit"
