@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
@@ -58,9 +60,19 @@ class PreferenceForm(forms.Form):
 
 
 class ScheduleCreateForm(forms.Form):
-    start = forms.DateField(widget=DateInput)
-    end = forms.DateField(widget=DateInput)
+    start = forms.DateField(widget=DateInput, required=True)
+    end = forms.DateField(widget=DateInput, required=True)
     exclude_weekends = forms.BooleanField(required=False)
+
+    def clean_end(self):
+        start = self.cleaned_data["start"]
+        end = self.cleaned_data["end"]
+        if (end - start) > datetime.timedelta(days=365):
+            raise ValidationError(
+                _("The date range is limited to one year (365 days)"),
+                code="invalid",
+            )
+        return end
 
 
 class ScheduleSettingsForm(forms.Form):

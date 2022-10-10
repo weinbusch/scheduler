@@ -1,6 +1,12 @@
 import pytest
 
-from solver.forms import ParticipantForm
+from solver.forms import ParticipantForm, ScheduleCreateForm
+
+
+@pytest.mark.parametrize("end, valid", [("2023-01-01", True), ("2023-01-02", False)])
+def test_schedule_create_form_validates_date_range(end, valid):
+    form = ScheduleCreateForm({"start": "2022-01-01", "end": end})
+    assert form.is_valid() is valid
 
 
 def test_participant_form_is_invalid_if_participant_already_exists():
